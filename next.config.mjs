@@ -51,6 +51,25 @@ const nextConfig = {
       // REDIRECTS DE CONTEÚDO (apenas regras de conteúdo, não canonicalização)
       // Canonicalização (http→https, non-www→www) é feita pelo middleware.ts
       // ============================================================
+      // Redirecionamento de idiomas inválidos (SEO 301)
+      { source: '/fr/:path*', destination: '/:path*', permanent: true },
+      { source: '/fr', destination: '/', permanent: true },
+      { source: '/de/:path*', destination: '/:path*', permanent: true },
+      { source: '/de', destination: '/', permanent: true },
+      { source: '/ja/:path*', destination: '/:path*', permanent: true },
+      { source: '/ja', destination: '/', permanent: true },
+      { source: '/es/:path*', destination: '/:path*', permanent: true },
+      { source: '/es', destination: '/', permanent: true },
+      { source: '/pt-br/:path*', destination: '/:path*', permanent: true },
+      { source: '/pt-br', destination: '/', permanent: true },
+
+      // Rotas obsoletas/deletadas permanentemente
+      { source: '/blog/:path*', destination: '/guias', permanent: true },
+      { source: '/blog', destination: '/guias', permanent: true },
+      { source: '/optimizer', destination: '/voltrisoptimizer', permanent: true },
+      { source: '/gamers', destination: '/otimizacao-pc', permanent: true },
+      { source: '/about', destination: '/sobre', permanent: true },
+
       // Correcção de links quebrados (404) reportados por Screaming Frog - SEO Técnico
       { source: '/suporte-ao-windows', destination: '/todos-os-servicos/suporte-ao-windows', permanent: true },
       { source: '/todos-os-servicos/otimizacao-pc', destination: '/otimizacao-pc', permanent: true },
