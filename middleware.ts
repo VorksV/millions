@@ -1,5 +1,5 @@
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
+import { NextResponse } from 'next/dist/server/web/spec-extension/response.js'
+import { NextRequest } from 'next/dist/server/web/spec-extension/request.js'
 import { VALID_CATEGORIES, VALID_GUIDE_SLUGS } from './lib/valid-guide-slugs'
 
 const SECURITY_HEADERS = {
@@ -146,8 +146,7 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-    runtime: 'experimental-edge',
-    // `api` excluído do escopo de propósito — o middleware nunca protegeu
+    runtime: 'nodejs',
     // nada em /api: protectedRoutes cobre apenas /dashboard e
     // /restricted-area-admin. As rotas de API validam o usuário dentro
     // do próprio handler. Os headers de segurança de /api vêm do next.config.mjs.
