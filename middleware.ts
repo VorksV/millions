@@ -9,6 +9,7 @@ const SECURITY_HEADERS = {
     'Referrer-Policy': 'strict-origin-when-cross-origin',
     'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), interest-cohort=()',
     'X-DNS-Prefetch-Control': 'on',
+    'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
     'Server': 'Voltris Web Network',
 }
 
