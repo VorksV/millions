@@ -1,10 +1,13 @@
-# Este arquivo força o Vercel a sempre fazer build
-# Removendo este arquivo ou deixando vazio, o Vercel sempre fará build
+# Arquivos que NAO devem ir para o build da Vercel.
+# Garante build limpo e evita reuso de cache de dependencias.
 
-
-
-
-
-
-
-
+node_modules
+.next
+.env
+.env.*
+!.env.example
+.DS_Store
+*.log
+RoslynDiag
+obj
+bin
