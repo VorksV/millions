@@ -1,13 +1,8 @@
-// ═══════════════════════════════════════════════════════════════
-// ZERO imports de next/server ou qualquer módulo CJS do Node.js.
-// Usa APENAS Web API nativas (Response, Request, URL, Headers)
-// que funcionam identicamente em Edge Runtime, Node.js ESM e CJS.
-// Headers de segurança estão definidos no next.config.mjs headers().
-// ═══════════════════════════════════════════════════════════════
+import { NextResponse, type NextRequest } from 'next/server'
 import { VALID_CATEGORIES, VALID_GUIDE_SLUGS } from './lib/valid-guide-slugs'
 
-export function middleware(request: Request) {
-    const url = new URL(request.url)
+export function middleware(request: NextRequest) {
+    const url = request.nextUrl
     const pathname = url.pathname.toLowerCase()
 
     // ============================================================
@@ -20,9 +15,9 @@ export function middleware(request: Request) {
     if (matchedLang) {
         let cleanPath = url.pathname.substring(matchedLang.length)
         if (!cleanPath || cleanPath === '/') cleanPath = '/'
-        const target = new URL(request.url)
+        const target = url.clone()
         target.pathname = cleanPath
-        return Response.redirect(target, 301)
+        return NextResponse.redirect(target, 301)
     }
 
     // ============================================================
@@ -41,14 +36,14 @@ export function middleware(request: Request) {
         if (slug && slug !== '') {
             // URLs com caracteres especiais são lixo/legado → 410 GONE
             const hasSpecialChars = /[:()[\]áàãâéèêíìîóòõôúùûçñ,!?@#$%&=+]/.test(slug)
-            if (hasSpecialChars) return new Response(null, { status: 410 })
+            if (hasSpecialChars) return new NextResponse(null, { status: 410 })
 
             const isValid = VALID_CATEGORIES.has(slug) || VALID_GUIDE_SLUGS.has(slug)
             if (!isValid) {
-                const target = new URL(request.url)
+                const target = url.clone()
                 target.pathname = '/guias'
                 target.search = ''
-                return Response.redirect(target, 301)
+                return NextResponse.redirect(target, 301)
             }
         }
     }
@@ -65,7 +60,7 @@ export function middleware(request: Request) {
         GONE_URL_PATTERNS.some(p => pathname.includes(p)) ||
         GONE_PATHS.some(p => pathname === p)
 
-    if (isGoneUrl) return new Response(null, { status: 410 })
+    if (isGoneUrl) return new NextResponse(null, { status: 410 })
 
     // ============================================================
     // 4. CANONICALIZAÇÃO GLOBAL — http→https, non-www→www
@@ -75,10 +70,10 @@ export function middleware(request: Request) {
     const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1'
 
     if ((protocol === 'http:' && !isLocalhost) || hostname === 'voltris.com.br') {
-        const target = new URL(request.url)
+        const target = url.clone()
         if (!isLocalhost) target.protocol = 'https:'
         if (hostname === 'voltris.com.br') target.hostname = 'www.voltris.com.br'
-        return Response.redirect(target, 301)
+        return NextResponse.redirect(target, 301)
     }
 
     // ============================================================
@@ -87,31 +82,23 @@ export function middleware(request: Request) {
     // ============================================================
     const protectedRoutes = ['/dashboard', '/restricted-area-admin']
     if (protectedRoutes.some(r => url.pathname.startsWith(r))) {
-        const cookieHeader = request.headers.get('cookie') || ''
-        const hasSession = cookieHeader.split(';').some(c => {
-            const name = c.trim().split('=')[0] ?? ''
-            return name.startsWith('sb-') && name.endsWith('-auth-token')
-        })
+        const hasSession = request.cookies.getAll().some(c =>
+            c.name.startsWith('sb-') && c.name.endsWith('-auth-token')
+        )
         if (!hasSession) {
             const loginUrl = new URL('/login', request.url)
             loginUrl.searchParams.set('next', url.pathname)
-            return Response.redirect(loginUrl, 307)
+            return NextResponse.redirect(loginUrl, 307)
         }
     }
 
     // ============================================================
     // 6. PASS-THROUGH — continua para o handler original
-    // Headers de segurança são injetados via next.config.mjs headers()
     // ============================================================
-    return new Response(null, {
-        headers: { 'x-middleware-next': '1' },
-    })
+    return NextResponse.next()
 }
 
 export const config = {
-    // Edge Runtime: webpack bundeia tudo em um único arquivo (sem imports raw),
-    // roda em V8 isolate (ESM nativo), sem problemas de CJS/module loading.
-    runtime: 'experimental-edge',
     matcher: [
         '/((?!api|_next/static|_next/image|favicon.ico|assets|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js|woff2?|ttf)$).*)',
     ],
