@@ -1,155 +1,114 @@
-import { NextResponse } from 'next/dist/server/web/spec-extension/response.js'
-import { NextRequest } from 'next/dist/server/web/spec-extension/request.js'
+// ═══════════════════════════════════════════════════════════════
+// ZERO imports de next/server ou qualquer módulo CJS do Node.js.
+// Usa APENAS Web API nativas (Response, Request, URL, Headers)
+// que funcionam identicamente em Edge Runtime, Node.js ESM e CJS.
+// Headers de segurança estão definidos no next.config.mjs headers().
+// ═══════════════════════════════════════════════════════════════
 import { VALID_CATEGORIES, VALID_GUIDE_SLUGS } from './lib/valid-guide-slugs'
 
-const SECURITY_HEADERS = {
-    'X-Content-Type-Options': 'nosniff',
-    'X-Frame-Options': 'DENY',
-    'X-XSS-Protection': '1; mode=block',
-    'Referrer-Policy': 'strict-origin-when-cross-origin',
-    'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), interest-cohort=()',
-    'X-DNS-Prefetch-Control': 'on',
-    'Server': 'Voltris Web Network',
-}
-
-export function middleware(request: NextRequest) {
-    const pathname = request.nextUrl.pathname.toLowerCase();
+export function middleware(request: Request) {
+    const url = new URL(request.url)
+    const pathname = url.pathname.toLowerCase()
 
     // ============================================================
     // 1. TRATAMENTO DE IDIOMAS INVÁLIDOS (SEO REDIRECTS 301)
     // ============================================================
-    const invalidLanguages = ['/fr', '/de', '/ja', '/es', '/pt-br'];
+    const invalidLanguages = ['/fr', '/de', '/ja', '/es', '/pt-br']
     const matchedLang = invalidLanguages.find(lang =>
         pathname === lang || pathname.startsWith(lang + '/')
-    );
-
+    )
     if (matchedLang) {
-        let cleanPath = request.nextUrl.pathname.substring(matchedLang.length);
-        if (!cleanPath || cleanPath === '/') {
-            cleanPath = '/';
-        }
-        const url = request.nextUrl.clone();
-        url.pathname = cleanPath;
-        return NextResponse.redirect(url, 301);
+        let cleanPath = url.pathname.substring(matchedLang.length)
+        if (!cleanPath || cleanPath === '/') cleanPath = '/'
+        const target = new URL(request.url)
+        target.pathname = cleanPath
+        return Response.redirect(target, 301)
     }
 
     // ============================================================
     // 2. TRATAMENTO DE ROTAS SOB /guias/* (DYNAMIC 404 REMEDIATION)
     // ============================================================
-    let decodedPath = pathname;
-    try {
-        decodedPath = decodeURIComponent(pathname);
-    } catch {
-        // Fallback se houver algum caracter mal formado
-    }
+    let decodedPath = pathname
+    try { decodedPath = decodeURIComponent(pathname) } catch { /* fallback */ }
 
-    // Normalizar: remover barra final
-    let normalizedPath = decodedPath;
+    let normalizedPath = decodedPath
     if (normalizedPath.endsWith('/') && normalizedPath.length > 1) {
-        normalizedPath = normalizedPath.slice(0, -1);
+        normalizedPath = normalizedPath.slice(0, -1)
     }
 
     if (normalizedPath.startsWith('/guias/')) {
-        const slug = normalizedPath.substring(7);
-
+        const slug = normalizedPath.substring(7)
         if (slug && slug !== '') {
-            // URLs com caracteres especiais são lixo/legado — retornar 410 GONE
-            const hasSpecialChars = /[:()[\]áàãâéèêíìîóòõôúùûçñ,!?@#$%&=+]/.test(slug);
-            if (hasSpecialChars) {
-                return new NextResponse(null, { status: 410 });
-            }
+            // URLs com caracteres especiais são lixo/legado → 410 GONE
+            const hasSpecialChars = /[:()[\]áàãâéèêíìîóòõôúùûçñ,!?@#$%&=+]/.test(slug)
+            if (hasSpecialChars) return new Response(null, { status: 410 })
 
-            const isValid = VALID_CATEGORIES.has(slug) || VALID_GUIDE_SLUGS.has(slug);
-
+            const isValid = VALID_CATEGORIES.has(slug) || VALID_GUIDE_SLUGS.has(slug)
             if (!isValid) {
-                const url = request.nextUrl.clone();
-                url.pathname = '/guias';
-                url.search = '';
-                return NextResponse.redirect(url, 301);
+                const target = new URL(request.url)
+                target.pathname = '/guias'
+                target.search = ''
+                return Response.redirect(target, 301)
             }
         }
     }
 
     // ============================================================
-    // 3. BLOQUEIO DE PÁGINAS DELETADAS PERMANENTEMENTE (HTTP 410 GONE)
+    // 3. BLOQUEIO DE PÁGINAS DELETADAS PERMANENTEMENTE (HTTP 410)
     // ============================================================
-    const GONE_URL_PATTERNS = [
-        'indexnow-test',
-        'performance-test',
-        '/teste-pagamento',
-    ];
-    const GONE_PATHS = ['/optimizer', '/gamers', '/about'];
+    const GONE_URL_PATTERNS = ['indexnow-test', 'performance-test', '/teste-pagamento']
+    const GONE_PATHS = ['/optimizer', '/gamers', '/about']
 
-    const isBlogGone = pathname === '/blog' || pathname.startsWith('/blog/');
-    const isGoneUrl = isBlogGone ||
-        GONE_URL_PATTERNS.some(pattern => pathname.includes(pattern)) ||
-        GONE_PATHS.some(path => pathname === path);
+    const isBlogGone = pathname === '/blog' || pathname.startsWith('/blog/')
+    const isGoneUrl =
+        isBlogGone ||
+        GONE_URL_PATTERNS.some(p => pathname.includes(p)) ||
+        GONE_PATHS.some(p => pathname === p)
 
-    if (isGoneUrl) {
-        return new NextResponse(null, { status: 410 });
-    }
+    if (isGoneUrl) return new Response(null, { status: 410 })
 
     // ============================================================
     // 4. CANONICALIZAÇÃO GLOBAL — http→https, non-www→www
     // ============================================================
-    const protocol = request.nextUrl.protocol;
-    const hostname = request.nextUrl.hostname;
+    const protocol = url.protocol
+    const hostname = url.hostname
+    const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1'
 
-    const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1';
-    const needsProtocolRedirect = protocol === 'http:' && !isLocalhost;
-    const needsHostnameRedirect = hostname === 'voltris.com.br';
-
-    if (needsProtocolRedirect || needsHostnameRedirect) {
-        const url = request.nextUrl.clone();
-        if (!isLocalhost) {
-            url.protocol = 'https:';
-        }
-        if (hostname === 'voltris.com.br') {
-            url.host = 'www.voltris.com.br';
-        }
-        return NextResponse.redirect(url, 301);
+    if ((protocol === 'http:' && !isLocalhost) || hostname === 'voltris.com.br') {
+        const target = new URL(request.url)
+        if (!isLocalhost) target.protocol = 'https:'
+        if (hostname === 'voltris.com.br') target.hostname = 'www.voltris.com.br'
+        return Response.redirect(target, 301)
     }
 
     // ============================================================
     // 5. PROTEÇÃO DE ROTAS — verifica cookie de sessão Supabase
-    // Nota: a validação real do token JWT acontece nos Server Components
-    // e Route Handlers (Node.js runtime). Aqui fazemos apenas o redirect
-    // para login quando não há cookie de sessão, de forma segura no Edge.
+    // Validação real do JWT fica nos Server Components/Route Handlers.
     // ============================================================
-    const protectedRoutes = ['/dashboard', '/restricted-area-admin'];
-    const isProtectedRoute = protectedRoutes.some(route =>
-        request.nextUrl.pathname.startsWith(route)
-    );
-
-    if (isProtectedRoute) {
-        const hasSessionCookie = request.cookies.getAll().some(
-            c => c.name.startsWith('sb-') && c.name.includes('-auth-token')
-        );
-
-        if (!hasSessionCookie) {
-            const loginUrl = new URL('/login', request.url);
-            loginUrl.searchParams.set('next', request.nextUrl.pathname);
-            return NextResponse.redirect(loginUrl);
+    const protectedRoutes = ['/dashboard', '/restricted-area-admin']
+    if (protectedRoutes.some(r => url.pathname.startsWith(r))) {
+        const cookieHeader = request.headers.get('cookie') || ''
+        const hasSession = cookieHeader.split(';').some(c => {
+            const name = c.trim().split('=')[0] ?? ''
+            return name.startsWith('sb-') && name.endsWith('-auth-token')
+        })
+        if (!hasSession) {
+            const loginUrl = new URL('/login', request.url)
+            loginUrl.searchParams.set('next', url.pathname)
+            return Response.redirect(loginUrl, 307)
         }
     }
 
     // ============================================================
-    // 6. APLICAR HEADERS DE SEGURANÇA
+    // 6. PASS-THROUGH — continua para o handler original
+    // Headers de segurança são injetados via next.config.mjs headers()
     // ============================================================
-    const response = NextResponse.next();
-    Object.entries(SECURITY_HEADERS).forEach(([key, value]) => {
-        response.headers.set(key, value);
-    });
-    response.headers.delete('x-powered-by');
-
-    return response;
+    return new Response(null, {
+        headers: { 'x-middleware-next': '1' },
+    })
 }
 
 export const config = {
-    runtime: 'nodejs',
-    // nada em /api: protectedRoutes cobre apenas /dashboard e
-    // /restricted-area-admin. As rotas de API validam o usuário dentro
-    // do próprio handler. Os headers de segurança de /api vêm do next.config.mjs.
     matcher: [
         '/((?!api|_next/static|_next/image|favicon.ico|assets|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js|woff2?|ttf)$).*)',
     ],
