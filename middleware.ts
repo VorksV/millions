@@ -109,6 +109,9 @@ export function middleware(request: Request) {
 }
 
 export const config = {
+    // Edge Runtime: webpack bundeia tudo em um único arquivo (sem imports raw),
+    // roda em V8 isolate (ESM nativo), sem problemas de CJS/module loading.
+    runtime: 'experimental-edge',
     matcher: [
         '/((?!api|_next/static|_next/image|favicon.ico|assets|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js|woff2?|ttf)$).*)',
     ],
