@@ -26,6 +26,25 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
+// Rate limiting em memoria. Este e o endpoint mais chamado do app: o polling
+// normal e de 5 s (12/min) e a tela de vinculo interroga a cada 1 s por ate 5
+// minutos (60/min). O limite fica ACIMA do pior caso para nunca interromper o
+// fluxo de login; o que ele corta e flood/bot drenando a cota da Vercel.
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
+const RATE_LIMIT = 120;
+
+function checkRateLimit(ip: string): boolean {
+    const now = Date.now();
+    const entry = rateLimitMap.get(ip);
+    if (!entry || now >= entry.resetAt) {
+        rateLimitMap.set(ip, { count: 1, resetAt: now + 60000 });
+        return true;
+    }
+    if (entry.count >= RATE_LIMIT) return false;
+    entry.count++;
+    return true;
+}
+
 /**
  * GET /api/v1/install/status
  *
@@ -57,6 +76,13 @@ export const revalidate = 0;
 export async function GET(request: NextRequest) {
     const correlationId = getOrCreateCorrelationId(request);
     const ctx = startOperation('INSTALL_STATUS', correlationId);
+
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+    if (!checkRateLimit(ip)) {
+        return errorWithCorrelation(ctx, 429, 'RATE_LIMITED', 'Too Many Requests', {
+            details: { is_linked: false, linked: null, email: null },
+        });
+    }
 
     const { searchParams } = request.nextUrl;
     const installationId = normalizeUuid(searchParams.get('installation_id'));

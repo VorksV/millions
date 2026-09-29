@@ -18,6 +18,23 @@ export const revalidate = 0;
 /** Comandos expirados nao sao entregues: evita replay de comando antigo. */
 const COMMAND_TTL_MINUTES = 30;
 
+// Rate limiting em memoria. O app desktop consulta a cada 15 s (4/min), entao
+// 30/min nao encosta no polling normal e so corta flood/bot.
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
+const RATE_LIMIT = 30;
+
+function checkRateLimit(ip: string): boolean {
+    const now = Date.now();
+    const entry = rateLimitMap.get(ip);
+    if (!entry || now >= entry.resetAt) {
+        rateLimitMap.set(ip, { count: 1, resetAt: now + 60000 });
+        return true;
+    }
+    if (entry.count >= RATE_LIMIT) return false;
+    entry.count++;
+    return true;
+}
+
 /**
  * GET /api/v1/commands/pending
  *
@@ -27,6 +44,13 @@ const COMMAND_TTL_MINUTES = 30;
 export async function GET(req: NextRequest) {
     const correlationId = getOrCreateCorrelationId(req);
     const ctx = startOperation('COMMAND_PENDING', correlationId);
+
+    const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+    if (!checkRateLimit(ip)) {
+        return errorWithCorrelation(ctx, 429, 'RATE_LIMITED', 'Too Many Requests', {
+            details: { commands: [] },
+        });
+    }
 
     const { searchParams } = req.nextUrl;
     const rawId = searchParams.get('machine_id') ?? searchParams.get('device_id');

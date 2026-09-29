@@ -231,7 +231,17 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
+    // `api` foi excluido do escopo de proposito. O app desktop faz polling
+    // constante em /api/v1/* e o middleware roda ANTES das rewrites, entao cada
+    // uma dessas requisicoes consumia uma invocacao de Edge Function mesmo quando
+    // a resposta final vinha do arquivo estatico /api-mock.json.
+    //
+    // O middleware nunca protegeu nada em /api: `protectedRoutes` (linha acima)
+    // cobre apenas /dashboard e /restricted-area-admin. As rotas de API que
+    // exigem sessao validam o usuario dentro do proprio handler
+    // (/api/v1/install/link, /api/v1/commands/create, requireAdmin, etc).
+    // Os headers de seguranca de /api continuam vindos do next.config.js.
     matcher: [
-        '/((?!_next/static|_next/image|favicon.ico|assets|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js|woff2?|ttf)$).*)',
+        '/((?!api|_next/static|_next/image|favicon.ico|assets|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js|woff2?|ttf)$).*)',
     ],
 }

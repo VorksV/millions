@@ -20,6 +20,24 @@ import {
 
 export const runtime = 'nodejs';
 
+// Rate limiting em memoria. Desvinculacao e acionada por um clique (1 chamada
+// por acao), tanto no dashboard quanto no app. 10/min nao atrapalha ninguem e
+// impede que alguem use esta rota para varrer installation_ids.
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
+const RATE_LIMIT = 10;
+
+function checkRateLimit(ip: string): boolean {
+    const now = Date.now();
+    const entry = rateLimitMap.get(ip);
+    if (!entry || now >= entry.resetAt) {
+        rateLimitMap.set(ip, { count: 1, resetAt: now + 60000 });
+        return true;
+    }
+    if (entry.count >= RATE_LIMIT) return false;
+    entry.count++;
+    return true;
+}
+
 /**
  * POST /api/v1/install/unlink
  *
@@ -41,6 +59,11 @@ export const runtime = 'nodejs';
 export async function POST(request: NextRequest) {
     const correlationId = getOrCreateCorrelationId(request);
     const ctx = startOperation('INSTALL_UNLINK', correlationId);
+
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+    if (!checkRateLimit(ip)) {
+        return errorWithCorrelation(ctx, 429, 'RATE_LIMITED', 'Too Many Requests');
+    }
 
     let body: any = {};
     try {

@@ -13,6 +13,23 @@ import {
 
 export const runtime = 'nodejs';
 
+// Rate limiting em memoria. O heartbeat do app desktop chega a cada 15 s
+// (4/min); 30/min nao encosta no polling normal e so corta flood/bot.
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
+const RATE_LIMIT = 30;
+
+function checkRateLimit(ip: string): boolean {
+    const now = Date.now();
+    const entry = rateLimitMap.get(ip);
+    if (!entry || now >= entry.resetAt) {
+        rateLimitMap.set(ip, { count: 1, resetAt: now + 60000 });
+        return true;
+    }
+    if (entry.count >= RATE_LIMIT) return false;
+    entry.count++;
+    return true;
+}
+
 /**
  * POST /api/v1/install
  *
@@ -25,6 +42,11 @@ export const runtime = 'nodejs';
 export async function POST(request: NextRequest) {
     const correlationId = getOrCreateCorrelationId(request);
     const ctx = startOperation('INSTALL_REGISTER', correlationId);
+
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+    if (!checkRateLimit(ip)) {
+        return errorWithCorrelation(ctx, 429, 'RATE_LIMITED', 'Too Many Requests');
+    }
 
     let body: any;
     try {

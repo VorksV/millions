@@ -4,11 +4,32 @@ import { requireAdmin } from '@/utils/supabase/requireAdmin';
 
 export const runtime = 'nodejs';
 
+// Rate limiting em memoria. Rota de diagnostico: uso eventual, nao polling.
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
+const RATE_LIMIT = 20;
+
+function checkRateLimit(ip: string): boolean {
+    const now = Date.now();
+    const entry = rateLimitMap.get(ip);
+    if (!entry || now >= entry.resetAt) {
+        rateLimitMap.set(ip, { count: 1, resetAt: now + 60000 });
+        return true;
+    }
+    if (entry.count >= RATE_LIMIT) return false;
+    entry.count++;
+    return true;
+}
+
 export async function GET(request: NextRequest) {
     try {
         // SEGURANÇA: rota de diagnóstico — somente administradores
         const admin = await requireAdmin();
         if (admin.error) return admin.error;
+
+        const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+        if (!checkRateLimit(ip)) {
+            return NextResponse.json({ error: 'Too Many Requests' }, { status: 429 });
+        }
 
         const { searchParams } = new URL(request.url);
         const installation_id = searchParams.get('installation_id');
@@ -26,16 +47,12 @@ export async function GET(request: NextRequest) {
 
         const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-        console.log('[DEBUG] Buscando instalação:', installation_id);
-
         // Buscar a instalação usando service role (ignora RLS)
         const { data, error } = await supabase
             .from('installations')
             .select('*')
             .eq('id', installation_id)
             .single();
-
-        console.log('[DEBUG] Resultado:', { data, error });
 
         if (error) {
             return NextResponse.json({
@@ -49,7 +66,6 @@ export async function GET(request: NextRequest) {
             message: data ? 'Instalação encontrada' : 'Instalação não encontrada'
         });
     } catch (error: any) {
-        console.error('[DEBUG] Erro:', error);
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
 }
