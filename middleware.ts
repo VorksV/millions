@@ -1,5 +1,5 @@
-import { NextResponse } from 'next/server.js'
-import type { NextRequest } from 'next/server.js'
+import { NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
 import { VALID_CATEGORIES, VALID_GUIDE_SLUGS } from './lib/valid-guide-slugs'
 
 const SECURITY_HEADERS = {
@@ -146,6 +146,7 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
+    runtime: 'experimental-edge',
     // `api` excluído do escopo de propósito — o middleware nunca protegeu
     // nada em /api: protectedRoutes cobre apenas /dashboard e
     // /restricted-area-admin. As rotas de API validam o usuário dentro
