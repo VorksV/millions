@@ -1,5 +1,5 @@
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
+import { NextResponse } from 'next/server.js'
+import type { NextRequest } from 'next/server.js'
 import { VALID_CATEGORIES, VALID_GUIDE_SLUGS } from './lib/valid-guide-slugs'
 
 const SECURITY_HEADERS = {
