@@ -216,13 +216,17 @@ export function logSupabaseError(
 export function jsonWithCorrelation(
     ctx: OperationContext,
     body: Record<string, unknown>,
-    status = 200
+    status = 200,
+    customHeaders?: Record<string, string>
 ): NextResponse {
     const payload = { ...body, correlation_id: ctx.correlationId };
     logResponse(ctx, status, payload);
     return NextResponse.json(payload, {
         status,
-        headers: { [CORRELATION_HEADER]: ctx.correlationId },
+        headers: {
+            [CORRELATION_HEADER]: ctx.correlationId,
+            ...(customHeaders ?? {}),
+        },
     });
 }
 

@@ -26,6 +26,10 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
+// In-memory caches para evitar queries desnecessárias ao Supabase
+const userEmailCache = new Map<string, { email: string | null; expiresAt: number }>();
+const lastLinkCheckWritten = new Map<string, number>();
+
 // Rate limiting em memoria. Este e o endpoint mais chamado do app: o polling
 // normal e de 5 s (12/min) e a tela de vinculo interroga a cada 1 s por ate 5
 // minutos (60/min). O limite fica ACIMA do pior caso para nunca interromper o
@@ -210,22 +214,37 @@ export async function GET(request: NextRequest) {
 
     let userEmail: string | null = null;
     if (isLinked && installation.user_id && credentialValid) {
-        const { data: userData, error: userError } = await supabase.auth.admin.getUserById(installation.user_id);
-        if (userError) {
-            logSupabaseError(ctx, 'buscar email do usuario', userError);
+        const cached = userEmailCache.get(installation.user_id);
+        const nowMs = Date.now();
+        if (cached && nowMs < cached.expiresAt) {
+            userEmail = cached.email;
         } else {
-            userEmail = userData?.user?.email ?? null;
+            const { data: userData, error: userError } = await supabase.auth.admin.getUserById(installation.user_id);
+            if (userError) {
+                logSupabaseError(ctx, 'buscar email do usuario', userError);
+            } else {
+                userEmail = userData?.user?.email ?? null;
+                userEmailCache.set(installation.user_id, {
+                    email: userEmail,
+                    expiresAt: nowMs + 10 * 60_000, // Cache de 10 minutos
+                });
+            }
         }
     }
 
-    // Marca que o dispositivo consultou o estado (usado para diagnostico).
-    try {
-        await supabase
-            .from('installations')
-            .update({ last_link_check_at: new Date().toISOString() })
-            .eq('id', installationId);
-    } catch (e) {
-        logWarn(ctx, 'nao foi possivel registrar last_link_check_at', { reason: (e as Error)?.message });
+    // Marca que o dispositivo consultou o estado (apenas a cada 5 minutos para nao floodar o banco).
+    const lastCheck = lastLinkCheckWritten.get(installationId) ?? 0;
+    const nowMs = Date.now();
+    if (nowMs - lastCheck > 5 * 60_000) {
+        lastLinkCheckWritten.set(installationId, nowMs);
+        try {
+            await supabase
+                .from('installations')
+                .update({ last_link_check_at: new Date(nowMs).toISOString() })
+                .eq('id', installationId);
+        } catch (e) {
+            logWarn(ctx, 'nao foi possivel registrar last_link_check_at', { reason: (e as Error)?.message });
+        }
     }
 
     logSuccess(ctx, 'status consultado', {
@@ -234,6 +253,16 @@ export async function GET(request: NextRequest) {
         credentialInvalid,
         user: maskEmail(userEmail),
     });
+
+    // Se já está vinculado, faz cache de 20s na CDN da Vercel (economiza 75% das invocações).
+    // Se não está vinculado, cache de 3s para responder rápido quando o usuário vincular no site.
+    const cacheSeconds = isLinked ? 20 : 3;
+    const cacheHeaders: Record<string, string> = {
+        'Cache-Control': `public, s-maxage=${cacheSeconds}, stale-while-revalidate=${cacheSeconds * 2}`,
+        'CDN-Cache-Control': `public, s-maxage=${cacheSeconds}, stale-while-revalidate=${cacheSeconds * 2}`,
+        'Vercel-CDN-Cache-Control': `public, s-maxage=${cacheSeconds}, stale-while-revalidate=${cacheSeconds * 2}`,
+        'Vary': 'x-voltris-device-credential',
+    };
 
     return jsonWithCorrelation(
         ctx,
@@ -251,6 +280,7 @@ export async function GET(request: NextRequest) {
             credential_invalid: isLinked ? credentialInvalid : null,
             ...(issuedCredential ? { [DEVICE_CREDENTIAL_FIELD]: issuedCredential } : {}),
         },
-        200
+        200,
+        cacheHeaders
     );
 }

@@ -13,6 +13,9 @@ import {
 
 export const runtime = 'nodejs';
 
+// Cache em memória para evitar rodar upserts pesados no banco a cada 15 segundos
+const recentHeartbeatCache = new Map<string, { lastSaved: number; isLinked: boolean }>();
+
 // Rate limiting em memoria. O heartbeat do app desktop chega a cada 15 s
 // (4/min); 30/min nao encosta no polling normal e so corta flood/bot.
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
@@ -80,6 +83,18 @@ export async function POST(request: NextRequest) {
         );
     }
     ctx.installationId = installationId;
+
+    // Se a máquina já atualizou no banco há menos de 60s, confirma imediatamente em 1ms
+    const nowMs = Date.now();
+    const recent = recentHeartbeatCache.get(installationId);
+    if (recent && nowMs - recent.lastSaved < 60_000) {
+        return jsonWithCorrelation(ctx, {
+            success: true,
+            installation_id: installationId,
+            is_linked: recent.isLinked,
+            last_heartbeat: new Date(recent.lastSaved).toISOString(),
+        });
+    }
 
     const appVersion = pick('app_version');
     const hardware = body?.hardware ?? body?.Hardware ?? null;
@@ -158,6 +173,11 @@ export async function POST(request: NextRequest) {
         linked: Boolean(data?.user_id),
         lastHeartbeat: data?.last_heartbeat ?? null,
         columnsSent: Object.keys(upsertData),
+    });
+
+    recentHeartbeatCache.set(installationId, {
+        lastSaved: nowMs,
+        isLinked: Boolean(data?.user_id),
     });
 
     return jsonWithCorrelation(ctx, {

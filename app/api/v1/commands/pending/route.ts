@@ -117,9 +117,19 @@ export async function GET(req: NextRequest) {
 
     logSuccess(ctx, 'comandos pendentes entregues', { count: commands?.length ?? 0 });
 
+    const hasCommands = Boolean(commands && commands.length > 0);
+    const cacheHeaders = hasCommands
+        ? { 'Cache-Control': 'no-store, no-cache, must-revalidate' }
+        : {
+            'Cache-Control': 'public, s-maxage=10, stale-while-revalidate=20',
+            'CDN-Cache-Control': 'public, s-maxage=10, stale-while-revalidate=20',
+            'Vercel-CDN-Cache-Control': 'public, s-maxage=10, stale-while-revalidate=20',
+        };
+
     return jsonWithCorrelation(
         ctx,
         { commands: commands ?? [], registered: true },
-        200
+        200,
+        cacheHeaders
     );
 }
