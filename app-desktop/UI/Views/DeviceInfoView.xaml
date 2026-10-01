@@ -1,0 +1,304 @@
+<UserControl xmlns:services="clr-namespace:VoltrisOptimizer.Services" x:Class="VoltrisOptimizer.UI.Views.DeviceInfoView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             Background="Transparent"
+             d:DesignHeight="900" d:DesignWidth="1100">
+
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/UI/Themes/Icons.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+
+            <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+
+            <Storyboard x:Key="EntryAnimation">
+                <DoubleAnimation Storyboard.TargetProperty="Opacity" From="0" To="1" Duration="0:0:0.6"/>
+                <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.Y)" From="20" To="0" Duration="0:0:0.6">
+                    <DoubleAnimation.EasingFunction>
+                        <PowerEase EasingMode="EaseOut" Power="5"/>
+                    </DoubleAnimation.EasingFunction>
+                </DoubleAnimation>
+            </Storyboard>
+
+            <Style x:Key="CardValueHeaderStyle" TargetType="TextBlock">
+                <Setter Property="FontSize" Value="13"/>
+                <Setter Property="FontWeight" Value="SemiBold"/>
+                <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
+                <Setter Property="TextWrapping" Value="NoWrap"/>
+                <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+                <Setter Property="Margin" Value="0,0,0,2"/>
+            </Style>
+
+            <Style x:Key="CardSectionHeaderStyle" TargetType="StackPanel">
+                <Setter Property="Orientation" Value="Horizontal"/>
+                <Setter Property="Margin" Value="0,0,0,10"/>
+            </Style>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <UserControl.RenderTransform>
+        <TranslateTransform/>
+    </UserControl.RenderTransform>
+
+    <UserControl.Triggers>
+        <EventTrigger RoutedEvent="UserControl.Loaded">
+            <BeginStoryboard Storyboard="{DynamicResource EntryAnimation}"/>
+        </EventTrigger>
+    </UserControl.Triggers>
+
+    <Grid>
+        <!-- Background Decorativo -->
+        <Grid IsHitTestVisible="False" ClipToBounds="True">
+            <Ellipse Width="600" Height="600" Fill="#0D31A8FF" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-300,-200,0">
+                <Ellipse.Effect><BlurEffect Radius="120"/></Ellipse.Effect>
+            </Ellipse>
+        </Grid>
+
+        <Grid Margin="28,12,28,16" ClipToBounds="True">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/> <!-- Header -->
+                <RowDefinition Height="14"/>
+                <RowDefinition Height="*"/>    <!-- Content: preenche o viewport, sem scroll -->
+            </Grid.RowDefinitions>
+
+            <!-- HEADER COMPACTO (alinhado com o layout do Dashboard) -->
+            <StackPanel Grid.Row="0" Orientation="Horizontal">
+                <Border Width="40" Height="40" CornerRadius="10" Margin="0,0,14,0" VerticalAlignment="Center">
+                    <Border.Background>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                            <GradientStop Color="#31A8FF" Offset="0"/>
+                            <GradientStop Color="#8B5CF6" Offset="1"/>
+                        </LinearGradientBrush>
+                    </Border.Background>
+                    <Border.Effect>
+                        <DropShadowEffect BlurRadius="12" ShadowDepth="0" Color="#31A8FF" Opacity="0.4"/>
+                    </Border.Effect>
+                    <Path Data="{DynamicResource DeviceInfoIcon}"
+                          Fill="White"
+                          Width="20" Height="20"
+                          Stretch="Uniform"
+                          HorizontalAlignment="Center"
+                          VerticalAlignment="Center"/>
+                </Border>
+
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock Text="{Binding [Loc_DeviceInformation], Source={x:Static services:LocalizationService.Instance}}"
+                               FontFamily="Segoe UI Variable Display, Segoe UI"
+                               FontSize="20"
+                               FontWeight="Bold">
+                        <TextBlock.Foreground>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                <GradientStop Color="#31A8FF" Offset="0"/>
+                                <GradientStop Color="#8B5CF6" Offset="1"/>
+                            </LinearGradientBrush>
+                        </TextBlock.Foreground>
+                    </TextBlock>
+                    <TextBlock Text="{Binding [Loc_DetailedMonitoringOfPhysicalComponents], Source={x:Static services:LocalizationService.Instance}}"
+                               FontSize="11"
+                               Foreground="{DynamicResource TextSecondaryBrush}"
+                               Opacity="0.7"/>
+                </StackPanel>
+            </StackPanel>
+
+            <!-- CONTEÚDO: grid de estrelas que ocupa exatamente a altura disponível -->
+            <Grid Grid.Row="2">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="1*"/>
+                    <ColumnDefinition Width="14"/>
+                    <ColumnDefinition Width="1*"/>
+                    <ColumnDefinition Width="14"/>
+                    <ColumnDefinition Width="1.35*"/>
+                </Grid.ColumnDefinitions>
+
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="1*"/>
+                    <RowDefinition Height="14"/>
+                    <RowDefinition Height="1*"/>
+                    <RowDefinition Height="14"/>
+                    <RowDefinition Height="1*"/>
+                </Grid.RowDefinitions>
+
+                <!-- SISTEMA -->
+                <Border Grid.Row="0" Grid.Column="0" Grid.RowSpan="1"
+                        Style="{DynamicResource PremiumCard}" Padding="14" VerticalAlignment="Stretch">
+                    <StackPanel>
+                        <StackPanel Style="{StaticResource CardSectionHeaderStyle}">
+                            <Border Width="30" Height="30" CornerRadius="8" Background="#1A31A8FF" Margin="0,0,10,0">
+                                <Path Data="{DynamicResource SystemIcon}" Fill="{DynamicResource BrandBlue}" Width="15" Height="15" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <TextBlock Text="{Binding [Loc_System], Source={x:Static services:LocalizationService.Instance}}" VerticalAlignment="Center" Style="{DynamicResource SectionTitleTextStyle}" FontSize="13"/>
+                        </StackPanel>
+                        <TextBlock Text="{Binding OsName}" Style="{StaticResource CardValueHeaderStyle}"/>
+                        <TextBlock Text="{Binding OsVersion}" Style="{DynamicResource Caption}" Opacity="0.6" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- MEMÓRIA RAM -->
+                <Border Grid.Row="0" Grid.Column="2"
+                        Style="{DynamicResource PremiumCard}" Padding="14" VerticalAlignment="Stretch">
+                    <StackPanel>
+                        <StackPanel Style="{StaticResource CardSectionHeaderStyle}">
+                            <Border Width="30" Height="30" CornerRadius="8" Background="#1A8B31FF" Margin="0,0,10,0">
+                                <Path Data="{DynamicResource IconRam}" Fill="{DynamicResource BrandPurple}" Width="15" Height="15" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <TextBlock Text="{Binding [Loc_RamMemory], Source={x:Static services:LocalizationService.Instance}}" VerticalAlignment="Center" Style="{DynamicResource SectionTitleTextStyle}" FontSize="13"/>
+                        </StackPanel>
+                        <TextBlock Text="{Binding RamTotal}" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource TextPrimary}" Margin="0,2,0,2" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"/>
+                        <TextBlock Text="{Binding RamType}" Style="{DynamicResource BodyTextStyle}" Foreground="{DynamicResource BrandPurple}" FontWeight="Bold" FontSize="11" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- ARMAZENAMENTO (coluna da direita, com scroll interno dos drives) -->
+                <Border Grid.Row="0" Grid.RowSpan="5" Grid.Column="4"
+                        Style="{DynamicResource PremiumCard}" Padding="14" VerticalAlignment="Stretch">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <StackPanel Grid.Row="0" Style="{StaticResource CardSectionHeaderStyle}" Margin="0,0,0,10">
+                            <Border Width="32" Height="32" CornerRadius="9" Background="#1A31A8FF" Margin="0,0,10,0">
+                                <Path Data="{DynamicResource IconDisk}" Fill="{DynamicResource BrandBlue}" Width="16" Height="16" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <TextBlock Text="{Binding [Loc_Storage], Source={x:Static services:LocalizationService.Instance}}" VerticalAlignment="Center" Style="{DynamicResource SectionTitleTextStyle}" FontSize="14"/>
+                        </StackPanel>
+
+                        <ScrollViewer Grid.Row="1"
+                                      VerticalScrollBarVisibility="Auto"
+                                      HorizontalScrollBarVisibility="Disabled"
+                                      CanContentScroll="True">
+                            <ItemsControl ItemsSource="{Binding Drives}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Margin="0,0,0,8" Background="#0AFFFFFF" CornerRadius="10" Padding="12,10">
+                                            <StackPanel>
+                                                <Grid Margin="0,0,0,6">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock Grid.Column="0" Text="{Binding Letter}" FontWeight="Black" Foreground="{DynamicResource BrandBlue}" FontSize="15" VerticalAlignment="Center" Width="32"/>
+                                                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="8,0,8,0" MinWidth="0">
+                                                        <TextBlock Text="{Binding Model}" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"/>
+                                                        <TextBlock Text="{Binding Label}" FontSize="9" Foreground="{DynamicResource TextMuted}" FontWeight="Medium" FontStyle="Italic" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"/>
+                                                    </StackPanel>
+                                                    <Border Grid.Column="2" Background="{DynamicResource BrandBlue}" CornerRadius="4" Padding="5,2" VerticalAlignment="Top" Opacity="0.9">
+                                                        <TextBlock Text="{Binding Type}" FontSize="8" FontWeight="Black" Foreground="{DynamicResource TextPrimary}"/>
+                                                    </Border>
+                                                </Grid>
+
+                                                <TextBlock Style="{DynamicResource Caption}" FontSize="9" Margin="0,4,0,6" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis">
+                                                    <Run Text="{Binding FreeSpace}" FontWeight="Bold" Foreground="{DynamicResource TextPrimary}"/>
+                                                    <Run Text="{Binding [Loc_FreeFrom], Source={x:Static services:LocalizationService.Instance}, Mode=OneWay}"/>
+                                                    <Run Text="{Binding TotalSize}"/>
+                                                </TextBlock>
+
+                                                <ProgressBar Value="{Binding UsagePercent, Mode=OneWay}" Style="{DynamicResource VoltrisProgressBar}" Height="3" HorizontalAlignment="Stretch"/>
+                                            </StackPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                    </Grid>
+                </Border>
+
+                <!-- PROCESSADOR -->
+                <Border Grid.Row="2" Grid.Column="0"
+                        Style="{DynamicResource PremiumCard}" Padding="14" VerticalAlignment="Stretch">
+                    <StackPanel>
+                        <StackPanel Style="{StaticResource CardSectionHeaderStyle}">
+                            <Border Width="30" Height="30" CornerRadius="8" Background="#1AFF4B6B" Margin="0,0,10,0">
+                                <Path Data="{DynamicResource IconCpu}" Fill="{DynamicResource BrandPink}" Width="15" Height="15" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <TextBlock Text="{Binding [Loc_Processor], Source={x:Static services:LocalizationService.Instance}}" VerticalAlignment="Center" Style="{DynamicResource SectionTitleTextStyle}" FontSize="13"/>
+                        </StackPanel>
+                        <TextBlock Text="{Binding CpuName}" Style="{StaticResource CardValueHeaderStyle}"/>
+                        <TextBlock Text="{Binding CpuDetails}" FontSize="10" Foreground="{DynamicResource BrandPink}" FontWeight="Medium" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- ENERGIA / BATERIA -->
+                <Border Grid.Row="2" Grid.Column="2"
+                        Style="{DynamicResource PremiumCard}" Padding="14" VerticalAlignment="Stretch">
+                    <StackPanel>
+                        <StackPanel Style="{StaticResource CardSectionHeaderStyle}">
+                            <Border Width="30" Height="30" CornerRadius="8" Background="#1AFF4B6B" Opacity="0.8" Margin="0,0,10,0">
+                                <Path Data="{DynamicResource BoltIcon}" Fill="{DynamicResource BrandPink}" Width="14" Height="14" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <TextBlock Text="{Binding [Loc_Energy], Source={x:Static services:LocalizationService.Instance}}" VerticalAlignment="Center" Style="{DynamicResource SectionTitleTextStyle}" FontSize="13"/>
+                        </StackPanel>
+                        <TextBlock Text="{Binding BatteryStatus}" Style="{StaticResource CardValueHeaderStyle}"/>
+                        <TextBlock Text="{Binding [Loc_CurrentStateOfThePower], Source={x:Static services:LocalizationService.Instance}}" Style="{DynamicResource Caption}" Opacity="0.6" FontSize="9" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- PLACA DE VÍDEO -->
+                <Border Grid.Row="4" Grid.Column="0"
+                        Style="{DynamicResource PremiumCard}" Padding="14" VerticalAlignment="Stretch">
+                    <StackPanel>
+                        <StackPanel Style="{StaticResource CardSectionHeaderStyle}">
+                            <Border Width="30" Height="30" CornerRadius="8" Background="#1A00FF94" Margin="0,0,10,0">
+                                <Path Data="{DynamicResource GamerIcon}" Fill="{DynamicResource BrandGreen}" Width="15" Height="15" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <TextBlock Text="{Binding [Loc_VideoCard], Source={x:Static services:LocalizationService.Instance}}" VerticalAlignment="Center" Style="{DynamicResource SectionTitleTextStyle}" FontSize="13"/>
+                        </StackPanel>
+                        <TextBlock Text="{Binding GpuName}" Style="{StaticResource CardValueHeaderStyle}"/>
+                        <TextBlock Text="{Binding GpuDetails}" FontSize="10" Foreground="{DynamicResource BrandGreen}" FontWeight="Medium" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- REDE & CONEXÕES -->
+                <Border Grid.Row="4" Grid.Column="2"
+                        Style="{DynamicResource PremiumCard}" Padding="14" VerticalAlignment="Stretch">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <StackPanel Grid.Row="0" Style="{StaticResource CardSectionHeaderStyle}" Margin="0,0,0,8">
+                            <Border Width="30" Height="30" CornerRadius="8" Background="#1A31A8FF" Margin="0,0,10,0">
+                                <Path Data="{DynamicResource NetworkIcon}" Fill="{DynamicResource BrandBlue}" Width="15" Height="15" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <TextBlock Text="{Binding [Loc_Network], Source={x:Static services:LocalizationService.Instance}}" VerticalAlignment="Center" Style="{DynamicResource SectionTitleTextStyle}" FontSize="13"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="1">
+                            <ItemsControl ItemsSource="{Binding Networks}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid Margin="0,0,0,5">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" Text="{Binding Name}" FontSize="10" Foreground="{DynamicResource TextPrimary}" FontWeight="SemiBold" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
+                                            <TextBlock Grid.Column="1" Text="{Binding Speed}" FontSize="9" Foreground="{DynamicResource BrandBlue}" FontWeight="Black" Margin="8,0,0,0" VerticalAlignment="Center"/>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                            <TextBlock Text="{Binding [Loc_NoActiveConnections], Source={x:Static services:LocalizationService.Instance}}" Style="{DynamicResource Caption}" Visibility="{Binding Networks.Count, Converter={StaticResource BooleanToVisibilityConverter}, ConverterParameter=Inverse}" Opacity="0.6" FontSize="10"/>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+            </Grid>
+        </Grid>
+
+        <!-- LOADING OVERLAY -->
+        <Border Background="#CC000000" Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}" CornerRadius="0">
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                <ProgressBar IsIndeterminate="True" Width="240" Height="4" Style="{DynamicResource VoltrisProgressBar}"/>
+                <TextBlock Text="{Binding [Loc_SynchronizingSpecifications], Source={x:Static services:LocalizationService.Instance}}" Foreground="{DynamicResource TextPrimary}" FontWeight="Black" HorizontalAlignment="Center" Margin="0,24,0,0" FontSize="12"/>
+                <TextBlock Text="{Binding [Loc_PleaseWaitWhileVoltrisProfiles], Source={x:Static services:LocalizationService.Instance}}" Style="{DynamicResource Caption}" HorizontalAlignment="Center" Margin="0,8,0,0"/>
+            </StackPanel>
+        </Border>
+    </Grid>
+</UserControl>

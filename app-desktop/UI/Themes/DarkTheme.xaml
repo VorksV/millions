@@ -1,0 +1,51 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    
+    <!-- Tema Dark Principal -->
+    <SolidColorBrush x:Key="WindowBackgroundBrush" Color="{StaticResource DarkColor}"/>
+    <SolidColorBrush x:Key="PanelBackgroundBrush" Color="{StaticResource DarkPanelColor}"/>
+    <SolidColorBrush x:Key="PanelAltBackgroundBrush" Color="{StaticResource DarkPanelAltColor}"/>
+    <SolidColorBrush x:Key="BorderBrush" Color="{StaticResource DarkBorderColor}"/>
+
+    <!-- Context Menu Dark -->
+    <SolidColorBrush x:Key="ContextMenuBackgroundBrush" Color="#0F0F14"/>
+    <SolidColorBrush x:Key="ContextMenuBorderBrush"     Color="#302A2A3A"/>
+    <!-- DarkBorderColor como Color para uso em SolidColorBrush inline no XAML -->
+    <Color x:Key="DarkBorderColor">#2A2A3A</Color>
+    
+    <!-- Cores de Texto Padrão -->
+    <SolidColorBrush x:Key="DefaultTextBrush"    Color="{StaticResource TextPrimaryColor}"/>
+    <SolidColorBrush x:Key="SecondaryTextBrush"  Color="{StaticResource TextSecondaryColor}"/>
+    <SolidColorBrush x:Key="TextPrimaryBrush"    Color="{StaticResource TextPrimaryColor}"/>
+    <SolidColorBrush x:Key="TextSecondaryBrush"  Color="{StaticResource TextSecondaryColor}"/>
+    <!-- TextMutedBrush no dark: cinza médio visível (#8892A4) -->
+    <SolidColorBrush x:Key="TextMutedBrush"      Color="#8892A4"/>
+
+    <!-- VoltrisDesignSystem overrides para Dark -->
+    <SolidColorBrush x:Key="TextPrimary"    Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="TextSecondary"  Color="#94A3B8"/>
+    <SolidColorBrush x:Key="TextTertiary"   Color="#64748B"/>
+    <SolidColorBrush x:Key="TextMuted"      Color="#475569"/>
+    <SolidColorBrush x:Key="BgCard"         Color="#121218"/>
+    <SolidColorBrush x:Key="BgElevated"     Color="#1A1A22"/>
+    <SolidColorBrush x:Key="BgInput"        Color="#171313"/>
+    <SolidColorBrush x:Key="BgPrimary"      Color="#050510"/>
+    <SolidColorBrush x:Key="BgSecondary"    Color="#0A0A0F"/>
+    <SolidColorBrush x:Key="BorderSubtle"   Color="#0DFFFFFF"/>
+    <SolidColorBrush x:Key="BorderDefault"  Color="#1AFFFFFF"/>
+    <SolidColorBrush x:Key="BorderHover"    Color="#33FFFFFF"/>
+
+    <!-- Dashboard local resource overrides para Dark -->
+    <SolidColorBrush x:Key="BgCardGlass"    Color="#CC121218"/>
+    <SolidColorBrush x:Key="BgDark"         Color="#0A0A0A"/>
+    <SolidColorBrush x:Key="BgHover"        Color="#1AFFFFFF"/>
+    <SolidColorBrush x:Key="TextMain"       Color="#F8FAFC"/>
+    <SolidColorBrush x:Key="TextDim"        Color="#94A3B8"/>
+    <SolidColorBrush x:Key="BorderLight"    Color="#1AFFFFFF"/>
+    <SolidColorBrush x:Key="BorderAccent"   Color="#333B82F6"/>
+
+    <!-- Sidebar dark -->
+    <SolidColorBrush x:Key="SidebarBackgroundBrush" Color="#161622"/>
+    
+</ResourceDictionary>
+

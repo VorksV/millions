@@ -1,0 +1,312 @@
+<UserControl xmlns:services="clr-namespace:VoltrisOptimizer.Services" x:Class="VoltrisOptimizer.UI.Controls.ProfessionalApplyAllDialog"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             mc:Ignorable="d" 
+             d:DesignHeight="600" d:DesignWidth="800"
+             Background="{DynamicResource BackgroundBrush}">
+    
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        
+        <!-- Header with analysis summary -->
+        <Border Grid.Row="0" 
+                Background="{DynamicResource CardBackgroundBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="0,0,0,1"
+                Padding="24,20">
+            <StackPanel>
+                <TextBlock Text="{Binding [ProfAnalysisTitle], Source={x:Static services:LocalizationService.Instance}}" 
+                           FontSize="24" 
+                           FontWeight="SemiBold"
+                           Foreground="{DynamicResource TextPrimaryBrush}"
+                           Margin="0,0,0,8"/>
+                
+                <TextBlock x:Name="AnalysisSummaryText" 
+                           Text="{Binding [ProfAnalysisSummaryText], Source={x:Static services:LocalizationService.Instance}}"
+                           FontSize="14"
+                           Foreground="{DynamicResource TextSecondaryBrush}"
+                           TextWrapping="Wrap"
+                           Margin="0,0,0,16"/>
+                
+                <!-- Hardware Profile Indicator -->
+                <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                    <Ellipse Width="12" Height="12" 
+                             Fill="{Binding HardwareProfileColor}"
+                             VerticalAlignment="Center"
+                             Margin="0,0,8,0"/>
+                    <TextBlock Text="{Binding HardwareProfileText}" 
+                               FontSize="13"
+                               Foreground="{DynamicResource TextSecondaryBrush}"
+                               VerticalAlignment="Center"/>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+        
+        <!-- Main content area with optimization list -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="300"/>
+            </Grid.ColumnDefinitions>
+            
+            <!-- Optimization list -->
+            <ListView Grid.Column="0" 
+                      x:Name="OptimizationListView"
+                      ItemsSource="{Binding Optimizations}"
+                      Background="Transparent"
+                      BorderThickness="0"
+                      ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                      Margin="24,20">
+                
+                <ListView.ItemContainerStyle>
+                    <Style TargetType="{x:Type ListViewItem}">
+                        <Setter Property="Background" Value="Transparent"/>
+                        <Setter Property="Margin" Value="0,2"/>
+                        <Setter Property="Padding" Value="0"/>
+                        <Style.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="{DynamicResource HoverBackgroundBrush}"/>
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </ListView.ItemContainerStyle>
+                
+                <ListView.ItemTemplate>
+                    <DataTemplate>
+                        <Border Background="{DynamicResource CardBackgroundBrush}"
+                                BorderBrush="{DynamicResource BorderBrush}"
+                                BorderThickness="1"
+                                CornerRadius="6"
+                                Padding="16,12"
+                                Margin="0,2">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="120"/>
+                                    <ColumnDefinition Width="80"/>
+                                </Grid.ColumnDefinitions>
+                                
+                                <!-- Status Icon -->
+                                <TextBlock Grid.Column="0" 
+                                           Text="{Binding StatusIcon}" 
+                                           FontSize="18" 
+                                           Margin="0,0,12,0"
+                                           VerticalAlignment="Center"
+                                           Foreground="{Binding StatusColor}"/>
+                                
+                                <!-- Optimization Name and Description -->
+                                <StackPanel Grid.Column="1" 
+                                           VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding Name}" 
+                                              FontSize="14"
+                                              FontWeight="Medium"
+                                              Foreground="{DynamicResource TextPrimaryBrush}"
+                                              Margin="0,0,0,2"/>
+                                    <TextBlock Text="{Binding Description}" 
+                                              FontSize="12"
+                                              Foreground="{DynamicResource TextSecondaryBrush}"
+                                              TextTrimming="CharacterEllipsis"/>
+                                </StackPanel>
+                                
+                                <!-- Status Badge -->
+                                <Border Grid.Column="2" 
+                                       Background="{Binding StatusBadgeBackground}"
+                                       CornerRadius="12"
+                                       Padding="8,4"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding StatusDisplay}" 
+                                              FontSize="11"
+                                              FontWeight="SemiBold"
+                                              Foreground="{Binding StatusBadgeForeground}"
+                                              HorizontalAlignment="Center"/>
+                                </Border>
+                                
+                                <!-- Progress Indicator -->
+                                <Grid Grid.Column="3" 
+                                     VerticalAlignment="Center">
+                                    <ProgressBar x:Name="ItemProgress" 
+                                                Value="{Binding Progress, Mode=OneWay}" 
+                                                Maximum="100" 
+                                                Height="6"
+                                                Visibility="{Binding IsProcessing, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                                Style="{DynamicResource ProgressBarStyle}"/>
+                                    
+                                    <TextBlock Text="{Binding ProgressText}" 
+                                              FontSize="11"
+                                              Foreground="{DynamicResource TextSecondaryBrush}"
+                                              HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"
+                                              Visibility="{Binding IsProcessing, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
+                                </Grid>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
+            
+            <!-- Sidebar with statistics -->
+            <Border Grid.Column="1" 
+                    Background="{DynamicResource CardBackgroundBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="1,0,0,0"
+                    Padding="20">
+                <StackPanel>
+                    <TextBlock Text="{Binding [ProfStatsTitle], Source={x:Static services:LocalizationService.Instance}}" 
+                               FontSize="16" 
+                               FontWeight="SemiBold"
+                               Foreground="{DynamicResource TextPrimaryBrush}"
+                               Margin="0,0,0,16"/>
+                    
+                    <!-- Stats Cards -->
+                    <Border Background="{DynamicResource BackgroundBrush}"
+                            BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="1"
+                            CornerRadius="6"
+                            Padding="12"
+                            Margin="0,0,0,12">
+                        <StackPanel>
+                            <TextBlock Text="{Binding [ProfStatsTotal], Source={x:Static services:LocalizationService.Instance}}" 
+                                       FontSize="12"
+                                       Foreground="{DynamicResource TextSecondaryBrush}"/>
+                            <TextBlock Text="{Binding TotalCount}" 
+                                       FontSize="20"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        </StackPanel>
+                    </Border>
+                    
+                    <Border Background="{DynamicResource BackgroundBrush}"
+                            BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="1"
+                            CornerRadius="6"
+                            Padding="12"
+                            Margin="0,0,0,12">
+                        <StackPanel>
+                            <TextBlock Text="{Binding [ProfStatsToApply], Source={x:Static services:LocalizationService.Instance}}" 
+                                       FontSize="12"
+                                       Foreground="{DynamicResource TextSecondaryBrush}"/>
+                            <TextBlock Text="{Binding ToApplyCount}" 
+                                       FontSize="20"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource SuccessBrush}"/>
+                        </StackPanel>
+                    </Border>
+                    
+                    <Border Background="{DynamicResource BackgroundBrush}"
+                            BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="1"
+                            CornerRadius="6"
+                            Padding="12"
+                            Margin="0,0,0,12">
+                        <StackPanel>
+                            <TextBlock Text="{Binding [ProfStatsAlready], Source={x:Static services:LocalizationService.Instance}}" 
+                                       FontSize="12"
+                                       Foreground="{DynamicResource TextSecondaryBrush}"/>
+                            <TextBlock Text="{Binding AlreadyAppliedCount}" 
+                                       FontSize="20"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource InfoBrush}"/>
+                        </StackPanel>
+                    </Border>
+                    
+                    <Border Background="{DynamicResource BackgroundBrush}"
+                            BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="1"
+                            CornerRadius="6"
+                            Padding="12"
+                            Margin="0,0,0,12">
+                        <StackPanel>
+                            <TextBlock Text="{Binding [ProfStatsIncompatible], Source={x:Static services:LocalizationService.Instance}}" 
+                                       FontSize="12"
+                                       Foreground="{DynamicResource TextSecondaryBrush}"/>
+                            <TextBlock Text="{Binding IncompatibleCount}" 
+                                       FontSize="20"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource WarningBrush}"/>
+                        </StackPanel>
+                    </Border>
+                    
+                    <!-- Execution Mode Selector -->
+                    <TextBlock Text="{Binding [ProfExecMode], Source={x:Static services:LocalizationService.Instance}}" 
+                               FontSize="14"
+                               FontWeight="SemiBold"
+                               Foreground="{DynamicResource TextPrimaryBrush}"
+                               Margin="0,20,0,12"/>
+                    
+                    <ComboBox x:Name="ExecutionModeCombo"
+                              SelectedItem="{Binding SelectedExecutionMode}"
+                              Style="{DynamicResource ComboBoxStyle}"
+                              Margin="0,0,0,20">
+                        <ComboBoxItem Content="{Binding [ProfModeSmart], Source={x:Static services:LocalizationService.Instance}}" Tag="Smart"/>
+                        <ComboBoxItem Content="{Binding [ProfModeForce], Source={x:Static services:LocalizationService.Instance}}" Tag="Force"/>
+                        <ComboBoxItem Content="{Binding [ProfModeConservative], Source={x:Static services:LocalizationService.Instance}}" Tag="Conservative"/>
+                    </ComboBox>
+                    
+                    <!-- Estimated Time -->
+                    <TextBlock Text="{Binding [ProfEstimatedTime], Source={x:Static services:LocalizationService.Instance}}" 
+                               FontSize="12"
+                               Foreground="{DynamicResource TextSecondaryBrush}"
+                               Margin="0,0,0,4"/>
+                    <TextBlock Text="{Binding EstimatedTime}" 
+                               FontSize="14"
+                               FontWeight="SemiBold"
+                               Foreground="{DynamicResource TextPrimaryBrush}"/>
+                </StackPanel>
+            </Border>
+        </Grid>
+        
+        <!-- Action buttons with progress -->
+        <Border Grid.Row="2" 
+                Background="{DynamicResource CardBackgroundBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="0,1,0,0"
+                Padding="24,16">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                
+                <!-- Overall Progress -->
+                <StackPanel Grid.Column="0" 
+                            VerticalAlignment="Center"
+                            Margin="0,0,20,0">
+                    <TextBlock Text="{Binding ProgressText}" 
+                               FontSize="13"
+                               Foreground="{DynamicResource TextPrimaryBrush}"
+                               Margin="0,0,0,4"/>
+                    <ProgressBar x:Name="OverallProgress" 
+                                Value="{Binding OverallProgress, Mode=OneWay}" 
+                                Maximum="100" 
+                                Height="8"
+                                Style="{DynamicResource ProgressBarStyle}"/>
+                </StackPanel>
+                
+                <!-- Cancel Button -->
+                <Button Grid.Column="1" 
+                       Content="{Binding [ProfCancel], Source={x:Static services:LocalizationService.Instance}}" 
+                       Command="{Binding CancelCommand}"
+                       Style="{DynamicResource SecondaryButtonStyle}"
+                       Margin="0,0,12,0"
+                       Padding="24,10"/>
+                
+                <!-- Apply Button -->
+                <Button Grid.Column="2" 
+                       x:Name="ApplyButton" 
+                       Content="{Binding ApplyButtonText}" 
+                       Command="{Binding ApplyAllCommand}"
+                       Style="{DynamicResource PrimaryButtonStyle}"
+                       Padding="24,10"/>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>

@@ -1,0 +1,358 @@
+<UserControl xmlns:services="clr-namespace:VoltrisOptimizer.Services" x:Class="VoltrisOptimizer.UI.Views.OnboardingView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Background="{DynamicResource DarkBrush}"
+             HorizontalAlignment="Stretch"
+             VerticalAlignment="Stretch"
+             FontFamily="Segoe UI, Inter, Sans-Serif"
+             TextOptions.TextFormattingMode="Ideal"
+             TextOptions.TextRenderingMode="ClearType"
+             TextOptions.TextHintingMode="Fixed"
+             RenderOptions.BitmapScalingMode="HighQuality"
+             RenderOptions.ClearTypeHint="Enabled"
+             UseLayoutRounding="True"
+             SnapsToDevicePixels="True">
+    
+    <UserControl.Resources>
+        <!-- Animação de entrada -->
+        <Storyboard x:Key="FadeInStoryboard">
+            <DoubleAnimation Storyboard.TargetProperty="Opacity" 
+                            From="0" To="1" Duration="0:0:0.4"/>
+            <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.Y)" 
+                            From="20" To="0" Duration="0:0:0.4">
+                <DoubleAnimation.EasingFunction>
+                    <CubicEase EasingMode="EaseOut"/>
+                </DoubleAnimation.EasingFunction>
+            </DoubleAnimation>
+        </Storyboard>
+        
+        <!-- Animação de confete/comemoração -->
+        <Storyboard x:Key="CelebrationAnimation">
+            <DoubleAnimation Storyboard.TargetName="CelebrationIcon"
+                            Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)"
+                            From="0" To="1" Duration="0:0:0.5">
+                <DoubleAnimation.EasingFunction>
+                    <ElasticEase EasingMode="EaseOut" Oscillations="1" Springiness="4"/>
+                </DoubleAnimation.EasingFunction>
+            </DoubleAnimation>
+            <DoubleAnimation Storyboard.TargetName="CelebrationIcon"
+                            Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)"
+                            From="0" To="1" Duration="0:0:0.5">
+                <DoubleAnimation.EasingFunction>
+                    <ElasticEase EasingMode="EaseOut" Oscillations="1" Springiness="4"/>
+                </DoubleAnimation.EasingFunction>
+            </DoubleAnimation>
+            <DoubleAnimation Storyboard.TargetName="CelebrationOverlay"
+                            Storyboard.TargetProperty="Opacity"
+                            From="0" To="1" Duration="0:0:0.3"/>
+        </Storyboard>
+    </UserControl.Resources>
+    
+    <UserControl.Triggers>
+        <EventTrigger RoutedEvent="Loaded">
+            <BeginStoryboard>
+                <Storyboard>
+                    <DoubleAnimation Storyboard.TargetProperty="Opacity" 
+                                     From="0" To="1" Duration="0:0:0.5"/>
+                </Storyboard>
+            </BeginStoryboard>
+        </EventTrigger>
+    </UserControl.Triggers>
+    
+    <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch" ClipToBounds="True">
+        <!-- Background decorativo - CONTIDO dentro dos limites -->
+        <Border ClipToBounds="True" CornerRadius="16" Margin="20">
+            <Grid IsHitTestVisible="False">
+                <Ellipse Width="300" Height="300" 
+                         HorizontalAlignment="Left" VerticalAlignment="Top"
+                         Margin="-50,-50,0,0"
+                         Opacity="0.05">
+                    <Ellipse.Fill>
+                        <RadialGradientBrush>
+                            <GradientStop Color="#FF4B6B" Offset="0"/>
+                            <GradientStop Color="Transparent" Offset="1"/>
+                        </RadialGradientBrush>
+                    </Ellipse.Fill>
+                </Ellipse>
+                <Ellipse Width="250" Height="250" 
+                         HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                         Margin="0,0,-50,-50"
+                         Opacity="0.05">
+                    <Ellipse.Fill>
+                        <RadialGradientBrush>
+                            <GradientStop Color="#8B31FF" Offset="0"/>
+                            <GradientStop Color="Transparent" Offset="1"/>
+                        </RadialGradientBrush>
+                    </Ellipse.Fill>
+                </Ellipse>
+            </Grid>
+        </Border>
+        
+        <!-- Container principal responsivo que se adapta ao tamanho da janela -->
+        <Border VerticalAlignment="Center" HorizontalAlignment="Center" Margin="20" MaxWidth="900" ClipToBounds="True">
+            <Border.Background>
+                <SolidColorBrush Color="{DynamicResource DarkPanelColor}" Opacity="0.95"/>
+            </Border.Background>
+            <Border Background="{DynamicResource DarkPanelBrush}"
+                    CornerRadius="16"
+                    VerticalAlignment="Center"
+                    HorizontalAlignment="Stretch"
+                    Padding="0"
+                    ClipToBounds="True">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="40" 
+                                      ShadowDepth="0" 
+                                      Opacity="0.4" 
+                                      Color="Black"/>
+                </Border.Effect>
+                    
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        
+                        <!-- Header com gradiente -->
+                        <Border Grid.Row="0" 
+                                CornerRadius="16,16,0,0"
+                                Padding="40,32,40,28">
+                            <Border.Background>
+                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                    <GradientStop Color="#15FF4B6B" Offset="0"/>
+                                    <GradientStop Color="#108B31FF" Offset="0.5"/>
+                                    <GradientStop Color="#0531A8FF" Offset="1"/>
+                                </LinearGradientBrush>
+                            </Border.Background>
+                            
+                            <StackPanel>
+                                <TextBlock x:Name="StepTitleText"
+                                           Text="{Binding [Loc_WelcomeToVoltrisOptimizer], Source={x:Static services:LocalizationService.Instance}}"
+                                           FontFamily="Segoe UI Variable Display, Segoe UI"
+                                           FontSize="44"
+                                           FontWeight="Bold"
+                                           Foreground="{DynamicResource TextPrimaryBrush}"
+                                           HorizontalAlignment="Center"
+                                           TextWrapping="Wrap"
+                                           TextAlignment="Center"/>
+                                <TextBlock x:Name="StepDescriptionText"
+                                           Text="{Binding [Loc_LetsSetUpYourOptimization], Source={x:Static services:LocalizationService.Instance}}"
+                                           FontFamily="Segoe UI Variable, Segoe UI"
+                                           FontSize="22"
+                                           FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                           HorizontalAlignment="Center"
+                                           TextWrapping="Wrap"
+                                           TextAlignment="Center"
+                                           Margin="0,12,0,0"/>
+                            </StackPanel>
+                        </Border>
+                        
+                        <!-- Content Area (Auto height para ajustar ao conteúdo) -->
+                        <Grid Grid.Row="1" MinHeight="300">
+                            <ContentControl x:Name="StepContentControl"
+                                            Padding="40,16,40,24">
+                                <ContentControl.RenderTransform>
+                                    <TranslateTransform/>
+                                </ContentControl.RenderTransform>
+                            </ContentControl>
+                        </Grid>
+                        
+                        <!-- Footer com navegação -->
+                        <Border Grid.Row="2" 
+                                Background="{DynamicResource DarkPanelAltBrush}"
+                                CornerRadius="0,0,16,16"
+                                Padding="40,24,40,28"
+                                MinHeight="100">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                
+                                <!-- Botão Pular -->
+                                <Button x:Name="SkipButton"
+                                        Grid.Column="0"
+                                        Content="{Binding [Loc_SkipTutorial], Source={x:Static services:LocalizationService.Instance}}"
+                                        Style="{StaticResource SecondaryButtonStyle}"
+                                        MinHeight="52"
+                                        MinWidth="160"
+                                        FontSize="20"
+                                        FontWeight="SemiBold"
+                                        Padding="24,10"
+                                        Click="SkipButton_Click"/>
+                                
+                                <!-- Indicadores de progresso -->
+                                <StackPanel Grid.Column="1" 
+                                            Orientation="Horizontal" 
+                                            HorizontalAlignment="Center"
+                                            VerticalAlignment="Center">
+                                    <Ellipse x:Name="Step1Indicator" 
+                                             Width="10" Height="10" 
+                                             Fill="{DynamicResource PrimaryBrush}"
+                                             Margin="5,0"/>
+                                    <Ellipse x:Name="Step2Indicator" 
+                                             Width="10" Height="10" 
+                                             Fill="{DynamicResource DarkBorderBrush}"
+                                             Margin="5,0"/>
+                                    <Ellipse x:Name="Step3Indicator" 
+                                             Width="10" Height="10" 
+                                             Fill="{DynamicResource DarkBorderBrush}"
+                                             Margin="5,0"/>
+                                    <Ellipse x:Name="Step4Indicator" 
+                                             Width="10" Height="10" 
+                                             Fill="{DynamicResource DarkBorderBrush}"
+                                             Margin="5,0"/>
+                                </StackPanel>
+                                
+                                <!-- Botões de navegação -->
+                                <StackPanel Grid.Column="2" 
+                                            Orientation="Horizontal"
+                                            HorizontalAlignment="Right">
+                                    <Button x:Name="BackButton"
+                                            Content="{Binding [Loc_Previous], Source={x:Static services:LocalizationService.Instance}}"
+                                            Style="{StaticResource SecondaryButtonStyle}"
+                                            MinHeight="52"
+                                            MinWidth="150"
+                                            FontSize="20"
+                                            FontWeight="SemiBold"
+                                            Padding="20,10"
+                                            Margin="0,0,12,0"
+                                            Click="BackButton_Click"
+                                            Visibility="Collapsed"/>
+                                    
+                                    <Button x:Name="NextButton"
+                                            Content="{Binding [Loc_Next], Source={x:Static services:LocalizationService.Instance}}"
+                                            Style="{StaticResource ModernButtonStyle}"
+                                            MinHeight="52"
+                                            MinWidth="180"
+                                            FontSize="22"
+                                            FontWeight="Bold"
+                                            Padding="24,10"
+                                            Click="NextButton_Click"/>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                    </Grid>
+                </Border>
+        </Border>
+        
+        <!-- Modal de Comemoração (overlay) -->
+        <Grid x:Name="CelebrationOverlay" 
+              Visibility="Collapsed" 
+              Opacity="0"
+              Background="#E0000000"
+              HorizontalAlignment="Stretch"
+              VerticalAlignment="Stretch"
+              Panel.ZIndex="100">
+            <Border Background="{DynamicResource DarkPanelBrush}"
+                    CornerRadius="24"
+                    MaxWidth="420"
+                    MaxHeight="480"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Padding="40">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="50" ShadowDepth="0" Opacity="0.5" Color="Black"/>
+                </Border.Effect>
+                
+                <StackPanel HorizontalAlignment="Center">
+                    <!-- Ícone de celebração animado -->
+                    <Border x:Name="CelebrationIcon"
+                            Width="100" Height="100" 
+                            CornerRadius="50" 
+                            HorizontalAlignment="Center"
+                            Margin="0,0,0,24"
+                            RenderTransformOrigin="0.5,0.5">
+                        <Border.RenderTransform>
+                            <ScaleTransform ScaleX="1" ScaleY="1"/>
+                        </Border.RenderTransform>
+                        <Border.Background>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                <GradientStop Color="#10B981" Offset="0"/>
+                                <GradientStop Color="#059669" Offset="1"/>
+                            </LinearGradientBrush>
+                        </Border.Background>
+                        <Border.Effect>
+                            <DropShadowEffect BlurRadius="30" ShadowDepth="0" Color="#10B981" Opacity="0.5"/>
+                        </Border.Effect>
+                        <Path Data="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z" Fill="{DynamicResource TextPrimary}" Width="48" Height="48" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    
+                    <!-- Confetes decorativos -->
+                    <Canvas Width="300" Height="60" HorizontalAlignment="Center" Margin="0,-20,0,0">
+                        <Path Data="M18.85,10.39L19.96,10.68L18.85,10.97C18.17,11.16 17.65,11.68 17.46,12.36L17.17,13.47L16.88,12.36C16.69,11.68 16.17,11.16 15.49,10.97L14.38,10.68L15.49,10.39C16.17,10.2 16.69,9.68 16.88,9L17.17,7.89L17.46,9C17.65,9.68 18.17,10.2 18.85,10.39M15,5.5L14,2L13,5.5C12.56,7.11 11.28,8.39 9.67,8.83L6.17,9.83L9.67,10.83C11.28,11.27 12.56,12.55 13,14.16L14,17.66L15,14.16C15.44,12.55 16.72,11.27 18.33,10.83L21.83,9.83L18.33,8.83C16.72,8.39 15.44,7.11 15,5.5M8.42,14.58L7.75,12.25L7.08,14.58C6.7,15.86 5.69,16.87 4.41,17.25L2.08,17.92L4.41,18.59C5.69,18.97 6.7,19.98 7.08,21.26L7.75,23.59L8.42,21.26C8.8,19.98 9.81,18.97 11.09,18.59L13.42,17.92L11.09,17.25C9.81,16.87 8.8,15.86 8.42,14.58Z" Fill="#FF4B6B" Width="24" Height="24" Stretch="Uniform" Canvas.Left="20" Canvas.Top="10"/>
+                        <Path Data="M19,10L20,13L23,14L20,15L19,18L18,15L15,14L18,13L19,10M13,2.5L13.88,6.88L18.25,7.75L13.88,8.63L13,13L12.13,8.63L7.75,7.75L12.13,6.88L13,2.5M6.5,13.5L5.75,17.25L2,18L5.75,18.75L6.5,22.5L7.25,18.75L11,18L7.25,17.25L6.5,13.5Z" Fill="#8B31FF" Width="20" Height="20" Stretch="Uniform" Canvas.Left="60" Canvas.Top="25"/>
+                        <Path Data="M18.85,10.39L19.96,10.68L18.85,10.97C18.17,11.16 17.65,11.68 17.46,12.36L17.17,13.47L16.88,12.36C16.69,11.68 16.17,11.16 15.49,10.97L14.38,10.68L15.49,10.39C16.17,10.2 16.69,9.68 16.88,9L17.17,7.89L17.46,9C17.65,9.68 18.17,10.2 18.85,10.39M15,5.5L14,2L13,5.5C12.56,7.11 11.28,8.39 9.67,8.83L6.17,9.83L9.67,10.83C11.28,11.27 12.56,12.55 13,14.16L14,17.66L15,14.16C15.44,12.55 16.72,11.27 18.33,10.83L21.83,9.83L18.33,8.83C16.72,8.39 15.44,7.11 15,5.5Z" Fill="#31A8FF" Width="22" Height="22" Stretch="Uniform" Canvas.Left="120" Canvas.Top="5"/>
+                        <Path Data="M12,17.27L18.18,21L16.54,13.97L22,9.24L14.81,8.62L12,2L9.19,8.62L2,9.24L7.45,13.97L5.82,21L12,17.27Z" Fill="#FBBF24" Width="18" Height="18" Stretch="Uniform" Canvas.Left="180" Canvas.Top="30"/>
+                        <Path Data="M15,5.5L14,2L13,5.5C12.56,7.11 11.28,8.39 9.67,8.83L6.17,9.83L9.67,10.83C11.28,11.27 12.56,12.55 13,14.16L14,17.66L15,14.16C15.44,12.55 16.72,11.27 18.33,10.83L21.83,9.83L18.33,8.83C16.72,8.39 15.44,7.11 15,5.5Z" Fill="#FF4B6B" Width="24" Height="24" Stretch="Uniform" Canvas.Left="240" Canvas.Top="15"/>
+                        <Path Data="M19,10L20,13L23,14L20,15L19,18L18,15L15,14L18,13L19,10M13,2.5L13.88,6.88L18.25,7.75L13.88,8.63L13,13L12.13,8.63L7.75,7.75L12.13,6.88L13,2.5Z" Fill="#8B31FF" Width="20" Height="20" Stretch="Uniform" Canvas.Left="280" Canvas.Top="35"/>
+                    </Canvas>
+                    
+                    <!-- Título -->
+                    <TextBlock Text="{Binding [Loc_Congratulations], Source={x:Static services:LocalizationService.Instance}}"
+                               FontFamily="Segoe UI Variable Display, Segoe UI"
+                               FontSize="42"
+                               FontWeight="Bold"
+                               HorizontalAlignment="Center"
+                               Margin="0,10,0,12">
+                        <TextBlock.Foreground>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                <GradientStop Color="#FF4B6B" Offset="0"/>
+                                <GradientStop Color="#8B31FF" Offset="0.5"/>
+                                <GradientStop Color="#31A8FF" Offset="1"/>
+                            </LinearGradientBrush>
+                        </TextBlock.Foreground>
+                    </TextBlock>
+                    
+                    <!-- Mensagem -->
+                    <TextBlock Text="{Binding [Loc_AllOptimizationsWereAppliedSuccessfully], Source={x:Static services:LocalizationService.Instance}}"
+                               FontFamily="Segoe UI Variable, Segoe UI"
+                               FontSize="22"
+                               FontWeight="SemiBold"
+                               Foreground="{DynamicResource TextSecondaryBrush}"
+                               TextAlignment="Center"
+                               TextWrapping="Wrap"
+                               Margin="0,0,0,12"/>
+                    
+                    <TextBlock Text="{Binding [Loc_YourSystemIsNowOptimized], Source={x:Static services:LocalizationService.Instance}}"
+                               FontFamily="Segoe UI Variable, Segoe UI"
+                               FontSize="20"
+                               FontWeight="Medium"
+                               Foreground="{DynamicResource TextMutedBrush}"
+                               TextAlignment="Center"
+                               TextWrapping="Wrap"
+                               Margin="0,0,0,32"/>
+                    
+                    <!-- Botão para ir ao Dashboard -->
+                    <Button x:Name="GoToDashboardButton"
+                            MinHeight="52"
+                            MinWidth="220"
+                            FontFamily="Segoe UI Variable Display, Segoe UI"
+                            FontSize="20"
+                            FontWeight="Bold"
+                            Click="GoToDashboardButton_Click">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource NeonButtonStyle}">
+                                <Setter Property="Background">
+                                    <Setter.Value>
+                                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                            <GradientStop Color="#FF4B6B" Offset="0"/>
+                                            <GradientStop Color="#8B31FF" Offset="0.5"/>
+                                            <GradientStop Color="#31A8FF" Offset="1"/>
+                                        </LinearGradientBrush>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </Button.Style>
+                        <StackPanel Orientation="Horizontal">
+                            <Path Data="M13.13,22.19L11.5,18.36C13.07,17.78 14.54,17 15.9,16.09L13.13,22.19M5.64,12.5L1.81,10.87L7.91,8.1C7,9.46 6.22,10.93 5.64,12.5M19.22,4C19.5,4 19.75,4 19.96,4.05C20.13,5.44 19.94,8.3 16.66,11.58C14.96,13.29 12.93,14.6 10.65,15.47L8.5,13.37C9.42,11.06 10.73,9.03 12.42,7.34C14.73,5.03 17.3,4.08 19.22,4M4.15,17.54C5,18.38 5.96,18.5 6.47,18.5C7.16,18.5 7.69,18.24 7.86,18.07L9.7,16.22C9.19,16.39 8.66,16.5 8.11,16.55L7.63,16.59L7.17,16.95C6.64,17.36 6.36,17.5 6.08,17.5C5.77,17.5 5.37,17.35 5.05,17.03C4.5,16.47 4.41,15.88 4.97,15.33L6.32,13.97L6.61,14.25C6.62,13.95 6.66,13.66 6.71,13.36L4.15,15.93C3.59,16.5 3.29,16.69 4.15,17.54M21.56,2.46C21.56,2.46 19.37,0.28 11.32,8.34C9.75,9.91 8.5,11.77 7.6,13.87L10.14,16.41C12.24,15.5 14.1,14.26 15.66,12.68C23.72,4.63 21.56,2.46 21.56,2.46Z" Fill="{DynamicResource TextPrimary}" Width="18" Height="18" Stretch="Uniform" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                            <TextBlock Text="{Binding [Loc_GoToDashboard], Source={x:Static services:LocalizationService.Instance}}" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </Border>
+        </Grid>
+    </Grid>
+</UserControl>

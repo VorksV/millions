@@ -1,0 +1,1564 @@
+<UserControl xmlns:services="clr-namespace:VoltrisOptimizer.Services"
+             xmlns:converters="clr-namespace:VoltrisOptimizer.UI.Converters"
+             x:Class="VoltrisOptimizer.UI.Views.RecoveryView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             mc:Ignorable="d"
+             DataContext="{Binding Source={StaticResource Locator}, Path=RecoveryVM}"
+             Background="Transparent"
+             UseLayoutRounding="True" SnapsToDevicePixels="True"
+             TextOptions.TextFormattingMode="Display"
+             FontFamily="Segoe UI"
+             SizeChanged="OnRecoverySizeChanged"
+             d:DesignHeight="820" d:DesignWidth="1180">
+
+    <!--
+        ════════════════════════════════════════════════════════════════════
+        CENTRAL DE RECUPERAÇÃO — reconstrução de layout.
+
+        O QUE ESTA PÁGINA ERA, E POR QUE ESTAVA QUEBRADA
+        ────────────────────────────────────────────────
+        1. TODAS AS ABAS COM O MESMO ÍCONE. O template ShieldTabItem tinha
+           UM Path fixo, com Data="{StaticResource RecoveryIcon}". Um
+           ControlTemplate é ÚNICO para todos os TabItems, então não havia
+           como cada aba ter o seu: as 6 mostravam a mesma seta circular.
+
+        2. OS RÓTULOS DAS ABAS NÃO APARECIAM. O mesmo template não tinha
+           ContentPresenter com ContentSource="Header". TabItem é um
+           HeaderedContentControl: se o template não apresenta o Header, o
+           Header simplesmente não é desenhado. As abas eram 6 squirclas
+           idênticas, sem texto — impossível saber onde cada uma levava.
+           (Este era o defeito mais grave e ninguém tinha notado porque o
+           ícone repetido "parecia" o rótulo.)
+
+        3. OVERFLOW NA ABA DE REPARO (aba removida depois). O card esquerdo
+           era um <StackPanel> sem ScrollViewer, contendo um botão com
+           rótulo longo mais uma lista de ações. Não havia como o conteúdo
+           caber, então o WPF CLIPAVA — texto cortado dentro do card.
+
+        4. COLUNAS FIXAS. A barra lateral tinha 238px cravados e a coluna do
+           motor de varredura 290px cravados. A janela mínima do app é
+           640x600 e a sidebar principal ocupa 240px — sobrava ~400px. Com
+           238 + 14 + 290 fixos, a área de resultados recebia ZERO.
+
+        5. UniformGrid NÃO É RESPONSIVO. Columns="4" é uma constante: em
+           400px cada tile fica com 90px e o texto quebra em 3 linhas.
+           WrapPanel reflowa de verdade.
+
+        O QUE ESTA PÁGINA É AGORA
+        ────────────────────────
+        - Cada aba tem o SEU ícone, dentro do Header (que é por aba, então
+          aceita geometria diferente). O template cuida só da moldura.
+        - SEM SCROLL VERTICAL DE PÁGINA E SEM SCROLL VERTICAL DE TAB. Cada
+          aba é desenhada para CABER na altura útil. Só listas de dados
+          (DataGrid, listas de backup, histórico) rolam por dentro do card.
+        - Três regimes de layout, escolhidos no code-behind por largura real:
+          lateral (>=1000), trilho de ícones (>=720) e barra no topo (<720).
+        - Métricas e ações usam WrapPanel, que reflowa sozinho.
+    -->
+
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolVis" />
+        <!-- IsEnabled exige bool; um conversor que devolve Visibility geraria erro de binding. -->
+        <converters:InverseBooleanConverter x:Key="InverseBool" />
+<converters:RecoveryConfidenceToBrushConverter x:Key="ConfidenceBrush" />
+
+        <!-- =========================================================== -->
+        <!-- Tokens. Mais compactos que antes DE PROPÓSITO: sem scroll,   -->
+        <!-- cada pixel de altura vertical conta.                         -->
+        <!-- =========================================================== -->
+
+        <LinearGradientBrush x:Key="ShieldAccent" StartPoint="0,0" EndPoint="1,0">
+            <GradientStop Color="#4B6BFF" Offset="0" />
+            <GradientStop Color="#8B31FF" Offset="1" />
+        </LinearGradientBrush>
+
+        <LinearGradientBrush x:Key="ShieldAccentTile" StartPoint="0,0" EndPoint="1,1">
+            <GradientStop Color="#4B6BFF" Offset="0" />
+            <GradientStop Color="#8B31FF" Offset="1" />
+        </LinearGradientBrush>
+
+        <Style x:Key="ShieldCard" TargetType="Border">
+            <Setter Property="Background" Value="{DynamicResource BgCardGlass}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderLight}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="14" />
+            <Setter Property="Padding" Value="16,14" />
+            <!-- MinWidth=0 no card: sem isto, um Grid com coluna * encolhe -->
+            <!-- até zero mas o Border leva oDesiredSize do conteúdo e       -->
+            <!-- empurra os irmãos para fora do pai. É a causa clássica de -->
+            <!-- "estouro horizontal" em layout WPF com colunaestrela.      -->
+            <Setter Property="MinWidth" Value="0" />
+        </Style>
+
+        <Style x:Key="ShieldSubCard" TargetType="Border">
+            <Setter Property="Background" Value="#0FFFFFFF" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderLight}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="10" />
+            <Setter Property="Padding" Value="12,10" />
+            <Setter Property="MinWidth" Value="0" />
+        </Style>
+
+        <Style x:Key="ShieldSectionTitle" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource DefaultTextBrush}" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+        </Style>
+
+        <Style x:Key="ShieldSectionDesc" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+        </Style>
+
+        <Style x:Key="ShieldLabel" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource TextMutedBrush}" />
+            <Setter Property="FontSize" Value="9.5" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
+
+        <!--
+            ShieldValue COM TextTrimming só funciona se o bloco tiver uma
+            largura CONHECIDA. Num StackPanel (largura Auto) o TextBlock cresce
+            até o tamanho do texto e a elipse nunca aparece — o texto estoura o
+            card. Por isso todo uso deste estilo vive dentro de um Grid com
+            coluna *, que é quem dá a largura.
+        -->
+        <Style x:Key="ShieldValue" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource DefaultTextBrush}" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+        </Style>
+
+        <!--
+            ElementStyle das colunas curtas do DataGrid. Sem ela, o
+            DataGridTextColumn renderiza o texto SEM elipse e a coluna
+            "Tamanho"/"Duração" cresce até o conteúdo e come a largura das
+            colunas de texto.
+        -->
+        <Style x:Key="ShieldGridText" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+            <Setter Property="Foreground" Value="{DynamicResource DefaultTextBrush}" />
+        </Style>
+
+        <!--
+            ===========================================================
+            CONTROLES QUE CAÍAM NO TEMA PADRÃO DO WPF
+            ===========================================================
+            O tema do VOLTRIS define estilos IMPLÍCITOS apenas para ComboBox.
+            TextBox, Button e DataGridColumnHeader existem só com x:Key — e
+            uma tag sem Style NÃO os acha. Resultado: cada um deles recebia o
+            chrome CLARO do Aero, que é o que aparecia como "botão cinza claro"
+            e "campo de busca branco" dentro de uma página escura.
+
+            Não é cosmético: o texto branco do título do modo de varredura
+            ficava SOBRE o fundo branco do botão Aero e desaparecia. Um
+            controle sem template próprio não tem como ser corrigido por
+            Setter de cor — é o TEMPLATE que pinta. Por isso estes três
+            estilos trazem template.
+        -->
+
+        <!-- Botão invisível: o clique é no CARD inteiro, e o hover é do card. -->
+        <!--
+            SCROLLBAR SLIM.
+
+            O tema do VOLTRIS não tem estilo para ScrollBar, então cada
+            ScrollViewer da página recebia a barra CLARA e larga do WPF
+            padrão — um retângulo bege no meio de um card escuro, do tamanho
+            de um polegar. É o mesmo defeito do TextBox/Button, e a correção
+            é a mesma: template.
+
+            Slim (7px), sem botão de incremento, e o polegar só aparece no
+            hover do track. Some quando o conteúdo cabe — que é o caso
+            normal desta página, já que o layout foi desenhado para caber.
+        -->
+        <Style x:Key="ShieldScrollThumb" TargetType="Thumb">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Thumb">
+                        <Border x:Name="bd" Background="#26FFFFFF" CornerRadius="4"
+                                Width="7" HorizontalAlignment="Center" />
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="#4DFFFFFF" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style TargetType="ScrollBar">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Width" Value="9" />
+            <Setter Property="MinWidth" Value="9" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ScrollBar">
+                        <Grid Background="Transparent">
+                            <Track x:Name="PART_Track" IsDirectionReversed="True">
+                                <Track.DecreaseRepeatButton>
+                                    <RepeatButton Command="ScrollBar.PageUpCommand" Opacity="0" Focusable="False" />
+                                </Track.DecreaseRepeatButton>
+                                <Track.Thumb>
+                                    <Thumb Style="{StaticResource ShieldScrollThumb}" />
+                                </Track.Thumb>
+                                <Track.IncreaseRepeatButton>
+                                    <RepeatButton Command="ScrollBar.PageDownCommand" Opacity="0" Focusable="False" />
+                                </Track.IncreaseRepeatButton>
+                            </Track>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="Orientation" Value="Horizontal">
+                    <Setter Property="Width" Value="Auto" />
+                    <Setter Property="MinWidth" Value="0" />
+                    <Setter Property="Height" Value="9" />
+                    <Setter Property="MinHeight" Value="9" />
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="ScrollBar">
+                                <Grid Background="Transparent">
+                                    <Track x:Name="PART_Track" IsDirectionReversed="False">
+                                        <Track.DecreaseRepeatButton>
+                                            <RepeatButton Command="ScrollBar.PageLeftCommand" Opacity="0" Focusable="False" />
+                                        </Track.DecreaseRepeatButton>
+                                        <Track.Thumb>
+                                            <Thumb Style="{StaticResource ShieldScrollThumb}" />
+                                        </Track.Thumb>
+                                        <Track.IncreaseRepeatButton>
+                                            <RepeatButton Command="ScrollBar.PageRightCommand" Opacity="0" Focusable="False" />
+                                        </Track.IncreaseRepeatButton>
+                                    </Track>
+                                </Grid>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="ShieldGhostBtn" TargetType="Button">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <!-- Sem Border, sem chrome: o botão é invisível e o
+                             card atrás é que dá a forma e o feedback. -->
+                        <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                          VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="ShieldInput" TargetType="TextBox">
+            <Setter Property="Background" Value="#12FFFFFF" />
+            <Setter Property="Foreground" Value="{DynamicResource DefaultTextBrush}" />
+            <Setter Property="CaretBrush" Value="{DynamicResource DefaultTextBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderLight}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="SelectionBrush" Value="#4D31A8FF" />
+            <Setter Property="Padding" Value="10,7" />
+            <Setter Property="FontSize" Value="11.5" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Border x:Name="bd" Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="9" SnapsToDevicePixels="True">
+                            <ScrollViewer x:Name="PART_ContentHost" Margin="{TemplateBinding Padding}"
+                                          VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bd" Property="BorderBrush" Value="#5931A8FF" />
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                                <Setter TargetName="bd" Property="BorderBrush" Value="#8B31A8FF" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="ShieldGridHeader" TargetType="DataGridColumnHeader">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="{DynamicResource TextMutedBrush}" />
+            <Setter Property="FontSize" Value="9.5" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Padding" Value="8,7" />
+            <Setter Property="HorizontalContentAlignment" Value="Left" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderLight}" />
+            <Setter Property="BorderThickness" Value="0,0,0,1" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="DataGridColumnHeader">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                              VerticalAlignment="Center" />
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!--
+            Célula e linha: o tema padrão pinta a seleção em azul-sistema e
+            alterna o fundo das linhas. Numa tabela de dados escura isso
+            destrói a leitura, então as duas vão neutras e o realce passa a
+            ser um fundo sutil da LINHA inteira.
+        -->
+        <Style x:Key="ShieldGridCell" TargetType="DataGridCell">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Foreground" Value="{DynamicResource DefaultTextBrush}" />
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="DataGridCell">
+                        <Border Background="{TemplateBinding Background}" Padding="8,0">
+                            <ContentPresenter VerticalAlignment="Center" />
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Foreground" Value="{DynamicResource DefaultTextBrush}" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="ShieldGridRow" TargetType="DataGridRow">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="SnapsToDevicePixels" Value="True" />
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#0FFFFFFF" />
+                </Trigger>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="#1A31A8FF" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="ShieldBtn" TargetType="Button">            <Setter Property="Background" Value="#1AFFFFFF" />
+            <Setter Property="Foreground" Value="{DynamicResource DefaultTextBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderLight}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Padding" Value="14,8" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="FontSize" Value="11.5" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="bd" Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="9" Padding="{TemplateBinding Padding}"
+                                SnapsToDevicePixels="True">
+                            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                              VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="#2AFFFFFF" />
+                                <Setter TargetName="bd" Property="BorderBrush" Value="#31A8FF" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="bd" Property="Opacity" Value="0.45" />
+                                <Setter Property="Cursor" Value="Arrow" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="ShieldPrimaryBtn" TargetType="Button" BasedOn="{StaticResource ShieldBtn}">
+            <Setter Property="Background" Value="{StaticResource ShieldAccent}" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
+
+        <!--
+            Botão de MODO DE VARREDURA: o card inteiro é clicável, e o card
+            precisa reagir ao hover e ao IsEnabled do Command. Repete as
+            cores do ShieldBtn de propósito — se divergissem, o hover do
+            botão pareceria um retângulo dentro de outro retângulo.
+        -->
+        <Style x:Key="ScanModeCard" TargetType="Border">
+            <Setter Property="Background" Value="#0FFFFFFF" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderLight}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="10" />
+            <Setter Property="Margin" Value="0,0,0,7" />
+            <Setter Property="MinWidth" Value="0" />
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#18FFFFFF" />
+                    <Setter Property="BorderBrush" Value="#4D31A8FF" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!--
+            Item de métrica. MinWidth decides quantas colunas cabem: com 132,
+            DUAS colunas cabem a partir de ~280px de largura interna, que é o
+            caso do pior layout (janela 640 menos a sidebar principal de 240).
+            Com o MinWidth de 150 anterior, o pior caso caía para uma coluna
+            só e a Occupação vertical explodia.
+
+            O MaxWidth impede que o tile estique em telas largas: com WrapPanel
+            e filhos de largura automática, um tile sem teto vira uma barra
+            horizontal de 400px.
+        -->
+        <Style x:Key="ShieldStatTile" TargetType="Grid">
+            <Setter Property="MinWidth" Value="132" />
+            <Setter Property="MaxWidth" Value="248" />
+            <Setter Property="Margin" Value="0,0,10,8" />
+        </Style>
+
+        <!-- =========================================================== -->
+        <!-- ABAS                                                         -->
+        <!-- =========================================================== -->
+
+        <!--
+            O template NÃO tem mais Path: quem desenha o ícone é o Header de
+            cada TabItem (e o Header é por aba, então cada um recebe a sua
+            geometria). O template cuida só da moldura: fundo, barra de
+            acento, foco de teclado.
+
+            E AGORA TEM ContentPresenter com ContentSource="Header" — sem
+            ele o texto das abas simplesmente não existe na tela.
+        -->
+        <Style x:Key="ShieldTabItem" TargetType="TabItem">
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+            <Setter Property="FontSize" Value="11.5" />
+            <Setter Property="Padding" Value="11,9" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TabItem">
+                        <Border x:Name="Bd" Background="Transparent" CornerRadius="10"
+                                Padding="{TemplateBinding Padding}" Margin="0,0,0,4"
+                                SnapsToDevicePixels="True">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Border x:Name="AccentBar" Grid.Column="0" Width="3" Height="20"
+                                        CornerRadius="2" Background="Transparent"
+                                        VerticalAlignment="Center" Margin="0,0,9,0" />
+                                <ContentPresenter Grid.Column="1" ContentSource="Header"
+                                                  VerticalAlignment="Center" />
+                            </Grid>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#12FFFFFF" />
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#1AFFFFFF" />
+                                <Setter TargetName="AccentBar" Property="Background" Value="{StaticResource ShieldAccent}" />
+                                <Setter Property="Foreground" Value="{DynamicResource DefaultTextBrush}" />
+                                <Setter Property="FontWeight" Value="SemiBold" />
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="#6631A8FF" />
+                                <Setter TargetName="Bd" Property="BorderThickness" Value="1" />
+                            </Trigger>
+
+                            <!--
+                                REGIME COMPACTO: sem barra de acento e sem
+                                padding lateral, porque no trilho de ícones a
+                                aba tem ~44px e qualquer padding lateral come
+                                metade do ícone. O código define Tag para
+                                chooses o regime — assim o chrome responde sem
+                                o code-behind precisar alcançar elementos de
+                                dentro do template.
+                            -->
+                            <Trigger Property="Tag" Value="compact">
+                                <Setter TargetName="Bd" Property="Padding" Value="0" />
+                                <Setter TargetName="Bd" Property="Margin" Value="0,0,0,5" />
+                                <Setter TargetName="Bd" Property="CornerRadius" Value="9" />
+                                <Setter TargetName="AccentBar" Property="Visibility" Value="Collapsed" />
+                            </Trigger>
+                            <Trigger Property="Tag" Value="narrow">
+                                <Setter TargetName="Bd" Property="Padding" Value="0" />
+                                <Setter TargetName="Bd" Property="Margin" Value="0,0,6,0" />
+                                <Setter TargetName="Bd" Property="CornerRadius" Value="8" />
+                                <Setter TargetName="AccentBar" Property="Visibility" Value="Collapsed" />
+                            </Trigger>
+                            <MultiTrigger>
+                                <MultiTrigger.Conditions>
+                                    <Condition Property="Tag" Value="narrow" />
+                                    <Condition Property="IsSelected" Value="True" />
+                                </MultiTrigger.Conditions>
+                                <Setter TargetName="Bd" Property="Background" Value="#26231A8B" />
+                            </MultiTrigger>
+                            <!--
+                               COMPACTO: sem barra de acento, o FUNDO é a
+                                única coisa que diz qual aba está ativa. Com o
+                                #1AFFFFFF do gatilho genérico, o item
+                                selecionado no trilho de ícones ficava
+                                indistinguível de um hover — e num trilho sem
+                                texto, "qual aba estou?" é a única pergunta que
+                                o trilho precisa responder.
+                            -->
+                            <MultiTrigger>
+                                <MultiTrigger.Conditions>
+                                    <Condition Property="Tag" Value="compact" />
+                                    <Condition Property="IsSelected" Value="True" />
+                                </MultiTrigger.Conditions>
+                                <Setter TargetName="Bd" Property="Background" Value="#33231A8B" />
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="#5931A8FF" />
+                                <Setter TargetName="Bd" Property="BorderThickness" Value="1" />
+                            </MultiTrigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!--
+            MOLDURA DO TabControl, com as três geometrias.
+
+            Named GridDefinitions dentro do template NÃO são uma curiosidade:
+            é o que permite ao code-behind reorganizar a página inteira
+            mudando Width/Height e Grid.Row/Grid.Column, sem duplicar o
+            template três vezes. Um template por modo significaria três
+            cópias da barra lateral para manter em sincronia.
+        -->
+        <Style x:Key="ShieldTabControl" TargetType="TabControl">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TabControl">
+                        <Grid x:Name="Shell" Background="Transparent">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition x:Name="SideCol" Width="238" />
+                                <ColumnDefinition x:Name="SideGapCol" Width="14" />
+                                <ColumnDefinition x:Name="MainCol" Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition x:Name="SideRow" Height="*" />
+                                <RowDefinition x:Name="SideGapRow" Height="0" />
+                                <RowDefinition x:Name="MainRow" Height="*" />
+                            </Grid.RowDefinitions>
+
+                            <Border x:Name="SideCard" Grid.Column="0" Grid.Row="0"
+                                    Style="{StaticResource ShieldCard}" Padding="11" Margin="0,0,14,0">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition x:Name="SideHeadRow" Height="Auto" />
+                                        <RowDefinition x:Name="SideTabsRow" Height="*" />
+                                        <RowDefinition x:Name="SideFootRow" Height="Auto" />
+                                    </Grid.RowDefinitions>
+
+                                    <StackPanel x:Name="SideHead" Grid.Row="0" Margin="5,0,5,11">
+                                        <TextBlock Text="{Binding [Loc_SystemicPanel], Source={x:Static services:LocalizationService.Instance}}"
+                                                   FontSize="9.5" FontWeight="Bold" Opacity="0.6"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}" />
+                                        <TextBlock Text="{Binding [Loc_RecoveryCenter], Source={x:Static services:LocalizationService.Instance}}"
+                                                   FontSize="14" FontWeight="Bold" Margin="0,2,0,0"
+                                                   TextWrapping="Wrap"
+                                                   Foreground="{DynamicResource DefaultTextBrush}" />
+                                        <TextBlock Text="{Binding [Loc_RedundancyForensicRescue], Source={x:Static services:LocalizationService.Instance}}"
+                                                   FontSize="9.5" Margin="0,3,0,0" TextWrapping="Wrap"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    </StackPanel>
+
+                                    <ScrollViewer x:Name="SideTabsHost" Grid.Row="1"
+                                                  VerticalScrollBarVisibility="Auto"
+                                                  HorizontalScrollBarVisibility="Disabled"
+                                                  Padding="0,0,5,0">
+                                        <TabPanel x:Name="Tabs" IsItemsHost="True" />
+                                    </ScrollViewer>
+
+                                    <Border x:Name="SideFoot" Grid.Row="2" Margin="0,9,0,0"
+                                            Padding="10,8" CornerRadius="10" Background="#12FFFFFF">
+                                        <StackPanel>
+                                            <TextBlock Text="{Binding [RecoveryEnvironment], Source={x:Static services:LocalizationService.Instance}}" Style="{StaticResource ShieldLabel}" />
+                                            <TextBlock Text="{Binding Operations.EnvironmentNote}"
+                                                       FontSize="9.5" Margin="0,3,0,0" TextWrapping="Wrap"
+                                                       Foreground="{DynamicResource TextSecondaryBrush}" />
+                                            <ProgressBar Height="3" Margin="0,7,0,0" Minimum="0" Maximum="100"
+                                                         Value="{Binding Operations.RepairProgress, Mode=OneWay}"
+                                                         Foreground="#8B31FF" Background="#18FFFFFF" BorderThickness="0"
+                                                         Visibility="{Binding Operations.IsBusy, Converter={StaticResource BoolVis}}" />
+                                            <Button Content="{Binding [RecoveryCancel], Source={x:Static services:LocalizationService.Instance}}" Command="{Binding Operations.CancelCommand}"
+                                                    Style="{StaticResource ShieldBtn}" Padding="10,5" FontSize="10"
+                                                    Margin="0,7,0,0" HorizontalAlignment="Stretch"
+                                                    Visibility="{Binding Operations.IsBusy, Converter={StaticResource BoolVis}}" />
+                                        </StackPanel>
+                                    </Border>
+                                </Grid>
+                            </Border>
+
+                            <ContentPresenter x:Name="MainHost" Grid.Column="2" Grid.Row="0"
+                                              ContentSource="SelectedContent" />
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!--
+            Estado vazio. O ícone é o MESMO da aba em que ele aparece — então
+            o eye-trick funciona: um estado vazio em "Recuperação de arquivos"
+            mostra o ícone de recuperação, e em "Histórico" mostra o de
+            histórico. Nenhum se repete entre abas.
+        -->
+        <Style x:Key="EmptyIcon" TargetType="Path">
+            <Setter Property="Width" Value="30" />
+            <Setter Property="Height" Value="30" />
+            <Setter Property="Stretch" Value="Uniform" />
+            <Setter Property="Opacity" Value="0.28" />
+            <Setter Property="Fill" Value="{DynamicResource TextSecondaryBrush}" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
+        </Style>
+
+        <Style x:Key="EmptyText" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+            <Setter Property="FontSize" Value="11.5" />
+            <Setter Property="TextAlignment" Value="Center" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="MaxWidth" Value="380" />
+            <Setter Property="Margin" Value="0,10,0,0" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
+        </Style>
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- ============================== CABEÇALHO ============================== -->
+        <Grid Grid.Row="0" Margin="22,16,22,12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" MinWidth="0" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                <Border Width="38" Height="38" CornerRadius="11" Margin="0,0,13,0" VerticalAlignment="Center">
+                    <Border.Background>
+                        <StaticResource ResourceKey="ShieldAccentTile" />
+                    </Border.Background>
+                    <Path Data="{StaticResource RecoveryIcon}" Fill="White" Width="19" Height="19"
+                          Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                </Border>
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock Text="{Binding [Loc_SecurityRecoveryCenter], Source={x:Static services:LocalizationService.Instance}}"
+                               FontSize="20" FontWeight="Bold" Foreground="{DynamicResource DefaultTextBrush}"
+                               TextTrimming="CharacterEllipsis" />
+                    <TextBlock Text="{Binding [Loc_AdvancedRescueOfDeletedFiles], Source={x:Static services:LocalizationService.Instance}}"
+                               FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}"
+                               TextTrimming="CharacterEllipsis" />
+                </StackPanel>
+            </StackPanel>
+
+                <Button Grid.Column="1" Content="{Binding [Refresh], Source={x:Static services:LocalizationService.Instance}}" Command="{Binding Operations.RefreshCommand}"
+                    Style="{StaticResource ShieldBtn}" Margin="11,0,0,0" VerticalAlignment="Center"
+                    MinWidth="98" />
+        </Grid>
+
+        <!-- ============================== ABAS ============================== -->
+        <TabControl x:Name="TabHost" Grid.Row="1" Style="{StaticResource ShieldTabControl}"
+                    Margin="22,0,22,18">
+
+            <!-- ==================== ABA 1 — VISÃO GERAL ==================== -->
+            <TabItem Style="{StaticResource ShieldTabItem}" Tag="wide">
+                <TabItem.Header>
+                    <StackPanel Orientation="Horizontal">
+                        <Path Data="{StaticResource ShieldIcon}" Width="16" Height="16" Stretch="Uniform"
+                              Margin="0,0,9,0" VerticalAlignment="Center"
+                              Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type TabItem}}}" />
+                        <TextBlock x:Name="TabLabel1" Text="" VerticalAlignment="Center"
+                                   FontSize="{Binding FontSize, RelativeSource={RelativeSource AncestorType={x:Type TabItem}}}"
+                                   FontWeight="{Binding FontWeight, RelativeSource={RelativeSource AncestorType={x:Type TabItem}}}"
+                                   Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type TabItem}}}"
+                                   TextTrimming="CharacterEllipsis" />
+                    </StackPanel>
+                </TabItem.Header>
+
+                <!--
+                    SEM SCROLL. Duas linhas: as métricas em cima, e abaixo
+                    "Ações principais" ao lado de "Recuperação de arquivos".
+                    Antes eram três cards empilhados num StackPanel com
+                    ScrollViewer — que era ao mesmo tempo um estouro de
+                    altura E um scroll desnecessário.
+                -->
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                        <Border Grid.Row="0" Style="{StaticResource ShieldCard}">
+                            <StackPanel>
+                                <TextBlock Text="{Binding [RecoveryHealthTitle], Source={x:Static services:LocalizationService.Instance}}" Style="{StaticResource ShieldSectionTitle}" />
+                                <!-- x:Name nestas descrições: no regime estreito
+                                     elas são zeradas. São ~90px de altura somados
+                                     e, com a regra de "sem scroll", é a diferença
+                                     entre a aba caber e a última card ser cortada.
+                                     O título e os DADOS continuam visíveis — o que
+                                     some é a prosa, não a informação. -->
+                                <TextBlock x:Name="DescHealth" Text="{Binding [RecoveryHealthDesc], Source={x:Static services:LocalizationService.Instance}}"
+                                           Style="{StaticResource ShieldSectionDesc}" Margin="0,2,0,10" />
+
+                            <WrapPanel>
+                                <Grid Style="{StaticResource ShieldStatTile}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <Border Grid.Column="0" Width="26" Height="26" CornerRadius="8"
+                                            Background="#1AFF4B6B" Margin="0,0,9,0" VerticalAlignment="Center">
+                                        <Path Data="{StaticResource RecoveryIcon}" Width="13" Height="13" Stretch="Uniform"
+                                              Fill="#FF6B7A" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    </Border>
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding [RecoveryNativeEngine], Source={x:Static services:LocalizationService.Instance}}" Style="{StaticResource ShieldLabel}" />
+                                        <TextBlock Text="RecoveryEngine" Style="{StaticResource ShieldValue}" />
+                                    </StackPanel>
+                                </Grid>
+
+                                <Grid Style="{StaticResource ShieldStatTile}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <Border Grid.Column="0" Width="26" Height="26" CornerRadius="8"
+                                            Background="#1A31A8FF" Margin="0,0,9,0" VerticalAlignment="Center">
+                                        <Path Data="{StaticResource HistoryIcon}" Width="13" Height="13" Stretch="Uniform"
+                                              Fill="#31A8FF" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    </Border>
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding [RecoveryShadowCopy], Source={x:Static services:LocalizationService.Instance}}" Style="{StaticResource ShieldLabel}" />
+                                        <TextBlock Text="{Binding ShadowCopyCountText}" Style="{StaticResource ShieldValue}" />
+                                    </StackPanel>
+                                </Grid>
+
+                                <Grid Style="{StaticResource ShieldStatTile}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <Border Grid.Column="0" Width="26" Height="26" CornerRadius="8"
+                                            Background="#1A8B31FF" Margin="0,0,9,0" VerticalAlignment="Center">
+                                        <Path Data="{StaticResource ShieldIcon}" Width="13" Height="13" Stretch="Uniform"
+                                              Fill="#8B31FF" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    </Border>
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding [RecoveryPrivileges], Source={x:Static services:LocalizationService.Instance}}" Style="{StaticResource ShieldLabel}" />
+                                        <TextBlock Text="{Binding [RecoveryAdministrator], Source={x:Static services:LocalizationService.Instance}}" Style="{StaticResource ShieldValue}" />
+                                    </StackPanel>
+                                </Grid>
+
+                                <Grid Style="{StaticResource ShieldStatTile}" Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <Border Grid.Column="0" Width="26" Height="26" CornerRadius="8"
+                                            Background="#1A10B981" Margin="0,0,9,0" VerticalAlignment="Center">
+                                        <Path Data="{StaticResource ServicesIcon}" Width="13" Height="13" Stretch="Uniform"
+                                              Fill="#10B981" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    </Border>
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding [RecoveryVoltrisPoints], Source={x:Static services:LocalizationService.Instance}}" Style="{StaticResource ShieldLabel}" />
+                                        <TextBlock Text="{Binding Operations.RestorePoints.Count, StringFormat=N0}"
+                                                   Style="{StaticResource ShieldValue}" />
+                                    </StackPanel>
+                                </Grid>
+                            </WrapPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- x:Name nos dois painéis: o code-behind troca Grid.Column
+                         entre 0 e 1 para empilhar quando a janela estreita. -->
+                    <Grid x:Name="OverviewGrid" Grid.Row="1" Margin="0,12,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" MinWidth="0" />
+                            <ColumnDefinition Width="*" MinWidth="0" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <Border x:Name="OverviewActionsCard" Grid.Column="0" Style="{StaticResource ShieldCard}"
+                                Margin="0,0,6,0">
+                            <StackPanel>
+                                <TextBlock Text="{Binding [RecoveryMainActions], Source={x:Static services:LocalizationService.Instance}}" Style="{StaticResource ShieldSectionTitle}" />
+                                <TextBlock x:Name="DescActions" Text="{Binding [RecoveryMainActionsDesc], Source={x:Static services:LocalizationService.Instance}}"
+                                           Style="{StaticResource ShieldSectionDesc}" Margin="0,2,0,10" />
+
+                                <!--
+                                    Botões com largura NATURAL (padding +
+                                    texto) e teto de MaxWidth — sem MinWidth.
+                                    MinWidth é o que causava o recorte: um
+                                    botão de 200px dentro de um slot de 185px
+                                    não encolhe, ele SAI do card. Dimensionado
+                                    pelo conteúdo, o WrapPanel decide quantos
+                                    cabem e nenhum estoura.
+                                -->
+                                <WrapPanel>
+                                    <Button Content="{Binding [RecoveryCreateRestorePoint], Source={x:Static services:LocalizationService.Instance}}" MaxWidth="270" Margin="0,0,8,8"
+                                            Command="{Binding Operations.CreateRestorePointCommand}"
+                                            Style="{StaticResource ShieldPrimaryBtn}" />
+                                    <Button Content="{Binding [RecoveryWindowsRecovery], Source={x:Static services:LocalizationService.Instance}}" MaxWidth="270" Margin="0,0,8,8"
+                                            Command="{Binding Operations.OpenWindowsRestoreCommand}"
+                                            Style="{StaticResource ShieldBtn}" />
+                                    <Button Content="{Binding [RecoveryCreateSystemBackup], Source={x:Static services:LocalizationService.Instance}}" MaxWidth="270" Margin="0,0,8,8"
+                                            Command="{Binding Operations.CreateBackupCommand}"
+                                            Style="{StaticResource ShieldBtn}" />
+                                    <Button Content="{Binding [RecoveryRepairSystem], Source={x:Static services:LocalizationService.Instance}}" MaxWidth="270" Margin="0,0,8,8"
+                                            Command="{Binding Operations.RunSystemRepairCommand}"
+                                            Style="{StaticResource ShieldBtn}" />
+                                </WrapPanel>
+
+                                <Border Style="{StaticResource ShieldSubCard}" Padding="10,8"
+                                        Visibility="{Binding Operations.IsBusy, Converter={StaticResource BoolVis}}">
+                                    <TextBlock Text="{Binding Operations.BusyMessage}" FontSize="10.5"
+                                               TextWrapping="Wrap"
+                                               Foreground="{DynamicResource TextSecondaryBrush}" />
+                                </Border>
+                            </StackPanel>
+                        </Border>
+
+                        <Border x:Name="OverviewFilesCard" Grid.Column="1" Style="{StaticResource ShieldCard}"
+                                Margin="6,0,0,0">
+                            <StackPanel>
+                                <TextBlock Text="{Binding [RecoveryFileRecovery], Source={x:Static services:LocalizationService.Instance}}" Style="{StaticResource ShieldSectionTitle}" />
+                                <TextBlock x:Name="DescFiles" Text="{Binding [RecoveryFileRecoveryDesc], Source={x:Static services:LocalizationService.Instance}}"
+                                           Style="{StaticResource ShieldSectionDesc}" Margin="0,2,0,10" />
+
+                                <!-- Mesmo componente de métrica do card de cima.
+                                     Antes eram três Grid com rótulo+valor em
+                                     coluna, que ocupavam 3 linhas fixas; como
+                                     WrapPanel, viram tiles que reagem à
+                                     largura e encolhem a card. -->
+                                <WrapPanel>
+                                    <Grid Style="{StaticResource ShieldStatTile}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <Border Grid.Column="0" Width="24" Height="24" CornerRadius="7"
+                                                Background="#1AFF4B6B" Margin="0,0,8,0" VerticalAlignment="Center">
+                                            <Path Data="{StaticResource IconDisk}" Width="12" Height="12" Stretch="Uniform"
+                                                  Fill="#FF6B7A" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                        </Border>
+                                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                            <TextBlock Text="" Style="{StaticResource ShieldLabel}" />
+                                            <TextBlock Text="{Binding SelectedDrive}" Style="{StaticResource ShieldValue}" />
+                                        </StackPanel>
+                                    </Grid>
+
+                                    <Grid Style="{StaticResource ShieldStatTile}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <Border Grid.Column="0" Width="24" Height="24" CornerRadius="7"
+                                                Background="#1A31A8FF" Margin="0,0,8,0" VerticalAlignment="Center">
+                                            <Path Data="{StaticResource ServicesIcon}" Width="12" Height="12" Stretch="Uniform"
+                                                  Fill="#31A8FF" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                        </Border>
+                                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                            <TextBlock Text="" Style="{StaticResource ShieldLabel}" />
+                                            <TextBlock Text="{Binding AvailableDrives.Count}" Style="{StaticResource ShieldValue}" />
+                                        </StackPanel>
+                                    </Grid>
+
+                                    <Grid Style="{StaticResource ShieldStatTile}" Margin="0,0,0,8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <Border Grid.Column="0" Width="24" Height="24" CornerRadius="7"
+                                                Background="#1A8B31FF" Margin="0,0,8,0" VerticalAlignment="Center">
+                                            <Path Data="{StaticResource PrivacyIcon}" Width="12" Height="12" Stretch="Uniform"
+                                                  Fill="#8B31FF" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                        </Border>
+                                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                            <TextBlock Text="" Style="{StaticResource ShieldLabel}" />
+                                            <TextBlock Text="{Binding FilteredList.Count}" Style="{StaticResource ShieldValue}" />
+                                        </StackPanel>
+                                    </Grid>
+                                </WrapPanel>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </Grid>
+            </TabItem>
+
+            <!-- ==================== ABA 2 — RECUPERAÇÃO DE ARQUIVOS ==================== -->
+            <TabItem Style="{StaticResource ShieldTabItem}" Tag="wide">
+                <TabItem.Header>
+                    <StackPanel Orientation="Horizontal">
+                        <Path Data="{StaticResource RecoveryIcon}" Width="16" Height="16" Stretch="Uniform"
+                              Margin="0,0,9,0" VerticalAlignment="Center"
+                              Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type TabItem}}}" />
+                        <TextBlock x:Name="TabLabel2" Text="" VerticalAlignment="Center"
+                                   FontSize="{Binding FontSize, RelativeSource={RelativeSource AncestorType={x:Type TabItem}}}"
+                                   FontWeight="{Binding FontWeight, RelativeSource={RelativeSource AncestorType={x:Type TabItem}}}"
+                                   Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type TabItem}}}"
+                                   TextTrimming="CharacterEllipsis" />
+                    </StackPanel>
+                </TabItem.Header>
+
+                <!--
+                    Coluna do motor: MinWidth/MaxWidth em vez de Width fixa.
+                    300px cravados deixavam a área de resultados com ZERO
+                    largura quando a janela estreitava. Com 260..330 ela
+                    encolhe e a lista continua existindo.
+                -->
+                <Grid x:Name="FilesGridLayout">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="300" MinWidth="248" MaxWidth="330" />
+                        <ColumnDefinition Width="*" MinWidth="240" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <!-- Motor de varredura -->
+                    <Border x:Name="ScanEngineCard" Grid.Column="0" Style="{StaticResource ShieldCard}" Margin="0,0,12,0">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
+
+                            <StackPanel Grid.Row="0" Margin="0,0,0,11">
+                                <TextBlock Text="" Style="{StaticResource ShieldLabel}" />
+                                <ComboBox ItemsSource="{Binding AvailableDrives}" SelectedItem="{Binding SelectedDrive}"
+                                          Margin="0,5,0,0" Padding="8,6" FontSize="11.5" MinHeight="30"
+                                          IsEnabled="{Binding IsScanning, Converter={StaticResource InverseBool}}" />
+                            </StackPanel>
+
+                            <TextBlock Grid.Row="1" Text="" Style="{StaticResource ShieldLabel}"
+                                       Margin="0,0,0,7" />
+
+                            <!-- Cada modo com o SEU ícone: são três ações
+                                 diferentes e três glifos diferentes. Antes
+                                 eram três cards de texto idênticos. -->
+                            <StackPanel Grid.Row="2">
+                                <Border Style="{StaticResource ScanModeCard}">
+                                    <Button Command="{Binding QuickScanCommand}" HorizontalAlignment="Stretch"
+                                            Style="{StaticResource ShieldGhostBtn}">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" MinWidth="0" />
+                                            </Grid.ColumnDefinitions>
+                                            <Border Grid.Column="0" Width="28" Height="28" CornerRadius="8"
+                                                    Background="#1A31A8FF" Margin="0,0,10,0" VerticalAlignment="Top">
+                                                <Path Data="{StaticResource PerformanceIcon}" Width="14" Height="14"
+                                                      Stretch="Uniform" Fill="#31A8FF"
+                                                      HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </Border>
+                                            <StackPanel Grid.Column="1">
+                                                <TextBlock Text="" FontSize="11.5" FontWeight="SemiBold"
+                                                           Foreground="{DynamicResource DefaultTextBrush}"
+                                                           TextTrimming="CharacterEllipsis" />
+                                                <TextBlock x:Name="ScanDescQuick" Text=""
+                                                           FontSize="9.5" TextWrapping="Wrap" Margin="0,3,0,0"
+                                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                            </StackPanel>
+                                        </Grid>
+                                    </Button>
+                                </Border>
+
+                                <Border Style="{StaticResource ScanModeCard}">
+                                    <Button Command="{Binding DeepScanCommand}" HorizontalAlignment="Stretch"
+                                            Style="{StaticResource ShieldGhostBtn}">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" MinWidth="0" />
+                                            </Grid.ColumnDefinitions>
+                                            <Border Grid.Column="0" Width="28" Height="28" CornerRadius="8"
+                                                    Background="#1A8B31FF" Margin="0,0,10,0" VerticalAlignment="Top">
+                                                <Path Data="{StaticResource DiagnosticsIcon}" Width="14" Height="14"
+                                                      Stretch="Uniform" Fill="#8B31FF"
+                                                      HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </Border>
+                                            <StackPanel Grid.Column="1">
+                                                <TextBlock Text="" FontSize="11.5" FontWeight="SemiBold"
+                                                           Foreground="{DynamicResource DefaultTextBrush}"
+                                                           TextTrimming="CharacterEllipsis" />
+                                                <TextBlock x:Name="ScanDescDeep" Text=""
+                                                           FontSize="9.5" TextWrapping="Wrap" Margin="0,3,0,0"
+                                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                            </StackPanel>
+                                        </Grid>
+                                    </Button>
+                                </Border>
+
+                                <Border Style="{StaticResource ScanModeCard}">
+                                    <Button Command="{Binding VssScanCommand}" HorizontalAlignment="Stretch"
+                                            Style="{StaticResource ShieldGhostBtn}">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" MinWidth="0" />
+                                            </Grid.ColumnDefinitions>
+                                            <Border Grid.Column="0" Width="28" Height="28" CornerRadius="8"
+                                                    Background="#1A10B981" Margin="0,0,10,0" VerticalAlignment="Top">
+                                                <Path Data="{StaticResource IconDisk}" Width="14" Height="14"
+                                                      Stretch="Uniform" Fill="#10B981"
+                                                      HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </Border>
+                                            <StackPanel Grid.Column="1">
+                                                <TextBlock Text="" FontSize="11.5" FontWeight="SemiBold"
+                                                           Foreground="{DynamicResource DefaultTextBrush}"
+                                                           TextTrimming="CharacterEllipsis" />
+                                                <TextBlock x:Name="ScanDescVss" Text=""
+                                                           FontSize="9.5" TextWrapping="Wrap" Margin="0,3,0,0"
+                                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                                <TextBlock Text="{Binding ShadowCopyCountText}" FontSize="9.5" Margin="0,4,0,0"
+                                                           Foreground="#31A8FF" FontWeight="SemiBold" />
+                                            </StackPanel>
+                                        </Grid>
+                                    </Button>
+                                </Border>
+                            </StackPanel>
+
+                            <!-- O status fica na última linha, alinhado ao
+                                 fundo: sobrar espaço entre os modos de
+                                 varredura e o estado é o que deixa o motor
+                                 respirar e separa as duas responsabilidades. -->
+                            <Border x:Name="ScanStatusCard" Grid.Row="3" Style="{StaticResource ShieldSubCard}"
+                                    Margin="0,11,0,0" VerticalAlignment="Bottom">
+                                <StackPanel>
+                                    <TextBlock Text="" Style="{StaticResource ShieldLabel}" />
+                                    <TextBlock x:Name="ScanStatusText" Text="{Binding StatusMessage}" FontSize="10.5" TextWrapping="Wrap"
+                                               Margin="0,4,0,7" MaxHeight="46"
+                                               Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <ProgressBar Height="4" Minimum="0" Maximum="100" Value="{Binding ScanProgress, Mode=OneWay}"
+                                                 Foreground="#8B31FF" Background="#18FFFFFF" BorderThickness="0"
+                                                 Visibility="{Binding IsScanning, Converter={StaticResource BoolVis}}" />
+                                    <Button Content="{Binding [RecoveryInterruptBtn], Source={x:Static services:LocalizationService.Instance}}" Command="{Binding CancelScanCommand}"
+                                            Style="{StaticResource ShieldBtn}" Padding="10,6" FontSize="10.5"
+                                            Margin="0,8,0,0" HorizontalAlignment="Stretch"
+                                            Visibility="{Binding IsScanning, Converter={StaticResource BoolVis}}" />
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+                    </Border>
+
+                    <!-- Resultados -->
+                    <Border x:Name="FilesResultsCard" Grid.Column="1" Style="{StaticResource ShieldCard}">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <!--
+                                A barra de ferramentas É WRAP, não Grid com
+                                colunas. Com Grid, o botão "Recuperar
+                                selecionado" (MinWidth 176) espremia a busca
+                                até zero em janela estreita; com Wrap ele
+                                desce para a linha de baixo sozinho.
+                            -->
+                            <WrapPanel Grid.Row="0" Margin="0,0,0,10" VerticalAlignment="Center">
+                                <TextBox Text="{Binding SearchQuery, UpdateSourceTrigger=PropertyChanged}"
+                                         MinHeight="32" MinWidth="150" MaxWidth="420"
+                                         Margin="0,0,8,6" HorizontalAlignment="Stretch"
+                                         Style="{StaticResource ShieldInput}" />
+                                 <!--
+                                    Seletor de tipo. Montado a partir do que a
+                                    varredura encontrou, com a contagem em cada
+                                    linha: o usuário vê o que existe no volume
+                                    antes de escolher, em vez de filtrar às
+                                    cegas e ver zero resultado sem saber por quê.
+
+                                    Fica ANTES do botão de recuperar de propósito
+                                    — é o controle que o usuário procura quando
+                                    tem 44 mil itens na tela.
+                                -->
+                                <ComboBox ItemsSource="{Binding TypeOptions}"
+                                          SelectedItem="{Binding SelectedTypeOption}"
+                                          MinHeight="32" MinWidth="168" MaxWidth="240"
+                                          Margin="0,0,8,6"
+                                          VerticalContentAlignment="Center"
+                                          ToolTip="{Binding [RecoveryFilterByFileType], Source={x:Static services:LocalizationService.Instance}}" />
+                                <Button Content="{Binding [RecoveryRecoverSelected], Source={x:Static services:LocalizationService.Instance}}" MaxWidth="200" Margin="0,0,0,6"
+                                        Command="{Binding RecoverFileCommand}" Style="{StaticResource ShieldPrimaryBtn}" />
+                            </WrapPanel>
+
+                            <Grid Grid.Row="1">
+                                <DataGrid x:Name="FilesGrid" ItemsSource="{Binding FilteredList}"
+                                          SelectedItem="{Binding SelectedFile}"
+                                          AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False"
+                                          HeadersVisibility="Column" GridLinesVisibility="None" RowHeaderWidth="0"
+                                          Background="Transparent" BorderThickness="0" RowHeight="32"
+                                          EnableRowVirtualization="True" EnableColumnVirtualization="True"
+                                          Foreground="{DynamicResource DefaultTextBrush}"
+                                          CellStyle="{StaticResource ShieldGridCell}"
+                                          RowStyle="{StaticResource ShieldGridRow}"
+                                          ColumnHeaderStyle="{StaticResource ShieldGridHeader}"
+                                          SelectionMode="Single" SelectionUnit="FullRow"
+                                          HorizontalGridLinesBrush="Transparent">
+                                    <DataGrid.Columns>
+                                        <DataGridTemplateColumn Header="" Width="Auto">
+                <DataGridTemplateColumn.CellTemplate>
+                    <DataTemplate>
+                        <!--
+                            Ícone REAL do Windows, resolvido pelo shell com
+                            SHGFI_USEFILEATTRIBUTES. O arquivo está apagado,
+                            então Icon.ExtractAssociatedIcon não funcionaria —
+                            ele exige o arquivo em disco. Aqui o shell
+                            responde só pelo nome e pela extensão, e devolve
+                            o ícone que o Explorer mostraria.
+
+                            Sem converter de visibilidade de propósito: se o
+                            shell não souber a extensão, a célula fica vazia
+                            e o log [ICONE] registra a falha. Mostrar o ícone
+                            de .exe num .pdf seria pior que não mostrar nada.
+                        -->
+                        <Image Source="{Binding Icon}" Stretch="Uniform"
+                               Width="18" Height="18"
+                               ToolTip="{Binding IconTip}" />
+                    </DataTemplate>
+                </DataGridTemplateColumn.CellTemplate>
+            </DataGridTemplateColumn>
+            <DataGridTemplateColumn Header="{Binding [RecoveryColFile], Source={x:Static services:LocalizationService.Instance}}" Width="2*" MinWidth="96">
+
+                                            <DataGridTemplateColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <TextBlock Text="{Binding Filename}" FontSize="11.5"
+                                                               TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                                                </DataTemplate>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
+            <DataGridTemplateColumn Header="{Binding [RecoveryColOriginalPath], Source={x:Static services:LocalizationService.Instance}}" Width="3*" MinWidth="130">
+                <DataGridTemplateColumn.CellTemplate>
+                    <DataTemplate>
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="{Binding FullPath}" FontSize="10.5"
+                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                       TextTrimming="CharacterEllipsis" />
+                            <!--
+                                A origem do caminho é informação de primeira
+                                classe: "veio do USN Journal" significa que a pasta
+                                não existe mais no volume e o caminho foi
+                                reconstruído da única fonte que ainda o
+                                conhece. Sem isso o usuário não sabe se deve
+                                confiar no texto.
+                            -->
+                            <TextBlock Text="{Binding PathNote}" FontSize="9"
+                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                       Opacity="0.65"
+                                       TextTrimming="CharacterEllipsis" />
+                        </StackPanel>
+                    </DataTemplate>
+                </DataGridTemplateColumn.CellTemplate>
+            </DataGridTemplateColumn>
+            <DataGridTemplateColumn Header="{Binding [RecoveryColConfidence], Source={x:Static services:LocalizationService.Instance}}" Width="Auto" MinWidth="86">
+                <DataGridTemplateColumn.CellTemplate>
+                    <DataTemplate>
+                        <!--
+                            Confiança ANTES de "Recup." na ordem das colunas,
+                            porque é a informação que decide se o usuário
+                            extrai o arquivo. A porcentagem é um número
+                            composto que o usuário não consegue interpretar
+                            sozinho; a cor e o rótulo dizem o que ele vai
+                            obter.
+                        -->
+                        <StackPanel VerticalAlignment="Center"
+                                    ToolTip="{Binding ConfidenceNote}">
+                            <TextBlock Text="{Binding ConfidenceLabel}" FontSize="11"
+                                       FontWeight="SemiBold"
+                                       Foreground="{Binding Confidence, Converter={StaticResource ConfidenceBrush}}" />
+                            <TextBlock Text="{Binding IsFragmented, StringFormat=fragmentado}"
+                                       FontSize="9"
+                                       Foreground="{DynamicResource WarningBrush}"
+                                       Visibility="{Binding IsFragmented, Converter={StaticResource BoolVis}}" />
+                        </StackPanel>
+                    </DataTemplate>
+                </DataGridTemplateColumn.CellTemplate>
+            </DataGridTemplateColumn>
+
+                                        <DataGridTextColumn Header="{Binding [Size], Source={x:Static services:LocalizationService.Instance}}" Binding="{Binding SizeDisplay}"
+                                                            Width="Auto" ElementStyle="{StaticResource ShieldGridText}" />
+                                        <DataGridTextColumn Header="{Binding [RecoveryColRecovered], Source={x:Static services:LocalizationService.Instance}}" Width="Auto" ElementStyle="{StaticResource ShieldGridText}">
+                                            <DataGridTextColumn.Binding>
+                                                <Binding Path="RecoverabilityPercent" StringFormat="{}{0:0}%" />
+                                            </DataGridTextColumn.Binding>
+                                        </DataGridTextColumn>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+
+                                <StackPanel x:Name="FilesEmpty" VerticalAlignment="Center" HorizontalAlignment="Center"
+                                            Visibility="{Binding FilteredList.Count, Converter={StaticResource IntToVisibilityConverter}, ConverterParameter=Invert}">
+                                    <Path Data="{StaticResource RecoveryIcon}" Style="{StaticResource EmptyIcon}" />
+                                    <TextBlock Text="{Binding [RecoveryNoFilesYet], Source={x:Static services:LocalizationService.Instance}}"
+                                               Style="{StaticResource EmptyText}" />
+                                </StackPanel>
+                            </Grid>
+
+                        <!--
+                            "Carregar mais" cresce a lista em lotes de mil, a
+                            pedido do usuário. Subir o limite do grid de uma
+                            vez congelava a interface ao fim da varredura: as
+                            colunas com Width="*" obrigam o WPF a MEDIR todas
+                            as linhas, e a virtualização de linha não evita
+                            isso. Nenhum número alto resolve — o que resolve é
+                            não pedir milhares de linhas de uma vez.
+                        -->
+                        <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,9,0,0">
+                            <TextBlock Text="{Binding SearchStats}" FontSize="9.5"
+                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                       TextTrimming="CharacterEllipsis"
+                                       VerticalAlignment="Center" />
+                            <Button Content="{Binding [RecoveryLoadMore], Source={x:Static services:LocalizationService.Instance}}"
+                                    Command="{Binding LoadMoreCommand}"
+                                    Visibility="{Binding CanLoadMore, Converter={StaticResource BoolVis}}"
+                                    Margin="10,0,0,0" Padding="10,3" FontSize="10"
+                                    Foreground="{DynamicResource TextSecondaryBrush}"
+                                    Background="Transparent"
+                                    BorderBrush="{DynamicResource TextSecondaryBrush}"
+                                    BorderThickness="1" Cursor="Hand"
+                                    VerticalAlignment="Center" />
+                        </StackPanel>
+
+                        </Grid>
+                    </Border>
+                </Grid>
+            </TabItem>
+
+            <!-- ==================== ABA 3 — PONTOS DE RESTAURAÇÃO ==================== -->
+            <TabItem Style="{StaticResource ShieldTabItem}" Tag="wide">
+                <TabItem.Header>
+                    <StackPanel Orientation="Horizontal">
+                        <Path Data="{StaticResource HistoryIcon}" Width="16" Height="16" Stretch="Uniform"
+                              Margin="0,0,9,0" VerticalAlignment="Center"
+                              Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type TabItem}}}" />
+                        <TextBlock x:Name="TabLabel3" Text="" VerticalAlignment="Center"
+                                   FontSize="{Binding FontSize, RelativeSource={RelativeSource AncestorType={x:Type TabItem}}}"
+                                   FontWeight="{Binding FontWeight, RelativeSource={RelativeSource AncestorType={x:Type TabItem}}}"
+                                   Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type TabItem}}}"
+                                   TextTrimming="CharacterEllipsis" />
+                    </StackPanel>
+                </TabItem.Header>
+
+                <!-- Cabeçalho empilhado (título, descrição, botões em
+                     WrapPanel) em vez de Grid * / Auto: sem coluna Auto, não
+                     existe largura mínima que empurre o texto para fora. -->
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <Border Grid.Row="0" Style="{StaticResource ShieldCard}" Margin="0,0,0,12">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" MinWidth="0" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,12,0">
+                                <TextBlock Text="{Binding [RecoverySystemProtection], Source={x:Static services:LocalizationService.Instance}}" Style="{StaticResource ShieldSectionTitle}" />
+                                <TextBlock Text="{Binding [RecoverySystemProtectionDesc], Source={x:Static services:LocalizationService.Instance}}"
+                                           Style="{StaticResource ShieldSectionDesc}" Margin="0,2,0,0" MaxWidth="620" />
+                            </StackPanel>
+                            <WrapPanel Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Right">
+                                <Button Content="{Binding [RecoveryCreateRestorePoint], Source={x:Static services:LocalizationService.Instance}}" Command="{Binding Operations.CreateRestorePointCommand}"
+                                        Style="{StaticResource ShieldPrimaryBtn}" MinWidth="118" Margin="0,0,8,0" />
+                                <Button Content="rstrui.exe" Command="{Binding Operations.OpenWindowsRestoreCommand}"
+                                        Style="{StaticResource ShieldBtn}" MinWidth="98" />
+                            </WrapPanel>
+                        </Grid>
+                    </Border>
+
+                    <Border Grid.Row="1" Style="{StaticResource ShieldCard}">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Grid.Row="0" Text="{Binding [RecoveryRegisteredPoints], Source={x:Static services:LocalizationService.Instance}}" Style="{StaticResource ShieldLabel}" Margin="0,0,0,9" />
+
+                            <!-- Scroll é do DADO, não do layout: uma lista com
+                                 dezenas de pontos precisa rolar. O que não
+                                 pode rolar é a página nem a aba. -->
+                            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                                <ItemsControl ItemsSource="{Binding Operations.RestorePoints}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Style="{StaticResource ShieldSubCard}" Margin="0,0,0,7" Padding="11,9">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="Auto" />
+                                                        <ColumnDefinition Width="*" MinWidth="0" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <Path Grid.Column="0" Data="{StaticResource HistoryIcon}" Width="15" Height="15"
+                                                          Stretch="Uniform" Fill="{DynamicResource PrimaryBrush}"
+                                                          VerticalAlignment="Center" Margin="0,0,11,0" />
+                                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                        <TextBlock Text="{Binding Description}" FontSize="11.5" FontWeight="SemiBold"
+                                                                   Foreground="{DynamicResource DefaultTextBrush}"
+                                                                   TextTrimming="CharacterEllipsis" />
+                                                        <TextBlock FontSize="9.5" Margin="0,2,0,0"
+                                                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                                                   Text="{Binding CreatedAt, StringFormat=dd/MM/yyyy HH:mm}" />
+                                                    </StackPanel>
+                                                    <TextBlock Grid.Column="2" Text="{Binding Id}" FontSize="9" Opacity="0.5"
+                                                               VerticalAlignment="Center" MaxWidth="84"
+                                                               TextTrimming="CharacterEllipsis" />
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </ScrollViewer>
+
+                            <StackPanel Grid.Row="1" VerticalAlignment="Center" HorizontalAlignment="Center"
+                                        Visibility="{Binding Operations.RestorePoints.Count, Converter={StaticResource IntToVisibilityConverter}, ConverterParameter=Invert}">
+                                <Path Data="{StaticResource HistoryIcon}" Style="{StaticResource EmptyIcon}" />
+                                <TextBlock Text="{Binding [RecoveryNoRestorePoints], Source={x:Static services:LocalizationService.Instance}}"
+                                           Style="{StaticResource EmptyText}" />
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                </Grid>
+            </TabItem>
+
+            <!-- ==================== ABA 4 — BACKUPS ==================== -->
+            <TabItem Style="{StaticResource ShieldTabItem}" Tag="wide">
+                <TabItem.Header>
+                    <StackPanel Orientation="Horizontal">
+                        <Path Data="{StaticResource ServicesIcon}" Width="16" Height="16" Stretch="Uniform"
+                              Margin="0,0,9,0" VerticalAlignment="Center"
+                              Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type TabItem}}}" />
+                        <TextBlock x:Name="TabLabel4" Text="" VerticalAlignment="Center"
+                                   FontSize="{Binding FontSize, RelativeSource={RelativeSource AncestorType={x:Type TabItem}}}"
+                                   FontWeight="{Binding FontWeight, RelativeSource={RelativeSource AncestorType={x:Type TabItem}}}"
+                                   Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type TabItem}}}"
+                                   TextTrimming="CharacterEllipsis" />
+                    </StackPanel>
+                </TabItem.Header>
+
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <Border Grid.Row="0" Style="{StaticResource ShieldCard}" Margin="0,0,0,12">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" MinWidth="0" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,12,0">
+                                <TextBlock Text="{Binding [RecoverySystemBackups], Source={x:Static services:LocalizationService.Instance}}" Style="{StaticResource ShieldSectionTitle}" />
+                                <TextBlock Text="{Binding [RecoverySystemBackupsDesc], Source={x:Static services:LocalizationService.Instance}}"
+                                           Style="{StaticResource ShieldSectionDesc}" Margin="0,2,0,0" MaxWidth="620" />
+                            </StackPanel>
+                            <WrapPanel Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Right">
+                                <Button Content="{Binding [RecoveryCreateSnapshot], Source={x:Static services:LocalizationService.Instance}}" Command="{Binding Operations.CreateBackupCommand}"
+                                        Style="{StaticResource ShieldPrimaryBtn}" MinWidth="124" Margin="0,0,8,0" />
+                                <Button Content="{Binding [RecoveryExportDriverStore], Source={x:Static services:LocalizationService.Instance}}" Command="{Binding Operations.BackupDriversCommand}"
+                                        Style="{StaticResource ShieldBtn}" MinWidth="140" />
+                            </WrapPanel>
+                        </Grid>
+                    </Border>
+
+                    <Border Grid.Row="1" Style="{StaticResource ShieldCard}">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Grid.Row="0" Text="{Binding [RecoveryAvailableSnapshots], Source={x:Static services:LocalizationService.Instance}}" Style="{StaticResource ShieldLabel}" Margin="0,0,0,9" />
+
+                            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                                <ItemsControl ItemsSource="{Binding Operations.Backups}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Style="{StaticResource ShieldSubCard}" Margin="0,0,0,7" Padding="11,9">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="Auto" />
+                                                        <ColumnDefinition Width="*" MinWidth="0" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <Path Grid.Column="0" Data="{StaticResource ServicesIcon}" Width="15" Height="15"
+                                                          Stretch="Uniform" Fill="{DynamicResource PrimaryBrush}"
+                                                          VerticalAlignment="Center" Margin="0,0,11,0" />
+                                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                        <TextBlock Text="{Binding Label}" FontSize="11.5" FontWeight="SemiBold"
+                                                                   Foreground="{DynamicResource DefaultTextBrush}"
+                                                                   TextTrimming="CharacterEllipsis" />
+                                                        <StackPanel Orientation="Horizontal" Margin="0,3,0,0">
+                                                            <TextBlock Text="{Binding TimestampText}" FontSize="9.5"
+                                                                       Foreground="{DynamicResource TextSecondaryBrush}" />
+                                                            <TextBlock Text=" • " FontSize="9.5"
+                                                                       Foreground="{DynamicResource TextSecondaryBrush}" />
+                                                            <TextBlock Text="{Binding ItemCountText}" FontSize="9.5"
+                                                                       Foreground="{DynamicResource TextSecondaryBrush}" />
+                                                        </StackPanel>
+                                                    </StackPanel>
+                                                    <Button Grid.Column="2" Content="{Binding [RecoveryRestore], Source={x:Static services:LocalizationService.Instance}}"
+                                                            Command="{Binding Operations.RestoreBackupCommand}"
+                                                            CommandParameter="{Binding}" VerticalAlignment="Center"
+                                                            Style="{StaticResource ShieldBtn}" MinWidth="96" />
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </ScrollViewer>
+
+                            <StackPanel Grid.Row="1" VerticalAlignment="Center" HorizontalAlignment="Center"
+                                        Visibility="{Binding Operations.Backups.Count, Converter={StaticResource IntToVisibilityConverter}, ConverterParameter=Invert}">
+                                <Path Data="{StaticResource ServicesIcon}" Style="{StaticResource EmptyIcon}" />
+                                <TextBlock Text="{Binding [RecoveryNoSnapshots], Source={x:Static services:LocalizationService.Instance}}"
+                                           Style="{StaticResource EmptyText}" />
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                </Grid>
+            </TabItem>
+
+            <!-- ==================== ABA 5 — HISTÓRICO ==================== -->
+            <TabItem Style="{StaticResource ShieldTabItem}" Tag="wide">
+                <TabItem.Header>
+                    <StackPanel Orientation="Horizontal">
+                        <Path Data="{StaticResource LogsIcon}" Width="16" Height="16" Stretch="Uniform"
+                              Margin="0,0,9,0" VerticalAlignment="Center"
+                              Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type TabItem}}}" />
+                        <TextBlock x:Name="TabLabel5" Text="" VerticalAlignment="Center"
+                                   FontSize="{Binding FontSize, RelativeSource={RelativeSource AncestorType={x:Type TabItem}}}"
+                                   FontWeight="{Binding FontWeight, RelativeSource={RelativeSource AncestorType={x:Type TabItem}}}"
+                                   Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type TabItem}}}"
+                                   TextTrimming="CharacterEllipsis" />
+                    </StackPanel>
+                </TabItem.Header>
+
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <Border Grid.Row="0" Style="{StaticResource ShieldCard}" Margin="0,0,0,12">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" MinWidth="0" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,12,0">
+                                <TextBlock Text="{Binding [RecoveryRecentOperations], Source={x:Static services:LocalizationService.Instance}}" Style="{StaticResource ShieldSectionTitle}" />
+                                <TextBlock Text="{Binding [RecoveryHistoryDesc], Source={x:Static services:LocalizationService.Instance}}"
+                                           Style="{StaticResource ShieldSectionDesc}" Margin="0,2,0,0" MaxWidth="620" />
+                            </StackPanel>
+                            <Button Grid.Column="1" Content="{Binding [RecoveryReloadBtn], Source={x:Static services:LocalizationService.Instance}}" Command="{Binding Operations.RefreshHistoryCommand}"
+                                    Style="{StaticResource ShieldBtn}" MinWidth="98" VerticalAlignment="Center"
+                                    HorizontalAlignment="Right" />
+                        </Grid>
+                    </Border>
+
+                    <Border Grid.Row="1" Style="{StaticResource ShieldCard}">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Grid.Row="0" Text="{Binding [RecoveryRecords], Source={x:Static services:LocalizationService.Instance}}" Style="{StaticResource ShieldLabel}" Margin="0,0,0,9" />
+
+                            <DataGrid Grid.Row="1" ItemsSource="{Binding Operations.History}" AutoGenerateColumns="False"
+                                      IsReadOnly="True" CanUserAddRows="False" HeadersVisibility="Column"
+                                      GridLinesVisibility="None" RowHeaderWidth="0" Background="Transparent"
+                                      BorderThickness="0" RowHeight="30" EnableRowVirtualization="True"
+                                      Foreground="{DynamicResource DefaultTextBrush}"
+                                      CellStyle="{StaticResource ShieldGridCell}"
+                                      RowStyle="{StaticResource ShieldGridRow}"
+                                      ColumnHeaderStyle="{StaticResource ShieldGridHeader}"
+                                      SelectionMode="Single" SelectionUnit="FullRow"
+                                      HorizontalGridLinesBrush="Transparent">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="{Binding [RecoveryColDateTime], Source={x:Static services:LocalizationService.Instance}}" Binding="{Binding TimestampText}"
+                                                        Width="Auto" ElementStyle="{StaticResource ShieldGridText}" />
+                                    <DataGridTemplateColumn Header="{Binding [RecoveryColAction], Source={x:Static services:LocalizationService.Instance}}" Width="*" MinWidth="96">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding ActionType}" FontSize="11"
+                                                           TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                    <DataGridTemplateColumn Header="{Binding [RecoveryColDescription], Source={x:Static services:LocalizationService.Instance}}" Width="2*" MinWidth="150">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding Description}" FontSize="10.5"
+                                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                                           TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                    <DataGridTextColumn Header="{Binding [RecoveryColDuration], Source={x:Static services:LocalizationService.Instance}}" Binding="{Binding DurationText}"
+                                                        Width="Auto" ElementStyle="{StaticResource ShieldGridText}" />
+                                    <DataGridTextColumn Header="{Binding [Result], Source={x:Static services:LocalizationService.Instance}}" Binding="{Binding ResultText}"
+                                                        Width="Auto" ElementStyle="{StaticResource ShieldGridText}" />
+                                </DataGrid.Columns>
+                            </DataGrid>
+
+                            <StackPanel Grid.Row="1" VerticalAlignment="Center" HorizontalAlignment="Center"
+                                        Visibility="{Binding Operations.History.Count, Converter={StaticResource IntToVisibilityConverter}, ConverterParameter=Invert}">
+                                <Path Data="{StaticResource LogsIcon}" Style="{StaticResource EmptyIcon}" />
+                                <TextBlock Text="{Binding [RecoveryNoOperations], Source={x:Static services:LocalizationService.Instance}}"
+                                           Style="{StaticResource EmptyText}" />
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                </Grid>
+            </TabItem>
+        </TabControl>
+    </Grid>
+</UserControl>

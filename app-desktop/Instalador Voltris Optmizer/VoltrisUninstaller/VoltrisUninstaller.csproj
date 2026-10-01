@@ -1,0 +1,50 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <UseWPF>true</UseWPF>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <AssemblyName>uninstall</AssemblyName>
+    <RootNamespace>VoltrisUninstaller</RootNamespace>
+    <Version>1.0.2.5</Version>
+    <Authors>Voltris Corporation</Authors>
+    <Company>Voltris Corporation</Company>
+    <Product>Voltris Optimizer Uninstaller</Product>
+    <Description>Desinstalador profissional do Voltris Optimizer</Description>
+    <Copyright>Copyright © VOLTRIS 2025</Copyright>
+    <ApplicationIcon>..\VoltrisOptimizerInstaller\favicon.ico</ApplicationIcon>
+    <!-- Publicação self-contained single-file -->
+    <PublishSingleFile>true</PublishSingleFile>
+    <SelfContained>true</SelfContained>
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+    <PublishReadyToRun>false</PublishReadyToRun>
+    <RuntimeIdentifiers>win-x86;win-x64</RuntimeIdentifiers>
+    <EnableDefaultEmbeddedResourceItems>false</EnableDefaultEmbeddedResourceItems>
+    <StartupObject>VoltrisUninstaller.Program</StartupObject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="8.0.0" />
+    <PackageReference Include="Serilog" Version="4.0.0" />
+    <PackageReference Include="Serilog.Sinks.File" Version="5.0.0" />
+    <PackageReference Include="Serilog.Sinks.Console" Version="5.0.0" />
+    <PackageReference Include="Serilog.Extensions.Logging" Version="8.0.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="System.Management" Version="8.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Images\**\*" />
+  </ItemGroup>
+
+  <!-- Copiar imagem do instalador -->
+  <ItemGroup>
+    <Resource Include="..\..\Images\voltris.png">
+      <Link>Images\voltris.png</Link>
+    </Resource>
+  </ItemGroup>
+
+</Project>

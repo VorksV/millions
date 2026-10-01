@@ -1,0 +1,215 @@
+<UserControl xmlns:services="clr-namespace:VoltrisOptimizer.Services" x:Class="VoltrisOptimizer.UI.Views.GamerDiagnosticsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:vm="clr-namespace:VoltrisOptimizer.UI.ViewModels"
+             xmlns:models="clr-namespace:VoltrisOptimizer.Services.Gamer.Diagnostics.Models;assembly=VoltrisOptimizer"
+             mc:Ignorable="d" 
+             d:DesignHeight="800" d:DesignWidth="1200">
+    <!-- DataContext será definido via code-behind -->
+    
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Cabeçalho -->
+        <Border Grid.Row="0" Background="{DynamicResource DarkPanelBrush}" CornerRadius="5" Padding="15" Margin="0,0,0,10">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                
+                <StackPanel Grid.Column="0">
+                    <TextBlock Text="{Binding [Loc_GamerModeDiagnosticsBeta], Source={x:Static services:LocalizationService.Instance}}" 
+                               FontSize="20" FontWeight="Bold" Foreground="{DynamicResource TextPrimary}" Margin="0,0,0,5"/>
+                    <TextBlock Text="{Binding [Loc_RealtimeMonitoringOfVoltrisInternal], Source={x:Static services:LocalizationService.Instance}}" 
+                               FontSize="12" Foreground="#CCCCCC"/>
+                </StackPanel>
+                
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button Content="{Binding [Loc_ExportReport], Source={x:Static services:LocalizationService.Instance}}" 
+                            Command="{Binding ExportReportCommand}" 
+                            Margin="5" Padding="10,5"/>
+                    <Button Content="{Binding [Loc_ClearHistory], Source={x:Static services:LocalizationService.Instance}}" 
+                            Command="{Binding ClearHistoryCommand}" 
+                            Margin="5" Padding="10,5"/>
+                    <CheckBox Content="{Binding [Loc_DeveloperMode], Source={x:Static services:LocalizationService.Instance}}" 
+                              IsChecked="{Binding IsDeveloperModeEnabled}" 
+                              Margin="5" VerticalAlignment="Center" Foreground="{DynamicResource TextPrimary}"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Conteúdo Principal -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <!-- Métricas Gerais -->
+                <Border Grid.Row="0" Background="{DynamicResource DarkPanelAltBrush}" CornerRadius="5" Padding="15" Margin="0,0,0,10">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0" Margin="10">
+                            <TextBlock Text="{Binding [Loc_TotalCpu], Source={x:Static services:LocalizationService.Instance}}" FontSize="11" Foreground="#AAAAAA" Margin="0,0,0,5"/>
+                            <TextBlock Text="{Binding TotalCpuUsage, StringFormat='{}{0:F1}%'}" 
+                                       FontSize="18" FontWeight="Bold" Foreground="{DynamicResource TextPrimary}"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="1" Margin="10">
+                            <TextBlock Text="{Binding [Loc_GpuOverlay], Source={x:Static services:LocalizationService.Instance}}" FontSize="11" Foreground="#AAAAAA" Margin="0,0,0,5"/>
+                            <TextBlock Text="{Binding OverlayGpuUsage, StringFormat='{}{0:F1}%'}" 
+                                       FontSize="18" FontWeight="Bold" Foreground="{DynamicResource TextPrimary}"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="2" Margin="10">
+                            <TextBlock Text="{Binding [Loc_LoopOrchestrator], Source={x:Static services:LocalizationService.Instance}}" FontSize="11" Foreground="#AAAAAA" Margin="0,0,0,5"/>
+                            <TextBlock Text="{Binding OrchestratorLoopTime, StringFormat='{}{0:F2}ms'}" 
+                                       FontSize="18" FontWeight="Bold" Foreground="{DynamicResource TextPrimary}"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="3" Margin="10">
+                            <TextBlock Text="{Binding [Loc_InternalLatency], Source={x:Static services:LocalizationService.Instance}}" FontSize="11" Foreground="#AAAAAA" Margin="0,0,0,5"/>
+                            <TextBlock Text="{Binding InternalLatency, StringFormat='{}{0:F2}ms'}" 
+                                       FontSize="18" FontWeight="Bold" Foreground="{DynamicResource TextPrimary}"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="4" Margin="10">
+                            <TextBlock Text="{Binding [Loc_CriticalAnomalies], Source={x:Static services:LocalizationService.Instance}}" FontSize="11" Foreground="#AAAAAA" Margin="0,0,0,5"/>
+                            <TextBlock Text="{Binding CriticalAnomalies}" 
+                                       FontSize="18" FontWeight="Bold" 
+                                       Foreground="{Binding CriticalAnomalies, Converter={StaticResource AnomalyColorConverter}}"/>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <!-- Heatmap de Módulos -->
+                <Border Grid.Row="1" Background="{DynamicResource DarkPanelAltBrush}" CornerRadius="5" Padding="15" Margin="0,0,0,10">
+                    <StackPanel>
+                        <TextBlock Text="{Binding [Loc_ModuleExecutionHeatmap], Source={x:Static services:LocalizationService.Instance}}" 
+                                   FontSize="16" FontWeight="Bold" Foreground="{DynamicResource TextPrimary}" Margin="0,0,0,10"/>
+                        
+                        <ItemsControl ItemsSource="{Binding ModuleStatistics}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Background="{DynamicResource DarkPanelBrush}" CornerRadius="3" Padding="10" Margin="0,0,0,5">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="200"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="100"/>
+                                                <ColumnDefinition Width="100"/>
+                                                <ColumnDefinition Width="100"/>
+                                            </Grid.ColumnDefinitions>
+
+                                            <TextBlock Grid.Column="0" Text="{Binding ModuleName}" 
+                                                       Foreground="{DynamicResource TextPrimary}" FontWeight="Bold" VerticalAlignment="Center"/>
+                                            
+                                            <!-- Barra de progresso para tempo de execução -->
+                                            <Grid Grid.Column="1" Margin="10,0">
+                                                <ProgressBar Value="{Binding AverageExecutionTime, Mode=OneWay}" 
+                                                             Maximum="10" 
+                                                             Height="20"
+                                                             Background="{DynamicResource DarkBorderBrush}"
+                                                             Foreground="{Binding AverageExecutionTime, Converter={StaticResource ExecutionTimeColorConverter}}"/>
+                                                <TextBlock Text="{Binding AverageExecutionTime, StringFormat='{}{0:F2}ms'}" 
+                                                           HorizontalAlignment="Center" 
+                                                           VerticalAlignment="Center" 
+                                                           Foreground="{DynamicResource TextPrimary}" 
+                                                           FontSize="10"/>
+                                            </Grid>
+
+                                            <TextBlock Grid.Column="2" 
+                                                       Text="{Binding CpuUsage, StringFormat='CPU: {0:F1}%'}" 
+                                                       Foreground="#AAAAAA" 
+                                                       VerticalAlignment="Center" 
+                                                       FontSize="11"/>
+                                            
+                                            <TextBlock Grid.Column="3" 
+                                                       Text="{Binding ThreadBlocks, StringFormat='Blocks: {0}'}" 
+                                                       Foreground="#AAAAAA" 
+                                                       VerticalAlignment="Center" 
+                                                       FontSize="11"/>
+                                            
+                                            <TextBlock Grid.Column="4" 
+                                                       Text="{Binding ExecutionsAboveThreshold, StringFormat='Picos: {0}'}" 
+                                                       Foreground="#FF6B6B" 
+                                                       VerticalAlignment="Center" 
+                                                       FontSize="11"/>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
+
+                <!-- Gráfico do Loop do Orchestrator -->
+                <Border Grid.Row="2" Background="{DynamicResource DarkPanelAltBrush}" CornerRadius="5" Padding="15" Margin="0,0,0,10">
+                    <StackPanel>
+                        <TextBlock Text="{Binding [Loc_OrchestratorExecutionTimeline], Source={x:Static services:LocalizationService.Instance}}" 
+                                   FontSize="16" FontWeight="Bold" Foreground="{DynamicResource TextPrimary}" Margin="0,0,0,10"/>
+                        
+                        <!-- Gráfico simplificado usando Canvas -->
+                        <Border Background="{DynamicResource DarkPanelBrush}" Height="150" CornerRadius="3">
+                            <Canvas x:Name="OrchestratorChart" ClipToBounds="True">
+                                <!-- Linha de threshold -->
+                                <Line X1="0" Y1="100" X2="1000" Y2="100" 
+                                      Stroke="#FF6B6B" StrokeThickness="1" StrokeDashArray="5,5" Opacity="0.5"/>
+                                <TextBlock Canvas.Left="5" Canvas.Top="95" Text="{Binding [Loc_10ms], Source={x:Static services:LocalizationService.Instance}}" FontSize="10" Foreground="#FF6B6B"/>
+                            </Canvas>
+                        </Border>
+                    </StackPanel>
+                </Border>
+
+                <!-- Tabela de Anomalias -->
+                <Border Grid.Row="3" Background="{DynamicResource DarkPanelAltBrush}" CornerRadius="5" Padding="15">
+                    <StackPanel>
+                        <TextBlock Text="{Binding [Loc_EventsAndAnomaliesDetected], Source={x:Static services:LocalizationService.Instance}}" 
+                                   FontSize="16" FontWeight="Bold" Foreground="{DynamicResource TextPrimary}" Margin="0,0,0,10"/>
+                        
+                        <DataGrid ItemsSource="{Binding Anomalies}" 
+                                  AutoGenerateColumns="False" 
+                                  IsReadOnly="True"
+                                  Background="{DynamicResource DarkPanelBrush}"
+                                  Foreground="{DynamicResource TextPrimaryBrush}"
+                                  GridLinesVisibility="None"
+                                  HeadersVisibility="Column"
+                                  MaxHeight="300">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="{Binding [Loc_TimestampHeader], Source={x:Static services:LocalizationService.Instance}}" Binding="{Binding Timestamp, StringFormat='{}{0:HH:mm:ss}'}" Width="100"/>
+                                <DataGridTextColumn Header="{Binding [Loc_Module], Source={x:Static services:LocalizationService.Instance}}" Binding="{Binding ModuleName}" Width="200"/>
+                                <DataGridTextColumn Header="{Binding [Loc_TypeHeader], Source={x:Static services:LocalizationService.Instance}}" Binding="{Binding Type}" Width="200"/>
+                                <DataGridTextColumn Header="{Binding [Loc_SeverityHeader], Source={x:Static services:LocalizationService.Instance}}" Binding="{Binding Severity}" Width="100">
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="{Binding Severity, Converter={StaticResource SeverityColorConverter}}"/>
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+                                <DataGridTextColumn Header="{Binding [Loc_MessageHeader], Source={x:Static services:LocalizationService.Instance}}" Binding="{Binding Message}" Width="*"/>
+                                <DataGridTextColumn Header="{Binding [Loc_Recommendation_2], Source={x:Static services:LocalizationService.Instance}}" Binding="{Binding Recommendation}" Width="300"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </ScrollViewer>
+    </Grid>
+</UserControl>
+

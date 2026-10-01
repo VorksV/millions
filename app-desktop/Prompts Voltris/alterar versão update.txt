@@ -1,0 +1,13 @@
+AssemblyInfo.cs
+VersionInfo.cs
+AutoUpdateService.cs
+VersionService.cs
+ModernTrayMenu.xaml.cs
+MainWindow.xaml.cs
+app.manifest
+VoltrisOptimizer.csproj
+VoltrisUpdater.csproj
+VoltrisOptimizerInstaller.csproj
+VoltrisUninstaller.csproj
+update.json
+version.json

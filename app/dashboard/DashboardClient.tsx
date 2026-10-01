@@ -1,15 +1,11 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import Head from 'next/head';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-hot-toast';
 import Link from 'next/link';
-import {
-  FiPackage, FiClock, FiCheckCircle, FiRefreshCw, FiPlus,
-  FiActivity, FiAlertTriangle, FiSearch, FiCopy, FiExternalLink, FiCpu, FiShield,
-  FiMonitor, FiDownload, FiCreditCard, FiRotateCcw, FiX
-} from 'react-icons/fi';
+import VoltrisIcon, { type VoltrisIconName } from '@/components/dashboard/VoltrisIcon';
+import VoltrisIconTile, { DASHBOARD_ACCENT } from '@/components/dashboard/VoltrisIconTile';
 
 import type { Order } from '@/types/order';
 import { createClient } from '@/utils/supabase/client';
@@ -23,68 +19,40 @@ import { useDashboard } from '@/app/context/DashboardContext';
 import { notifyPageView } from '@/utils/notifications';
 
 
-// Componente de Card de Estatística Ultra-Moderno
-const StatCard = ({ title, value, icon: Icon, color, delay }: any) => {
+// Componente de Card de Estatística - Estilo Executivo
+const StatCard = ({ title, value, icon, delay, description }: {
+  title: string;
+  value: number;
+  icon: VoltrisIconName;
+  delay: number;
+  description?: string;
+}) => {
   const { transparencyMode } = useDashboard();
-
-  const colors: any = {
-    blue: 'from-[#31A8FF] to-[#1070FF]',
-    purple: 'from-[#8B31FF] to-[#6010FF]',
-    green: 'from-[#00FF88] to-[#00CC6A]',
-    pink: 'from-[#FF4B6B] to-[#FF2244]',
-  };
-
-  const glowColors: any = {
-    blue: 'rgba(49,168,255,0.4)',
-    purple: 'rgba(139,49,255,0.4)',
-    green: 'rgba(0,255,136,0.4)',
-    pink: 'rgba(255,75,107,0.4)',
-  };
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 30 }}
+      initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6, delay, type: "spring", stiffness: 100 }}
-      className={`relative group overflow-hidden p-5 sm:p-6 rounded-[2rem] sm:rounded-[2.5rem] border transition-all duration-500
-        ${transparencyMode ? 'voltris-glass' : 'bg-[#12121A] border-white/5 shadow-xl'}
-        hover:border-white/10 hover:-translate-y-2
+      transition={{ duration: 0.4, delay, ease: "easeOut" }}
+      className={`relative group p-5 sm:p-6 rounded-2xl border transition-all duration-200
+        ${transparencyMode ? 'voltris-glass' : 'bg-slate-900/50 border-slate-800/80 shadow-sm'}
+        hover:border-slate-700 hover:bg-slate-900/80
       `}
     >
-      <div className={`absolute -right-10 -top-10 w-40 h-40 bg-gradient-to-br ${colors[color]} opacity-5 blur-[60px] group-hover:opacity-15 transition-all duration-700`}></div>
-
-      <div className="relative z-10 flex flex-col h-full justify-center gap-4 sm:gap-6">
-        <div className="flex justify-between items-start">
-          <div className={`p-3 sm:p-4 rounded-2xl bg-gradient-to-br ${colors[color]} shadow-lg flex items-center justify-center text-white relative`}>
-            <Icon className="w-5 h-5 sm:w-6 sm:h-6" />
-            <div className={`absolute inset-0 rounded-2xl blur-lg opacity-40 bg-gradient-to-br ${colors[color]}`}></div>
-          </div>
-          <div className="flex flex-col items-end">
-            <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 mb-1">Status</span>
-            <div className="flex items-center gap-1.5">
-              <div className={`w-1.5 h-1.5 rounded-full animate-pulse bg-gradient-to-r ${colors[color]}`}></div>
-              <span className="text-[9px] sm:text-[10px] font-bold text-gray-700 uppercase tracking-widest leading-none">SINCRONIZADO</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="space-y-1">
-          <p className="text-gray-400 text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] mb-1">{title}</p>
-          <div className="flex items-baseline gap-2">
-            <h3 className="text-3xl sm:text-4xl font-black text-white tracking-tighter">{value}</h3>
-          </div>
-        </div>
-
-        {/* Decorative Progress Line */}
-        <div className="relative h-1 w-full bg-gray-200 rounded-full overflow-hidden mt-2">
-          <motion.div
-            initial={{ width: 0 }}
-            animate={{ width: '100%' }}
-            transition={{ duration: 1.5, delay: delay + 0.3 }}
-            className={`absolute inset-y-0 left-0 bg-gradient-to-r ${colors[color]}`}
-          />
+      <div className="flex items-center justify-between gap-4 mb-4">
+        <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">{title}</span>
+        <VoltrisIconTile icon={icon} accent={DASHBOARD_ACCENT.brand} size={9} />
+      </div>
+      <div className="flex items-baseline justify-between">
+        <h3 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">{value}</h3>
+        <div className="flex items-center gap-1.5">
+          <div className="w-1.5 h-1.5 rounded-full bg-emerald-400"></div>
+          <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Ativo</span>
         </div>
       </div>
+      {description && (
+        <p className="text-[11px] font-medium text-slate-500 mt-2">{description}</p>
+      )}
     </motion.div>
   );
 };
@@ -282,58 +250,66 @@ function DashboardContent() {
           </div>
         </div>
       ) : (
-        <div className="flex flex-col gap-8 w-full max-w-full min-h-screen">
-          {/* Dashboard Header - Premium UI */}
-          <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 text-center lg:text-left">
-            <div className="space-y-1.5 flex-1 min-w-0 flex flex-col items-center lg:items-start w-full">
-              <div className="flex flex-col lg:flex-row items-center gap-2 sm:gap-3">
-                <h2 className="text-lg xs:text-xl sm:text-2xl lg:text-3xl font-black text-white tracking-tighter uppercase italic leading-none break-words">Centro de <span className="text-[#31A8FF] not-italic">Painel</span></h2>
+        <div className="flex flex-col gap-6 w-full max-w-full h-full min-h-0">
+          {/* Dashboard Header - Executive Style */}
+          <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-800/60">
+            <div className="space-y-1">
+              <div className="flex items-center gap-3 flex-wrap">
+                <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+                  Painel de Controle
+                </h2>
 
                 {/* Hardware ID Protection Status Badge */}
-                <div className={`flex items-center gap-2 px-3 py-1 rounded-full border backdrop-blur-md transition-all duration-500
+                <div className={`inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full text-[11px] font-medium border transition-colors
                  ${hardwareIDProtection
                     ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
-                    : 'bg-red-500/10 border-red-500/20 text-red-400'}
+                    : 'bg-rose-500/10 border-rose-500/20 text-rose-400'}
                `}>
-                  <div className={`w-1.5 h-1.5 rounded-full animate-pulse shadow-lg
-                   ${hardwareIDProtection ? 'bg-emerald-400 shadow-emerald-500/50' : 'bg-red-400 shadow-red-500/50'}
-                 `}></div>
-                  <span className="text-[9px] font-black uppercase tracking-widest leading-none">
-                    PROT HID: {hardwareIDProtection ? 'ATIVA' : 'OFFLINE'}
+                  <div className={`w-1.5 h-1.5 rounded-full ${hardwareIDProtection ? 'bg-emerald-400' : 'bg-rose-400'}`}></div>
+                  <span>
+                    Proteção HID: {hardwareIDProtection ? 'Ativa' : 'Offline'}
                   </span>
                 </div>
               </div>
-              <p className="text-gray-500 font-bold text-[8px] xs:text-[10px] sm:text-xs tracking-wide uppercase px-2 lg:px-0 opacity-80 line-clamp-1">Operação tática disponível para <span className="text-[#8B31FF]">{profile?.full_name?.toUpperCase() || 'USUÁRIO'}</span></p>
+              <p className="text-slate-400 text-xs font-normal">
+                Bem-vindo de volta, <span className="text-slate-200 font-medium">{profile?.full_name || user?.email?.split('@')[0] || 'Usuário'}</span>
+              </p>
             </div>
 
-            <div className="flex items-center justify-center lg:justify-end gap-3 px-4 lg:px-0">
+            <div className="flex items-center gap-2.5">
+              <Link 
+                href="/" 
+                className="px-3 py-2 rounded-xl border border-slate-800 bg-slate-900/60 hover:bg-slate-800 hover:border-slate-700 transition-all text-xs font-medium text-slate-300 hover:text-white flex items-center gap-1.5 shadow-sm"
+              >
+                <VoltrisIcon name="arrowLeft" size={14} className="text-slate-400" />
+                <span>Voltar ao Site</span>
+              </Link>
               <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
                 onClick={() => {
                   setIsRefreshing(true);
                   fetchData(false)
                     .then(() => toast.success('Dados atualizados!'))
                     .finally(() => setIsRefreshing(false));
                 }}
-                className={`p-4 rounded-2xl bg-[#12121A] border border-white/5 text-gray-400 hover:text-white hover:bg-white/5 transition-all ${isRefreshing ? 'opacity-50' : ''}`}
+                className={`p-2.5 rounded-xl bg-slate-900/60 border border-slate-800 text-slate-400 hover:text-white hover:bg-slate-800 transition-all ${isRefreshing ? 'opacity-50' : ''}`}
+                title="Atualizar dados"
               >
-                <FiRefreshCw className={`w-5 h-5 ${isRefreshing ? 'animate-spin' : ''}`} />
+                <VoltrisIcon name="processing" size={16} className={isRefreshing ? 'animate-spin' : ''} />
               </motion.button>
-              <Link href="/servicos" className="flex-1 lg:flex-none">
+              <Link href="/servicos">
                 <motion.button
-                  whileHover={{ scale: 1.05, boxShadow: "0 0 30px rgba(49, 168, 255, 0.3)" }}
-                  whileTap={{ scale: 0.95 }}
-                  className="w-full flex items-center justify-center gap-3 px-8 py-4 bg-gradient-to-r from-[#31A8FF] via-[#8B31FF] to-[#FF4B6B] text-white font-black uppercase italic tracking-[0.15em] rounded-2xl shadow-2xl text-xs"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs rounded-xl shadow-md shadow-indigo-600/20 transition-colors"
                 >
-                  <FiPlus className="w-4 h-4" />
+                  <VoltrisIcon name="plus" size={16} />
                   <span>Novo Pedido</span>
                 </motion.button>
               </Link>
             </div>
           </header>
-
-          {/* Tabs Horizontais Removidas - Navegação unificada na Sidebar lateral inspirada no Restaurante */}
 
           {/* Tab Content Rendering */}
           <div className="flex-1 min-h-0 relative">
@@ -341,57 +317,67 @@ function DashboardContent() {
               {activeTab === 'overview' && (
                 <motion.div
                   key="overview"
-                  initial={{ opacity: 0, scale: 0.98 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.98 }}
-                  className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.2 }}
+                  className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"
                 >
-                  <StatCard title="Serviços Adquiridos" value={stats.totalOrders} icon={FiPackage} color="blue" delay={0.1} />
-                  <StatCard title="Licenças Disponíveis" value={stats.activeLicenses} icon={FiCheckCircle} color="purple" delay={0.2} />
-                  <StatCard title="Computadores Vinculados" value={stats.computers} icon={FiMonitor} color="green" delay={0.3} />
-                  {/* Tactical Billboard */}
-                  <div className={`md:col-span-2 lg:col-span-3 p-6 sm:p-10 rounded-[2rem] sm:rounded-[3rem] border border-white/5 relative overflow-hidden group ${transparencyMode ? 'voltris-glass' : 'bg-[#12121A] shadow-xl'}`}>
-                    <div className="absolute inset-0 bg-gradient-to-r from-[#31A8FF]/10 via-transparent to-[#8B31FF]/10 opacity-30"></div>
-                    <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-6 sm:gap-10 text-center lg:text-left">
-                      <div className="space-y-4">
-                        <div className="p-3 bg-white/5 border border-white/10 rounded-2xl w-fit mx-auto lg:mx-0">
-                          <FiDownload className="w-8 h-8 text-[#31A8FF]" />
-                        </div>
-                        <h2 className="text-xl sm:text-2xl lg:text-4xl font-black text-white italic uppercase tracking-tighter">Performance Máxima <span className="text-[#31A8FF] not-italic">Liberada</span></h2>
-                        <p className="text-gray-500 font-bold text-[10px] sm:text-sm max-w-xl uppercase tracking-widest leading-relaxed">Baixe o Voltris Optimizer agora para aplicar os ajustes de hardware e eliminar o input lag em segundos.</p>
+                  <StatCard title="Serviços Adquiridos" value={stats.totalOrders} icon="package" delay={0.05} description="Total de pedidos e serviços" />
+                  <StatCard title="Licenças Ativas" value={stats.activeLicenses} icon="success" delay={0.1} description="Disponíveis para uso imediato" />
+                  <StatCard title="Computadores Vinculados" value={stats.computers} icon="display" delay={0.15} description="Máquinas com uplink ativo" />
+                  
+                  {/* Action Cards Grid */}
+                  <div className="md:col-span-2 lg:col-span-3 grid grid-cols-1 lg:grid-cols-2 gap-5 mt-2">
+                    
+                    {/* App Download Card */}
+                    <div className={`p-6 sm:p-7 rounded-2xl border transition-all ${transparencyMode ? 'voltris-glass' : 'bg-slate-900/40 border-slate-800/80'} flex flex-col justify-between gap-6`}>
+                      <div className="space-y-3">
+                        <VoltrisIconTile icon="download" accent={DASHBOARD_ACCENT.brand} size={10} />
+                        <h3 className="text-lg font-bold text-white tracking-tight">Voltris Optimizer Desktop</h3>
+                        <p className="text-slate-400 text-xs leading-relaxed">
+                          Baixe o aplicativo para aplicar otimizações de baixa latência, telemetria de hardware e gerenciamento de comandos remotos.
+                        </p>
                       </div>
-                      <Link href="/voltrisoptimizer" className="w-full sm:w-auto px-8 py-4 sm:px-10 sm:py-5 bg-white text-black font-black uppercase italic text-[10px] sm:text-xs rounded-2xl hover:scale-105 transition-all shadow-2xl tracking-widest text-center">
-                        Baixar Voltris Optimizer
-                      </Link>
+                      <div className="pt-2">
+                        <Link href="/voltrisoptimizer" className="inline-flex items-center gap-2 px-4 py-2.5 bg-white hover:bg-slate-100 text-slate-950 font-semibold text-xs rounded-xl transition-all shadow-sm">
+                          <VoltrisIcon name="download" size={16} />
+                          <span>Baixar Voltris Optimizer</span>
+                        </Link>
+                      </div>
                     </div>
-                  </div>
 
-                  {/* Billing & Subscription Hub */}
-                  <div className={`md:col-span-2 lg:col-span-3 p-6 sm:p-10 rounded-[2rem] sm:rounded-[3rem] border border-white/5 relative overflow-hidden group ${transparencyMode ? 'voltris-glass' : 'bg-[#12121A] shadow-xl'}`}>
-                    <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/5 via-transparent to-blue-500/5 opacity-30"></div>
-                    <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-6 sm:gap-10 text-center lg:text-left">
-                      <div className="space-y-4">
-                        <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl w-fit mx-auto lg:mx-0">
-                          <FiCreditCard className="w-8 h-8 text-emerald-500" />
-                        </div>
-                        <h2 className="text-xl sm:text-2xl lg:text-4xl font-black text-white italic uppercase tracking-tighter">Centro de <span className="text-emerald-500 not-italic">Faturamento</span></h2>
-                        <p className="text-gray-500 font-bold text-[10px] sm:text-sm max-w-xl uppercase tracking-widest leading-relaxed">Gerencie suas assinaturas, cancele renovações automáticas ou solicite reembolsos dentro do prazo de garantia.</p>
+                    {/* Billing Hub Card */}
+                    <div className={`p-6 sm:p-7 rounded-2xl border transition-all ${transparencyMode ? 'voltris-glass' : 'bg-slate-900/40 border-slate-800/80'} flex flex-col justify-between gap-6`}>
+                      <div className="space-y-3">
+                        <VoltrisIconTile icon="creditCard" accent={DASHBOARD_ACCENT.brand} size={10} />
+                        <h3 className="text-lg font-bold text-white tracking-tight">Faturamento & Assinatura</h3>
+                        <p className="text-slate-400 text-xs leading-relaxed">
+                          Gerencie seus métodos de pagamento, acesse faturas da Stripe, cancele renovações automáticas ou solicite reembolso de garantia.
+                        </p>
                       </div>
-                      <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+                      <div className="flex flex-wrap items-center gap-3 pt-2">
+                        <button
+                          onClick={handleManageBilling}
+                          className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-medium text-xs rounded-xl transition-all flex items-center gap-2"
+                        >
+                          <VoltrisIcon name="externalLink" size={14} /> Portal Stripe
+                        </button>
                         <button
                           onClick={() => setIsCancelModalOpen(true)}
-                          className="px-8 py-4 bg-gray-900 text-white font-black uppercase italic text-[10px] sm:text-xs rounded-2xl hover:scale-105 transition-all shadow-2xl tracking-widest"
+                          className="px-4 py-2.5 bg-slate-900/60 hover:bg-slate-800 border border-slate-800 text-slate-300 font-medium text-xs rounded-xl transition-all"
                         >
                           Cancelar Renovação
                         </button>
                         <button
                           onClick={handleRequestRefund}
-                          className="px-8 py-4 bg-[#12121A] border border-white/10 text-white font-black uppercase italic text-[10px] sm:text-xs rounded-2xl hover:bg-white/5 transition-all tracking-widest"
+                          className="px-4 py-2.5 bg-rose-500/10 hover:bg-rose-500/15 border border-rose-500/20 text-rose-400 font-medium text-xs rounded-xl transition-all"
                         >
-                          Solicitar Reembolso
+                          Reembolso (7 Dias)
                         </button>
                       </div>
                     </div>
+
                   </div>
                 </motion.div>
               )}
@@ -399,128 +385,120 @@ function DashboardContent() {
               {activeTab === 'licenses' && (
                 <motion.div
                   key="licenses"
-                  initial={{ opacity: 0, y: 30 }}
+                  initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 30 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.2 }}
                   className="space-y-6"
                 >
-                  {/* Urgent Warning with Integrated Billing Actions */}
-                  <div className="flex flex-col gap-4 p-6 sm:p-8 rounded-[2rem] bg-amber-50 border border-amber-200 shadow-lg">
-                    <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
-                      <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-amber-100 flex items-center justify-center text-amber-600 shrink-0">
-                        <FiAlertTriangle className="w-6 h-6 sm:w-7 sm:h-7" />
-                      </div>
+                  {/* Warning & Billing Actions Banner */}
+                  <div className="flex flex-col gap-4 p-5 sm:p-6 rounded-2xl bg-amber-500/[0.06] border border-amber-500/20">
+                    <div className="flex flex-col sm:flex-row items-center gap-4">
+                       <VoltrisIconTile icon="alertTriangle" accent={DASHBOARD_ACCENT.warning} size={10} />
                       <div className="flex-1 text-center sm:text-left">
-                        <h4 className="font-black text-white uppercase italic tracking-wider text-sm sm:text-base">Gestão de Licença & Pagamento</h4>
-                        <p className="text-amber-700 text-[9px] sm:text-xs font-bold uppercase tracking-widest mt-1">Sua segurança é nossa prioridade. Gerencie sua assinatura ou peça reembolso abaixo.</p>
+                        <h4 className="font-semibold text-slate-200 text-sm">Gestão de Licenças & Faturamento</h4>
+                        <p className="text-slate-400 text-xs mt-0.5">Gerencie seu plano, cancele renovação ou solicite reembolso dentro de 7 dias.</p>
                       </div>
-                      <button onClick={() => fetchData(true)} className="w-full sm:w-auto px-6 py-3 bg-amber-400 text-black font-black uppercase italic text-[10px] rounded-xl shadow-md hover:scale-105 transition-all">
-                        Sync Agora
+                      <button 
+                        onClick={() => fetchData(true)} 
+                        className="px-4 py-2 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-300 font-medium text-xs rounded-xl transition-all shadow-sm"
+                      >
+                        Sincronizar Agora
                       </button>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-4 border-t border-amber-200">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3 border-t border-amber-500/15">
                       <button
                         onClick={() => setIsCancelModalOpen(true)}
-                        className="flex items-center justify-center gap-2 px-6 py-4 bg-gray-900 text-white font-black uppercase italic text-[10px] rounded-xl hover:bg-black transition-all shadow-xl"
+                        className="flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 font-medium text-xs rounded-xl transition-all"
                       >
-                        <FiX className="w-4 h-4" /> Cancelar Renovação Automática
+                        <VoltrisIcon name="close" size={14} /> Cancelar Renovação Automática
                       </button>
                       <button
                         onClick={handleRequestRefund}
-                        className="flex items-center justify-center gap-2 px-6 py-4 bg-amber-500/10 border border-amber-500/20 text-amber-500 font-black uppercase italic text-[10px] rounded-xl hover:bg-amber-500/20 transition-all shadow-sm"
+                        className="flex items-center justify-center gap-2 px-4 py-2.5 bg-rose-500/10 hover:bg-rose-500/15 border border-rose-500/20 text-rose-400 font-medium text-xs rounded-xl transition-all"
                       >
-                        <FiRotateCcw className="w-4 h-4" /> Solicitar Reembolso (7 Dias)
+                        <VoltrisIcon name="processing" size={14} /> Solicitar Reembolso (7 Dias)
                       </button>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
                     {licenses.length > 0 ? (
                       licenses.map((lic, i) => (
                         <motion.div
                           key={lic.id}
-                          initial={{ opacity: 0, y: 20 }}
+                          initial={{ opacity: 0, y: 15 }}
                           animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: i * 0.1 }}
-                          className={`group relative p-6 sm:p-8 rounded-[2rem] sm:rounded-[3rem] border transition-all duration-500 overflow-hidden ${transparencyMode ? 'voltris-glass' : 'bg-[#12121A] border-white/5 shadow-xl'} hover:border-[#31A8FF]/40`}
+                          transition={{ delay: i * 0.05 }}
+                          className={`group relative p-6 rounded-2xl border transition-all duration-200 ${transparencyMode ? 'voltris-glass' : 'bg-slate-900/50 border-slate-800/80 shadow-sm'} hover:border-slate-700`}
                         >
-                          {/* Interactive Background Elements */}
-                          <div className={`absolute -right-20 -bottom-20 w-80 h-80 ${lic.is_active ? 'bg-[#31A8FF]/10' : 'bg-red-500/10'} blur-[100px] rounded-full group-hover:scale-110 transition-transform duration-700`}></div>
-
-                          <div className="relative z-10 flex flex-col gap-8">
+                          <div className="relative z-10 flex flex-col gap-5">
                             {/* Card Top */}
                             <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-4">
-                                <div className={`w-16 h-16 rounded-2xl flex items-center justify-center relative transition-all duration-500 ${lic.is_active ? 'bg-gradient-to-br from-[#31A8FF] to-[#1070FF] text-white' : 'bg-white/5 border border-white/10 text-gray-400'}`}>
-                                  <FiCheckCircle className="w-8 h-8" />
-                                  <div className={`absolute inset-0 blur-lg opacity-40 ${lic.is_active ? 'bg-[#31A8FF]' : 'bg-transparent'}`}></div>
-                                </div>
+                              <div className="flex items-center gap-3">
+                                <VoltrisIconTile icon="success" accent={DASHBOARD_ACCENT.brand} size={10} />
                                 <div className="flex flex-col">
-                                  <h4 className="text-xl font-black text-white uppercase italic tracking-tighter">{lic.license_type}</h4>
-                                  <span className={`text-[9px] font-black tracking-[0.2em] px-3 py-1 rounded-full uppercase w-fit mt-1 border ${lic.is_active ? 'bg-emerald-400/10 text-emerald-400 border-emerald-400/20' : 'bg-red-400/10 text-red-400 border-red-400/20'}`}>
+                                  <h4 className="text-base font-bold text-white tracking-tight">{lic.license_type}</h4>
+                                  <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full uppercase tracking-wider w-fit mt-0.5 border ${lic.is_active ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border-rose-500/20'}`}>
                                     {lic.is_active ? 'Ativa' : 'Expirada'}
                                   </span>
                                 </div>
                               </div>
-                              <div className="hidden sm:flex flex-col items-end">
-                                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Validade</span>
-                                <span className="text-sm font-black text-white italic">{new Date(lic.expires_at).toLocaleDateString('pt-BR')}</span>
+                              <div className="flex flex-col items-end">
+                                <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Validade</span>
+                                <span className="text-xs font-semibold text-slate-200 mt-0.5">{new Date(lic.expires_at).toLocaleDateString('pt-BR')}</span>
                               </div>
                             </div>
 
-                            {/* Key Section - Dark Box */}
-                            <div className="bg-[#0a0a0f] rounded-[2rem] p-6 border border-white/5 group-hover:border-[#31A8FF]/20 transition-all">
-                              <span className="text-[9px] font-black text-[#31A8FF] uppercase tracking-[0.3em] mb-4 block">Chave de Ativação</span>
-                              <div className="flex items-center justify-between gap-4">
-                                <code className="flex-1 font-mono text-base font-black text-white tracking-widest truncate select-all">{lic.license_key}</code>
-                                <div className="flex items-center gap-2">
+                            {/* Key Section */}
+                            <div className="bg-slate-950/70 rounded-xl p-3.5 border border-slate-800/80 flex flex-col gap-1.5">
+                              <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Chave de Ativação</span>
+                              <div className="flex items-center justify-between gap-3">
+                                <code className="flex-1 font-mono text-xs font-semibold text-slate-200 tracking-wide truncate select-all">{lic.license_key}</code>
+                                <div className="flex items-center gap-1.5">
                                   <button
-                                    onClick={() => { navigator.clipboard.writeText(lic.license_key); toast.success('Key copiada!'); }}
-                                    className="p-3 rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition-all border border-white/10"
+                                    onClick={() => { navigator.clipboard.writeText(lic.license_key); toast.success('Chave copiada!'); }}
+                                    className="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-all border border-slate-700/80"
                                     title="Copiar Chave"
                                   >
-                                    <FiCopy className="w-4 h-4" />
+                                    <VoltrisIcon name="copy" size={14} />
                                   </button>
-                                  <Link href={`/dashboard?tab=pc`} className="p-3 rounded-xl bg-[#31A8FF]/10 hover:bg-[#31A8FF] text-[#31A8FF] hover:text-white transition-all border border-[#31A8FF]/20">
-                                    <FiExternalLink className="w-4 h-4" />
+                                  <Link href={`/dashboard?tab=pc`} className="p-2 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 hover:text-indigo-300 transition-all border border-indigo-500/25" title="Ver em Meu Computador">
+                                    <VoltrisIcon name="externalLink" size={14} />
                                   </Link>
                                 </div>
                               </div>
                             </div>
 
                             {/* Footer Info */}
-                            <div className="flex items-center justify-between border-t border-gray-200 pt-6">
-                              <div className="flex items-center gap-8">
+                            <div className="flex items-center justify-between border-t border-slate-800/60 pt-4 text-xs">
+                              <div className="flex items-center gap-6">
                                 <div className="flex flex-col">
-                                  <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Dispositivos</span>
-                                  <span className="text-sm font-black text-white">{lic.devices_in_use}/{lic.max_devices}</span>
+                                  <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Dispositivos</span>
+                                  <span className="text-xs font-bold text-white mt-0.5">{lic.devices_in_use}/{lic.max_devices}</span>
                                 </div>
                                 <div className="flex flex-col">
-                                  <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Hardware ID</span>
-                                  <span className="text-[10px] font-black text-green-700 uppercase tracking-widest">Vinculado</span>
+                                  <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Status HWID</span>
+                                  <span className="text-xs font-semibold text-emerald-400 mt-0.5">Sincronizado</span>
                                 </div>
                               </div>
-                              <div className="flex items-center gap-4">
-                                <Link href="/voltrisoptimizer" className="text-[10px] font-black text-[#8B31FF] uppercase tracking-[0.2em] flex items-center gap-2 hover:translate-x-1 transition-transform">
-                                  Baixar App <FiPlus className="w-3 h-3" />
-                                </Link>
-                              </div>
+                              <Link href="/voltrisoptimizer" className="text-xs font-semibold text-indigo-400 hover:text-indigo-300 flex items-center gap-1 transition-colors">
+                                Baixar App <VoltrisIcon name="plus" size={12} />
+                              </Link>
                             </div>
                           </div>
                         </motion.div>
                       ))
                     ) : (
-                      <div className={`col-span-1 xl:col-span-2 p-20 rounded-[4rem] text-center border border-white/5 flex flex-col items-center gap-8 ${transparencyMode ? 'voltris-glass' : 'bg-[#0a0a0f] shadow-xl'}`}>
-                        <div className="w-24 h-24 rounded-[2rem] bg-[#12121A] border border-white/10 flex items-center justify-center text-gray-400">
-                          <FiShield className="w-12 h-12" />
+                      <div className={`col-span-1 xl:col-span-2 p-12 sm:p-16 rounded-2xl text-center border border-slate-800/80 flex flex-col items-center gap-4 ${transparencyMode ? 'voltris-glass' : 'bg-slate-900/30'}`}>
+                        <VoltrisIconTile icon="security" accent={DASHBOARD_ACCENT.brand} size={14} />
+                        <div className="space-y-1.5 max-w-md">
+                          <h3 className="text-lg font-bold text-white tracking-tight">Nenhuma licença ativa</h3>
+                          <p className="text-slate-400 text-xs leading-relaxed">Você ainda não possui licenças ativas vinculadas a este e-mail. Adquira uma licença para desbloquear o Optimizer PRO.</p>
                         </div>
-                        <div className="space-y-4">
-                          <h3 className="text-4xl font-black text-white uppercase italic tracking-tighter">Armazém de Licenças Vazio</h3>
-                          <p className="text-gray-500 font-bold max-w-lg mx-auto uppercase tracking-wide text-xs">Você ainda não possui licenças operacionais vinculadas a esta conta. Adquira uma agora para desbloquear o Optimizer.</p>
-                        </div>
-                        <Link href="/adquirir-licenca">
-                          <button className="px-12 py-5 bg-white text-black font-black uppercase italic tracking-widest rounded-2xl hover:scale-105 transition-all shadow-3xl">
+                        <Link href="/adquirir-licenca" className="mt-2">
+                          <button className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs rounded-xl transition-all shadow-md shadow-indigo-600/20">
                             Explorar Planos PRO
                           </button>
                         </Link>
@@ -533,20 +511,19 @@ function DashboardContent() {
               {activeTab === 'orders' && (
                 <motion.div
                   key="orders"
-                  initial={{ opacity: 0, y: 30 }}
+                  initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 30 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.2 }}
                   className="space-y-6"
                 >
-                  <div className={`p-8 rounded-[2rem] sm:rounded-[3rem] border ${transparencyMode ? 'voltris-glass' : 'bg-[#12121A] border-white/5 shadow-xl'}`}>
-                    <div className="flex flex-col sm:flex-row items-center justify-between gap-6 mb-10">
-                      <div className="flex items-center gap-4">
-                        <div className="p-4 bg-gradient-to-br from-[#31A8FF] to-[#1070FF] rounded-2xl text-white shadow-lg shadow-blue-500/20">
-                          <FiPackage className="w-6 h-6" />
-                        </div>
+                  <div className={`p-6 sm:p-7 rounded-2xl border ${transparencyMode ? 'voltris-glass' : 'bg-slate-900/50 border-slate-800/80 shadow-sm'}`}>
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-800/80">
+                      <div className="flex items-center gap-3">
+                        <VoltrisIconTile icon="package" accent={DASHBOARD_ACCENT.brand} size={10} />
                         <div>
-                          <h2 className="text-2xl font-black text-white italic uppercase tracking-tighter">Histórico de Pedidos</h2>
-                          <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest mt-1">Acompanhe todos os seus serviços e licenças</p>
+                          <h2 className="text-lg font-bold text-white tracking-tight">Histórico de Pedidos</h2>
+                          <p className="text-slate-400 text-xs mt-0.5">Acompanhe todos os seus serviços contratados e licenças</p>
                         </div>
                       </div>
                     </div>
@@ -554,14 +531,14 @@ function DashboardContent() {
                     <div className="overflow-x-auto">
                       <table className="w-full text-left">
                         <thead>
-                          <tr className="border-b border-white/10">
-                            <th className="pb-4 px-2 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Serviço / Licença</th>
-                            <th className="pb-4 px-2 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] hidden sm:table-cell">Data</th>
-                            <th className="pb-4 px-2 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Valor</th>
-                            <th className="pb-4 px-2 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Status</th>
+                          <tr className="border-b border-slate-800/80">
+                            <th className="pb-3 px-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Item / Serviço</th>
+                            <th className="pb-3 px-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wider hidden sm:table-cell">Data</th>
+                            <th className="pb-3 px-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Valor</th>
+                            <th className="pb-3 px-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Status</th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-white/10">
+                        <tbody className="divide-y divide-slate-800/60">
                           {/* Mesclagem de Pedidos e Pagamentos */}
                           {[
                             ...orders.map(o => ({ ...o, display_type: 'SERVICE_LEGACY', display_name: o.service_name, display_plan: o.plan_type, amount: o.total || o.final_price })),
@@ -589,42 +566,42 @@ function DashboardContent() {
                                 };
                               })
                             ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).map((item, idx) => (
-                              <tr key={item.id + idx} className="group hover:bg-white/5 active:bg-white/10 transition-colors">
-                                <td className="py-6 px-2">
+                              <tr key={item.id + idx} className="group hover:bg-slate-800/30 transition-colors">
+                                <td className="py-4 px-3">
                                   <div className="flex flex-col">
-                                    <span className="text-sm font-black text-white uppercase italic tracking-tight">{item.display_name}</span>
-                                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">
+                                    <span className="text-xs font-semibold text-white tracking-tight">{item.display_name}</span>
+                                    <span className="text-[10px] font-medium text-slate-400 mt-0.5">
                                       {item.display_type === 'LICENSE' ? (
-                                        <span className="text-[#31A8FF]">💎 PRODUTO DIGITAL</span>
+                                        <span className="text-indigo-400">Produto Digital</span>
                                       ) : item.display_type === 'SERVICE' ? (
-                                        <span className="text-[#8B31FF]">🛠️ SERVIÇO TÉCNICO</span>
+                                        <span className="text-blue-400">Serviço Especializado</span>
                                       ) : (
-                                        item.display_plan || 'PERSONALIZADO'
+                                        item.display_plan || 'Personalizado'
                                       )}
                                     </span>
                                   </div>
                                 </td>
-                                <td className="py-6 px-2 hidden sm:table-cell">
-                                  <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">
+                                <td className="py-4 px-3 hidden sm:table-cell">
+                                  <span className="text-xs font-medium text-slate-400">
                                     {new Date(item.created_at).toLocaleDateString('pt-BR')}
                                   </span>
                                 </td>
-                                <td className="py-6 px-2">
-                                  <span className="text-xs font-black text-emerald-400">
+                                <td className="py-4 px-3">
+                                  <span className="text-xs font-semibold text-slate-200">
                                     R$ {(item.amount || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                                   </span>
                                 </td>
-                                <td className="py-6 px-2">
-                                  <div className={`flex items-center gap-2 px-3 py-1 rounded-full border w-fit
+                                <td className="py-4 px-3">
+                                  <div className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border text-[11px] font-medium
                                   ${(['completed', 'approved', 'paid', 'active'].includes(item.status?.toLowerCase())) ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' :
-                                      (['cancelled', 'rejected', 'declined', 'canceled', 'refunded'].includes(item.status?.toLowerCase())) ? 'bg-red-500/10 border-red-500/20 text-red-400' :
+                                      (['cancelled', 'rejected', 'declined', 'canceled', 'refunded'].includes(item.status?.toLowerCase())) ? 'bg-rose-500/10 border-rose-500/20 text-rose-400' :
                                         'bg-amber-500/10 border-amber-500/20 text-amber-400'}
                                 `}>
-                                    <div className={`w-1 h-1 rounded-full ${(['completed', 'approved', 'paid', 'active'].includes(item.status?.toLowerCase())) ? 'bg-emerald-600' : (['cancelled', 'rejected', 'declined', 'canceled', 'refunded'].includes(item.status?.toLowerCase())) ? 'bg-red-600' : 'bg-amber-600 animate-pulse'}`}></div>
-                                    <span className="text-[10px] font-black uppercase tracking-widest leading-none">
-                                      {(['completed', 'approved', 'paid', 'active', 'succeeded', 'ativo'].includes(String(item.status).trim().toLowerCase())) ? 'APROVADO' :
-                                        (['cancelled', 'rejected', 'declined', 'canceled', 'refunded', 'cancelado'].includes(String(item.status).trim().toLowerCase())) ? 'CANCELADO' :
-                                          'PENDENTE'}
+                                    <div className={`w-1.5 h-1.5 rounded-full ${(['completed', 'approved', 'paid', 'active'].includes(item.status?.toLowerCase())) ? 'bg-emerald-400' : (['cancelled', 'rejected', 'declined', 'canceled', 'refunded'].includes(item.status?.toLowerCase())) ? 'bg-rose-400' : 'bg-amber-400'}`}></div>
+                                    <span>
+                                      {(['completed', 'approved', 'paid', 'active', 'succeeded', 'ativo'].includes(String(item.status).trim().toLowerCase())) ? 'Aprovado' :
+                                        (['cancelled', 'rejected', 'declined', 'canceled', 'refunded', 'cancelado'].includes(String(item.status).trim().toLowerCase())) ? 'Cancelado' :
+                                          'Pendente'}
                                     </span>
                                   </div>
                                 </td>
@@ -632,8 +609,8 @@ function DashboardContent() {
                             ))
                           ) : (
                             <tr>
-                              <td colSpan={4} className="py-20 text-center">
-                                <p className="text-gray-400 font-black uppercase tracking-[0.3em] text-[10px]">Nenhum pedido ou pagamento encontrado.</p>
+                              <td colSpan={4} className="py-12 text-center">
+                                <p className="text-slate-400 text-xs">Nenhum pedido ou pagamento registrado até o momento.</p>
                               </td>
                             </tr>
                           )}
@@ -684,38 +661,33 @@ function DashboardContent() {
               className="absolute inset-0 bg-black/60 backdrop-blur-md"
             />
             <motion.div
-              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              initial={{ scale: 0.95, opacity: 0, y: 10 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              className="relative w-full max-w-md bg-[#12121A] rounded-[2.5rem] p-10 shadow-2xl border border-white/10 overflow-hidden"
+              exit={{ scale: 0.95, opacity: 0, y: 10 }}
+              className="relative w-full max-w-md bg-slate-900 rounded-2xl p-7 shadow-2xl border border-slate-800 overflow-hidden"
             >
-              {/* Background Glow */}
-              <div className="absolute -right-20 -top-20 w-64 h-64 bg-red-500/5 blur-[80px] rounded-full"></div>
-
               <div className="relative z-10 flex flex-col items-center text-center">
-                <div className="w-20 h-20 rounded-3xl bg-red-50 flex items-center justify-center text-red-500 mb-8 border border-red-100">
-                  <FiAlertTriangle className="w-10 h-10" />
-                </div>
+                <VoltrisIconTile icon="alertTriangle" accent={DASHBOARD_ACCENT.danger} size={12} className="mb-5" />
 
-                <h2 className="text-2xl font-black text-white uppercase italic tracking-tighter mb-4">
+                <h3 className="text-lg font-bold text-white tracking-tight mb-2">
                   Cancelar Assinatura?
-                </h2>
+                </h3>
 
-                <p className="text-gray-400 font-medium text-sm leading-relaxed mb-10">
-                  Ao confirmar, sua renovação automática será interrompida. Você continuará com acesso PRO até o fim do seu ciclo atual de faturamento.
+                <p className="text-slate-400 text-xs leading-relaxed mb-6">
+                  Ao confirmar, sua renovação automática será interrompida. Você continuará com acesso aos recursos PRO até o término do ciclo atual de faturamento.
                 </p>
 
-                <div className="flex flex-col gap-3 w-full">
+                <div className="flex flex-col gap-2.5 w-full">
                   <button
                     onClick={handleConfirmCancel}
                     disabled={isCancelling}
-                    className="w-full py-5 bg-white/5 border border-white/10 text-white font-black uppercase italic tracking-widest rounded-2xl hover:bg-white/10 transition-all shadow-xl disabled:opacity-50"
+                    className="w-full py-2.5 bg-rose-500 hover:bg-rose-600 disabled:opacity-50 text-white font-semibold text-xs rounded-xl transition-all shadow-sm"
                   >
                     {isCancelling ? 'Processando...' : 'Confirmar Cancelamento'}
                   </button>
                   <button
                     onClick={() => setIsCancelModalOpen(false)}
-                    className="w-full py-4 text-gray-500 font-bold uppercase text-[10px] tracking-widest hover:text-white transition-colors"
+                    className="w-full py-2.5 bg-slate-800 hover:bg-slate-700/80 border border-slate-700/70 text-slate-300 font-medium text-xs rounded-xl transition-all"
                   >
                     Manter minha assinatura
                   </button>

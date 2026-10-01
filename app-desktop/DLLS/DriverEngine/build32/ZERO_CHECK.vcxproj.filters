@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="18.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="E:\Minhas Coisas\Desktop\APLICATIVO VOLTRIS\DLLS\DriverEngine\build32\CMakeFiles\6ae64d998d9bebb3da10dbdd7fcc4957\generate.stamp.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{B8D7E055-9F65-3877-8855-1C96EF82CC36}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

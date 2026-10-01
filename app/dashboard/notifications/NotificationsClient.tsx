@@ -1,23 +1,34 @@
 'use client';
 
+import { useState } from 'react';
 import { useNotificationContext } from '@/components/notifications/NotificationContext';
 import { useAuth } from '@/app/hooks/useAuth';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   FiBell, FiPackage, FiMessageSquare, FiInfo, 
   FiCheckCircle, FiAlertTriangle, FiClock, FiShield,
-  FiTerminal, FiActivity, FiZap
+  FiTerminal, FiActivity, FiZap, FiCheck, FiFilter, FiRefreshCw
 } from 'react-icons/fi';
 import { useDashboard } from '@/app/context/DashboardContext';
 
 export default function NotificationsClient() {
     const { transparencyMode } = useDashboard();
-    const { notifications, markAsRead } = useNotificationContext();
+    const { notifications, markAsRead, markAllAsRead, refreshNotifications } = useNotificationContext();
     const { isAdmin } = useAuth();
+    const [filter, setFilter] = useState<'all' | 'unread' | 'order' | 'ticket'>('all');
+    const [isRefreshing, setIsRefreshing] = useState(false);
 
     // Filtragem conforme lógica original
-    const filteredNotifications = notifications.filter(n => isAdmin || (n.type !== 'newsletter' && n.type !== 'comment'));
-    const unreadCount = filteredNotifications.filter(n => !n.read).length;
+    const baseNotifications = notifications.filter(n => isAdmin || (n.type !== 'newsletter' && n.type !== 'comment'));
+    const unreadCount = baseNotifications.filter(n => !n.read).length;
+
+    // Filtro ativo na aba
+    const filteredNotifications = baseNotifications.filter(n => {
+        if (filter === 'unread') return !n.read;
+        if (filter === 'order') return n.type === 'order';
+        if (filter === 'ticket') return n.type === 'ticket';
+        return true;
+    });
 
     const getIcon = (type: string) => {
         switch (type) {
@@ -29,47 +40,118 @@ export default function NotificationsClient() {
         }
     };
 
+    // Cores dos ícones mantidas estritamente conforme configurado pelo usuário
     const getColor = (type: string) => {
         switch (type) {
             case 'order': return 'text-[#31A8FF] bg-[#31A8FF]/10 border-[#31A8FF]/20';
             case 'ticket': return 'text-[#8B31FF] bg-[#8B31FF]/10 border-[#8B31FF]/20';
             case 'success': return 'text-[#00FF88] bg-[#00FF88]/10 border-[#00FF88]/20';
             case 'warning': return 'text-amber-400 bg-amber-400/10 border-amber-400/20';
-            default: return 'text-gray-500 bg-gray-100 border-gray-200';
+            default: return 'text-indigo-400 bg-indigo-500/10 border-indigo-500/20';
+        }
+    };
+
+    const getTypeLabel = (type: string) => {
+        switch (type) {
+            case 'order': return 'Pedido';
+            case 'ticket': return 'Ticket';
+            case 'success': return 'Sucesso';
+            case 'warning': return 'Alerta';
+            default: return 'Sistema';
+        }
+    };
+
+    const handleRefresh = async () => {
+        setIsRefreshing(true);
+        try {
+            await refreshNotifications();
+        } finally {
+            setIsRefreshing(false);
         }
     };
 
     return (
-        <div className="flex flex-col gap-10 max-w-5xl mx-auto w-full">
+        <div className="flex flex-col gap-6 w-full max-w-5xl mx-auto">
             
-            {/* Header */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
-                <div className="space-y-2">
-                   <div className="flex items-center gap-3">
-                     <div className="w-2 h-8 bg-gradient-to-b from-[#31A8FF] to-[#8B31FF] rounded-full"></div>
-                     <h2 className="text-4xl font-black text-gray-900 italic uppercase tracking-tighter">Feed <span className="text-[#31A8FF] not-italic">Neural</span></h2>
-                   </div>
-                   <p className="text-gray-500 font-bold text-xs uppercase tracking-[0.2em] pl-5 font-mono">Logs de eventos do sistema e pings de sincronização</p>
+            {/* Page Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-800/80">
+                <div>
+                    <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-white flex items-center gap-2.5">
+                        <FiBell className="w-6 h-6 text-indigo-400" />
+                        <span>Central de Notificações</span>
+                    </h2>
+                    <p className="text-xs sm:text-sm text-slate-400 mt-1">
+                        Logs de eventos, atualizações de pedidos e avisos em tempo real.
+                    </p>
                 </div>
 
-                <div className="flex items-center gap-4">
-                   <div className="px-5 py-2 rounded-2xl bg-gray-100 border border-gray-200 flex items-center gap-3">
-                      <div className={`w-2 h-2 rounded-full ${unreadCount > 0 ? 'bg-[#31A8FF] animate-pulse' : 'bg-gray-300'}`}></div>
-                      <span className="text-[10px] font-black text-gray-900 uppercase tracking-widest">{unreadCount} EVENTOS NÃO LIDOS</span>
-                   </div>
-                   {unreadCount > 0 && (
-                      <button className="text-[10px] font-black text-[#31A8FF] uppercase tracking-widest hover:text-gray-900 transition-colors">
-                        Limpar Frequência
-                      </button>
-                   )}
+                <div className="flex items-center gap-2.5 flex-wrap">
+                    {/* Unread Counter Badge */}
+                    <div className="px-3 py-1.5 rounded-xl bg-slate-900/60 border border-slate-800 flex items-center gap-2">
+                        <div className={`w-2 h-2 rounded-full ${unreadCount > 0 ? 'bg-indigo-400 animate-pulse' : 'bg-slate-600'}`}></div>
+                        <span className="text-xs font-semibold text-slate-300">
+                            {unreadCount} {unreadCount === 1 ? 'não lida' : 'não lidas'}
+                        </span>
+                    </div>
+
+                    {/* Refresh Button */}
+                    <button
+                        onClick={handleRefresh}
+                        disabled={isRefreshing}
+                        className="p-2 rounded-xl bg-slate-900/60 border border-slate-800 text-slate-400 hover:text-white hover:bg-slate-800 transition-all shadow-sm active:scale-95 disabled:opacity-50"
+                        title="Atualizar notificações"
+                    >
+                        <FiRefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin text-indigo-400' : ''}`} />
+                    </button>
+
+                    {/* Mark All as Read */}
+                    {unreadCount > 0 && (
+                        <button
+                            onClick={() => markAllAsRead()}
+                            className="px-3.5 py-1.5 rounded-xl bg-indigo-600/10 hover:bg-indigo-600/20 border border-indigo-500/20 text-indigo-300 hover:text-white text-xs font-semibold transition-all active:scale-95 flex items-center gap-1.5 shadow-sm"
+                        >
+                            <FiCheck className="w-3.5 h-3.5" />
+                            <span>Marcar lidas</span>
+                        </button>
+                    )}
                 </div>
             </div>
 
-            {/* Notifications Stream */}
-            <div className="flex flex-col gap-6 relative">
-                {/* Visual Timeline Line */}
-                <div className="absolute left-10 top-0 bottom-0 w-px bg-gradient-to-b from-gray-200 via-gray-100 to-transparent hidden md:block"></div>
+            {/* Filter Tabs */}
+            <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
+                {[
+                    { id: 'all', label: 'Todas', count: baseNotifications.length },
+                    { id: 'unread', label: 'Não Lidas', count: unreadCount },
+                    { id: 'order', label: 'Pedidos', count: baseNotifications.filter(n => n.type === 'order').length },
+                    { id: 'ticket', label: 'Tickets', count: baseNotifications.filter(n => n.type === 'ticket').length },
+                ].map((tab) => {
+                    const isActive = filter === tab.id;
+                    return (
+                        <button
+                            key={tab.id}
+                            onClick={() => setFilter(tab.id as any)}
+                            className={`px-3.5 py-2 rounded-xl text-xs font-medium transition-all whitespace-nowrap flex items-center gap-2
+                                ${isActive
+                                    ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20 border border-indigo-500'
+                                    : 'bg-slate-900/60 text-slate-400 hover:text-slate-200 border border-slate-800/80 hover:bg-slate-800/60'
+                                }
+                            `}
+                        >
+                            <span>{tab.label}</span>
+                            {tab.count > 0 && (
+                                <span className={`px-1.5 py-0.2 rounded-md text-[10px] font-bold ${
+                                    isActive ? 'bg-white/20 text-white' : 'bg-slate-800 text-slate-400'
+                                }`}>
+                                    {tab.count}
+                                </span>
+                            )}
+                        </button>
+                    );
+                })}
+            </div>
 
+            {/* Notifications Stream */}
+            <div className="flex flex-col gap-3">
                 <AnimatePresence mode="popLayout">
                     {filteredNotifications.length > 0 ? (
                         filteredNotifications.map((notif, i) => {
@@ -79,66 +161,67 @@ export default function NotificationsClient() {
                             return (
                                 <motion.div
                                     key={notif.id}
-                                    initial={{ opacity: 0, x: -30 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    transition={{ delay: i * 0.05 }}
-                                    className="relative flex items-start gap-10 group"
+                                    initial={{ opacity: 0, y: 12 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, scale: 0.98 }}
+                                    transition={{ duration: 0.2, delay: i < 8 ? i * 0.03 : 0 }}
+                                    className={`relative p-4 sm:p-5 rounded-2xl border transition-all duration-200 group cursor-pointer
+                                        ${notif.read
+                                            ? 'bg-slate-900/30 border-slate-800/60 opacity-75 hover:opacity-100 hover:border-slate-700'
+                                            : `${transparencyMode ? 'voltris-glass' : 'bg-slate-900/70 border-slate-800 shadow-md'} hover:border-indigo-500/40 hover:bg-slate-900/90`
+                                        }
+                                    `}
                                     onClick={() => markAsRead(notif.id)}
                                 >
-                                    {/* Timeline Marker */}
-                                    <div className="hidden md:flex flex-col items-center pt-8 relative z-10 shrink-0">
-                                       <div className={`w-20 h-[1px] ${notif.read ? 'bg-gray-200' : 'bg-[#31A8FF]/40'} absolute right-0 top-[2.75rem] -mr-10`}></div>
-                                       <div className={`w-2.5 h-2.5 rounded-full border-2 ${transparencyMode ? 'border-gray-200' : 'border-gray-200'} z-20 transition-all duration-500 scale-125
-                                          ${notif.read ? 'bg-gray-300' : 'bg-[#31A8FF] shadow-[0_0_15px_rgba(49,168,255,0.8)]'}`}></div>
-                                    </div>
+                                    <div className="flex items-start gap-3.5 sm:gap-4">
+                                        {/* Icon Box with User's Exact Colors */}
+                                        <div className={`p-3 sm:p-3.5 rounded-xl border flex-shrink-0 transition-transform duration-200 group-hover:scale-105 ${colorClasses}`}>
+                                            <Icon className="w-5 h-5 sm:w-5 sm:h-5" />
+                                        </div>
 
-                                    {/* Notification Card */}
-                                    <div className={`flex-1 p-8 rounded-[3rem] border transition-all duration-500 relative overflow-hidden cursor-pointer
-                                       ${notif.read 
-                                         ? 'bg-gray-50 border-gray-200 opacity-40 hover:opacity-100' 
-                                         : `${transparencyMode ? 'voltris-glass' : 'bg-white border-gray-200 shadow-xl'} hover:border-[#31A8FF]/40 hover:-translate-y-1`
-                                       }
-                                    `}>
-                                        {/* Unread Visual Accent */}
-                                        {!notif.read && (
-                                            <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-[#31A8FF]/10 to-transparent pointer-events-none"></div>
-                                        )}
-
-                                        <div className="flex gap-8 items-start relative z-10">
-                                            <div className={`p-5 rounded-2xl border flex-shrink-0 transition-transform group-hover:scale-110 group-hover:rotate-3 ${colorClasses}`}>
-                                                <Icon className="w-6 h-6" />
-                                            </div>
-                                            <div className="flex-1 min-w-0 space-y-3">
-                                                <div className="flex justify-between items-start gap-4">
-                                                    <h3 className={`text-xl font-black italic uppercase tracking-tighter ${notif.read ? 'text-gray-400' : 'text-gray-900'}`}>{notif.title}</h3>
-                                                    <div className="flex flex-col items-end shrink-0">
-                                                       <div className="flex items-center gap-2 text-[10px] font-black text-gray-400 uppercase tracking-widest font-mono">
-                                                          <FiClock className="w-3 h-3" />
-                                                          {new Date(notif.created_at).toLocaleDateString()}
-                                                       </div>
-                                                       <span className="text-[9px] font-bold text-gray-300 uppercase tracking-[0.2em] font-mono">TRANSMISSÃO {notif.type.toUpperCase()}</span>
-                                                    </div>
+                                        {/* Content */}
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-2 mb-1">
+                                                <div className="flex items-center gap-2 min-w-0">
+                                                    {!notif.read && (
+                                                        <span className="w-2 h-2 rounded-full bg-indigo-400 shrink-0" title="Não lida" />
+                                                    )}
+                                                    <h3 className={`text-sm sm:text-base font-semibold tracking-tight truncate ${notif.read ? 'text-slate-300' : 'text-white'}`}>
+                                                        {notif.title}
+                                                    </h3>
                                                 </div>
-                                                <p className={`text-xs font-bold leading-relaxed uppercase tracking-wider ${notif.read ? 'text-gray-300' : 'text-gray-500'}`}>
-                                                  {notif.message}
-                                                </p>
+
+                                                <div className="flex items-center gap-2 shrink-0">
+                                                    <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-slate-800/80 text-slate-400 border border-slate-700/50 uppercase tracking-wider">
+                                                        {getTypeLabel(notif.type)}
+                                                    </span>
+                                                    <span className="text-[11px] text-slate-500 font-mono flex items-center gap-1">
+                                                        <FiClock className="w-3 h-3 text-slate-600" />
+                                                        {new Date(notif.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                                                    </span>
+                                                </div>
                                             </div>
+
+                                            <p className={`text-xs sm:text-sm leading-relaxed ${notif.read ? 'text-slate-400' : 'text-slate-300'}`}>
+                                                {notif.message}
+                                            </p>
                                         </div>
                                     </div>
                                 </motion.div>
                             );
                         })
                     ) : (
-                        <div className={`py-40 flex flex-col items-center justify-center text-center gap-10 rounded-[4rem] border border-gray-200 ${transparencyMode ? 'voltris-glass' : 'bg-gray-50 shadow-xl'}`}>
-                            <div className="relative">
-                               <div className="w-32 h-32 rounded-full bg-gray-100 flex items-center justify-center border border-gray-200">
-                                 <FiBell className="w-12 h-12 text-gray-300" />
-                               </div>
-                               <FiCheckCircle className="absolute -bottom-2 -right-2 w-10 h-10 text-[#00FF88] bg-white rounded-full p-2 border border-gray-200" />
+                        <div className={`py-20 sm:py-24 px-6 flex flex-col items-center justify-center text-center gap-4 rounded-2xl border border-slate-800 ${transparencyMode ? 'voltris-glass' : 'bg-slate-900/40 shadow-sm'}`}>
+                            <div className="w-14 h-14 rounded-2xl bg-slate-800/80 border border-slate-700 flex items-center justify-center text-slate-400">
+                                <FiBell className="w-7 h-7 text-indigo-400" />
                             </div>
-                            <div className="space-y-4">
-                              <h3 className="text-3xl font-black text-gray-900 uppercase italic tracking-tighter">Frequência Silenciosa</h3>
-                              <p className="text-gray-500 font-bold text-[10px] uppercase tracking-[0.3em] max-w-sm">Os nós neurais estão funcionando dentro dos parâmetros normais. Nenhuma interrupção recente detectada.</p>
+                            <div className="space-y-1.5 max-w-sm">
+                                <h3 className="text-base font-bold text-white tracking-tight">Nenhuma notificação encontrada</h3>
+                                <p className="text-xs text-slate-400 leading-relaxed">
+                                    {filter === 'unread'
+                                        ? 'Parabéns! Todas as notificações foram lidas.'
+                                        : 'Você está em dia com todos os eventos e atualizações do sistema.'}
+                                </p>
                             </div>
                         </div>
                     )}

@@ -1,0 +1,34 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:local="clr-namespace:VoltrisOptimizer.UI.Converters">
+    
+    <!-- Converters -->
+    <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+    <local:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter"/>
+    <local:InverseBooleanConverter x:Key="InverseBooleanConverter"/>
+    <local:BooleanToColorConverter x:Key="BooleanToColorConverter"/>
+    <local:NullToVisibilityConverter x:Key="NullToVisibilityConverter"/>
+    <local:PercentageConverter x:Key="PercentageConverter"/>
+    <local:FileSizeConverter x:Key="FileSizeConverter"/>
+    <local:BooleanToThrottleBrushConverter x:Key="BooleanToThrottleBrushConverter"/>
+    <local:GamerModeStatusConverter x:Key="GamerModeStatusConverter"/>
+    <local:InactiveToRedShadowConverter x:Key="InactiveToRedShadowConverter"/>
+    <local:ArcProgressConverter x:Key="ArcProgressConverter"/>
+    <local:PercentageToWidthConverter x:Key="PercentToWidthConverter"/>
+    <local:ImagePathConverter x:Key="ImagePathConverter"/>
+    <local:Win32ToTypeTextConverter x:Key="Win32ToTypeTextConverter"/>
+    <local:DeviceTypeToColorConverter x:Key="DeviceTypeToColorConverter"/>
+    <local:StatusToBrushConverter x:Key="StatusToBrushConverter"/>
+    <local:IntToVisibilityConverter x:Key="IntToVisibilityConverter"/>
+    <local:HexStringToBrushConverter x:Key="HexStringToBrushConverter"/>
+    <local:ThermalIndicatorConverter x:Key="ThermalIndicator"/>
+    <!-- Temperatura em valor único (widget). StringFormat não sabe formatar
+         double.NaN e imprimia literalmente "NaN°C" quando não havia sensor. -->
+    <local:TemperatureTextConverter x:Key="TemperatureText"/>
+    <local:BrainMoodToBrushConverter x:Key="BrainMoodBrush"/>
+    <local:StringToVisibilityConverter x:Key="StringToVisibilityConverter"/>
+    
+
+
+</ResourceDictionary>
+

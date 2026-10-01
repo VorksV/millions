@@ -1,0 +1,14 @@
+﻿{
+  "version": "1.0.2.9",
+  "downloadUrl": "https://github.com/DougFHansen/voltris-releases/releases/download/v1.0.2.9/VoltrisUpdater_x64.exe",
+  "download": "https://github.com/DougFHansen/voltris-releases/releases/download/v1.0.2.9/VoltrisUpdater_x64.exe",
+  "changelog": [
+    "V1.0.2.9 - Correção de Estabilidade e Licenciamento",
+    "Correção do sistema de vinculação de conta cloud",
+    "Correção do sistema de desvinculação de dispositivos",
+    "Correção das URLs de verificação de atualização"
+  ],
+  "mandatory": false,
+  "isMandatory": false,
+  "releaseDate": "2026-09-25T00:00:00Z"
+}

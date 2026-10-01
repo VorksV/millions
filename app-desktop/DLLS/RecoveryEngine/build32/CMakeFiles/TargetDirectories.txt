@@ -1,0 +1,3 @@
+D:/APLICATIVO VOLTRIS/DLLS/RecoveryEngine/build32/CMakeFiles/recovery_engine.dir
+D:/APLICATIVO VOLTRIS/DLLS/RecoveryEngine/build32/CMakeFiles/ALL_BUILD.dir
+D:/APLICATIVO VOLTRIS/DLLS/RecoveryEngine/build32/CMakeFiles/ZERO_CHECK.dir

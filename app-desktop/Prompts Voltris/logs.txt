@@ -1,0 +1,61 @@
+Você possui uma missão crítica que deve ser executada com máxima precisão e sem ignorar absolutamente nada.
+
+Realize uma análise forense completa em todos os arquivos de log localizados no diretório:
+
+C:\Users\VOLTRIS\AppData\Local\Voltris\Logs
+
+A análise deve ser extremamente profunda e detalhada, lendo integralmente todos os arquivos existentes, da primeira até a última linha, sem pular nenhum conteúdo.
+
+Seu objetivo é identificar:
+
+Erros críticos;
+Exceptions;
+Falhas silenciosas;
+Deadlocks;
+Congelamentos;
+Problemas de inicialização;
+Problemas de performance;
+Memory leaks;
+Race conditions;
+Problemas de threading;
+Loops anormais;
+Falhas intermitentes;
+Inconsistências de estado;
+Erros de carregamento;
+Problemas de UI;
+Falhas de sincronização;
+Qualquer comportamento suspeito ou potencialmente instável.
+
+Requisitos obrigatórios da análise:
+
+Ler 100% de todos os arquivos;
+Não ignorar nenhum log, mesmo os aparentemente irrelevantes;
+Correlacionar eventos entre múltiplos arquivos;
+Identificar padrões repetitivos de erro;
+Detectar causas raiz dos problemas;
+Explicar exatamente onde e por que os problemas acontecem;
+Informar impactos potenciais no programa;
+Sugerir correções profissionais e robustas;
+Evitar soluções paliativas ou superficiais.
+
+Além disso:
+
+Verifique possíveis problemas intermitentes que possam explicar travamentos aleatórios;
+Analise gargalos de desempenho;
+Procure sinais de falha durante inicialização, splash screen, carregamento do dashboard e troca de telas;
+Verifique conflitos entre threads, timers, eventos e operações assíncronas;
+Analise possíveis falhas relacionadas a renderização, overlay, widgets e monitoramento em tempo real.
+
+A análise deve ser feita com mentalidade de engenharia sênior e debugging avançado, focando em estabilidade, confiabilidade e comportamento profissional do software.
+
+No final, forneça:
+
+Lista completa dos problemas encontrados;
+Severidade de cada problema;
+Possível causa raiz;
+Arquivos e trechos relacionados;
+Impacto no sistema;
+Correção recomendada;
+Melhorias estruturais para evitar recorrência futura.
+
+Não faça análises superficiais. A prioridade é encontrar a verdadeira origem dos problemas e garantir máxima estabilidade do sistema.

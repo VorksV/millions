@@ -1,0 +1,10 @@
+^E:\MINHAS COISAS\DESKTOP\APLICATIVO VOLTRIS\DLLS\DRIVERENGINE\BUILD64\CMAKEFILES\CC5A4B17FFAC5F084C1479164978B87A\GENERATE.STAMP.RULE
+setlocal
+"C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" "-SE:/Minhas Coisas/Desktop/APLICATIVO VOLTRIS/DLLS/DriverEngine" "-BE:/Minhas Coisas/Desktop/APLICATIVO VOLTRIS/DLLS/DriverEngine/build64" --check-stamp-list CMakeFiles/generate.stamp.list --vs-solution-file "E:/Minhas Coisas/Desktop/APLICATIVO VOLTRIS/DLLS/DriverEngine/build64/DriverEngine.slnx"
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

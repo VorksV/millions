@@ -33,56 +33,58 @@ export default function NotificationModal() {
         />
         
         <motion.div
-          className={`relative w-full max-w-lg p-12 rounded-[4rem] border border-gray-200 shadow-xl overflow-hidden
-            ${transparencyMode ? 'voltris-glass' : 'bg-white'}
+          className={`relative w-full max-w-md p-6 sm:p-8 rounded-2xl border border-slate-800 shadow-2xl overflow-hidden
+            ${transparencyMode ? 'voltris-glass' : 'bg-slate-900'}
           `}
-          initial={{ y: 50, opacity: 0, scale: 0.9 }}
+          initial={{ y: 20, opacity: 0, scale: 0.95 }}
           animate={{ y: 0, opacity: 1, scale: 1 }}
-          exit={{ y: 50, opacity: 0, scale: 0.9 }}
-          transition={{ type: 'spring', stiffness: 150, damping: 20 }}
+          exit={{ y: 20, opacity: 0, scale: 0.95 }}
+          transition={{ type: 'spring', stiffness: 200, damping: 24 }}
           onClick={(e) => e.stopPropagation()}
         >
           {/* Visual Accents */}
           <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-[#31A8FF] via-[#8B31FF] to-[#FF4B6B]"></div>
-          <div className="absolute -right-20 -top-20 w-64 h-64 bg-[#31A8FF]/5 blur-[100px] rounded-full"></div>
+          <div className="absolute -right-20 -top-20 w-48 h-48 bg-[#31A8FF]/10 blur-[80px] rounded-full pointer-events-none"></div>
           
-          <div className="flex flex-col items-center text-center gap-10">
-            <div className="relative">
-              <div className="w-24 h-24 rounded-[2.5rem] bg-gradient-to-br from-[#31A8FF]/10 to-[#8B31FF]/10 border border-[#31A8FF]/20 flex items-center justify-center text-[#31A8FF] shadow-2xl relative z-10">
-                <FiBell className="w-10 h-10 animate-float" />
+          <div className="flex flex-col items-center text-center gap-6 relative z-10">
+            <div className="relative mt-2">
+              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#31A8FF]/15 to-[#8B31FF]/15 border border-[#31A8FF]/30 flex items-center justify-center text-[#31A8FF] shadow-xl relative z-10">
+                <FiBell className="w-8 h-8" />
               </div>
-              <div className="absolute inset-0 rounded-[2.5rem] bg-[#31A8FF] blur-3xl opacity-20 animate-pulse"></div>
+              <div className="absolute inset-0 rounded-2xl bg-[#31A8FF] blur-2xl opacity-20 animate-pulse"></div>
             </div>
 
-            <div className="space-y-4">
-              <h2 className="text-4xl font-black text-gray-900 italic uppercase tracking-tighter leading-none">Ativar <span className="text-[#31A8FF] not-italic">Notificações</span></h2>
-              <div className="flex flex-col gap-2">
-                 <p className="text-gray-500 font-bold text-xs uppercase tracking-[0.2em] leading-relaxed px-4">
-                   Estabeleça uma conexão direta para receber atualizações em tempo real e avisos críticos de segurança.
+            <div className="space-y-2">
+              <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight leading-tight">
+                Ativar <span className="text-[#31A8FF]">Notificações</span>
+              </h2>
+              <div className="flex flex-col gap-3">
+                 <p className="text-slate-400 text-xs sm:text-sm leading-relaxed px-2">
+                   Receba atualizações em tempo real sobre seus pedidos, computadores conectados e alertas críticos do sistema.
                  </p>
-                 <div className="flex items-center justify-center gap-4 pt-2">
-                    <div className="flex items-center gap-2 px-3 py-1 bg-gray-100 rounded-full border border-gray-200">
+                 <div className="flex items-center justify-center gap-3 pt-1">
+                    <div className="flex items-center gap-1.5 px-2.5 py-1 bg-slate-800/80 rounded-lg border border-slate-700/60">
                        <FiShield className="w-3 h-3 text-[#00FF88]" />
-                       <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest">CRIPTOGRAFADO</span>
+                       <span className="text-[10px] font-semibold text-slate-300 uppercase tracking-wider">Criptografado</span>
                     </div>
-                    <div className="flex items-center gap-2 px-3 py-1 bg-gray-100 rounded-full border border-gray-200">
+                    <div className="flex items-center gap-1.5 px-2.5 py-1 bg-slate-800/80 rounded-lg border border-slate-700/60">
                        <FiCpu className="w-3 h-3 text-[#31A8FF]" />
-                       <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest">BAIXO CONSUMO</span>
+                       <span className="text-[10px] font-semibold text-slate-300 uppercase tracking-wider">Baixo Consumo</span>
                     </div>
                  </div>
               </div>
             </div>
 
-            <div className="flex flex-col gap-4 w-full pt-4">
+            <div className="flex flex-col gap-2.5 w-full pt-2">
               <button
-                className="w-full py-6 bg-gradient-to-r from-[#31A8FF] to-[#8B31FF] text-white font-black uppercase italic tracking-[0.3em] rounded-3xl shadow-3xl hover:scale-[1.03] active:scale-95 transition-all flex items-center justify-center gap-4 text-xs"
+                className="w-full py-3 px-4 bg-gradient-to-r from-[#31A8FF] to-[#8B31FF] hover:opacity-95 text-white font-semibold rounded-xl shadow-lg shadow-indigo-500/20 active:scale-95 transition-all flex items-center justify-center gap-2 text-xs"
                 onClick={handleEnable}
               >
-                <FiCheck className="w-5 h-5" />
-                <span>Iniciar Conexão</span>
+                <FiCheck className="w-4 h-4" />
+                <span>Ativar Notificações</span>
               </button>
               <button
-                className="w-full py-5 text-gray-400 hover:text-gray-600 font-black uppercase tracking-[0.3em] text-[10px] transition-all"
+                className="w-full py-2.5 text-slate-400 hover:text-slate-200 font-medium text-xs transition-colors"
                 onClick={handleDismiss}
               >
                 Agora não

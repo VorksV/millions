@@ -1,0 +1,13 @@
+{
+  "UseCase": "Jogos singleplayer",
+  "Priority": "Balanced",
+  "IsLaptop": false,
+  "AutoRestartServices": true,
+  "AllowRegistryChanges": true,
+  "ApplyMode": "Manual",
+  "Hardware": {
+    "cpuCores": 8,
+    "ramMb": 16384,
+    "gpu": "discrete"
+  }
+}

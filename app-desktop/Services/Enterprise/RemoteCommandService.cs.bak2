@@ -1,0 +1,548 @@
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using System.Net.Http;
+using System.Text;
+using System.Text.Json;
+using System.Threading;
+using System.Threading.Tasks;
+using VoltrisOptimizer.Services.Enterprise.Models;
+using VoltrisOptimizer.Services.Gamer.Models;
+using VoltrisOptimizer.Services.Gamer.Interfaces;
+
+namespace VoltrisOptimizer.Services.Enterprise
+{
+    /// <summary>
+    /// Serviço de polling de comandos remotos do dashboard web (voltris.com.br).
+    ///
+    /// Faz polling a cada 60s para buscar comandos pendentes e executá-los.
+    /// Comandos suportados: optimize, prepare_pc, restart_link, shutdown, gamer_mode
+    ///
+    /// INTERVALO: era 15 s. Subiu para 60 s pelo custo: 15 s significa 5.760
+    /// requisições/dia por máquina só em pending + heartbeat, e o comando mais
+    /// comum (otimizar/limpar) leva minutos para ser executado pelo usuário de
+    /// qualquer forma. 60 s mantém a latência percebida basically igual para
+    /// uso humano e corta o volume por 4.
+    ///
+    /// HEARTBEAT: não vai em todo ciclo. O único propósito dele é o dashboard
+    /// mostrar o PC como "online" (coluna last_heartbeat). 5 min é suficiente
+    /// para isso — o dashboard considera online quem consultou nos últimos 5
+    /// minutos. Separado do poll de comandos, o custo cai de 5.760 para
+    /// ~288 chamadas/dia.
+    /// </summary>
+    public sealed class RemoteCommandService : IDisposable
+    {
+        private const string TAG = "[RemoteCmd]";
+        private const string API_BASE = "https://www.voltris.com.br/api/v1";
+        private const int POLL_INTERVAL_MS = 60_000; // 60 segundos
+        private const int HEARTBEAT_INTERVAL_MS = 300_000; // 5 minutos
+
+        private readonly ILoggingService _logger;
+        private readonly HttpClient _httpClient;
+        private CancellationTokenSource? _cts;
+        private bool _disposed;
+
+        public RemoteCommandService(ILoggingService logger)
+        {
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(15) };
+            _logger.LogInfo($"{TAG} Serviço de comandos remotos inicializado.");
+        }
+
+        public void Start()
+        {
+            if (_cts != null) return;
+
+            var settings = SettingsService.Instance.Settings;
+            if (!settings.IsDeviceLinked || string.IsNullOrEmpty(settings.InstallationId))
+            {
+                _logger.LogInfo($"{TAG} Dispositivo não vinculado — polling de comandos não iniciado.");
+                return;
+            }
+
+            _cts = new CancellationTokenSource();
+            _ = PollLoopAsync(_cts.Token);
+            _logger.LogInfo($"{TAG} Polling de comandos iniciado (intervalo={POLL_INTERVAL_MS}ms, heartbeat={HEARTBEAT_INTERVAL_MS}ms).");
+        }
+
+        public void Stop()
+        {
+            _logger.LogInfo($"{TAG} Polling de comandos parado.");
+            _cts?.Cancel();
+            _cts?.Dispose();
+            _cts = null;
+        }
+
+        private async Task PollLoopAsync(CancellationToken ct)
+        {
+            // Aguardar 10s antes do primeiro poll para não competir com o boot
+            await Task.Delay(10_000, ct).ConfigureAwait(false);
+
+            // O primeiro heartbeat acompanha o primeiro poll; depois fica a cada
+            // HEARTBEAT_INTERVAL_MS. Sem isso, "online" no dashboard dependia do
+            // ritmo do poll de comandos e o custo era o dobro do necessário.
+            var nextHeartbeatAt = DateTimeOffset.MaxValue;
+
+            while (!ct.IsCancellationRequested)
+            {
+                try
+                {
+                    var installationId = SettingsService.Instance.Settings.InstallationId;
+                    if (string.IsNullOrEmpty(installationId))
+                    {
+                        _logger.LogWarning($"{TAG} InstallationId vazio — pulando poll.");
+                        await Task.Delay(POLL_INTERVAL_MS, ct);
+                        continue;
+                    }
+
+                    // Heartbeat: só no primeiro ciclo e depois a cada 5 min.
+                    if (DateTimeOffset.UtcNow >= nextHeartbeatAt)
+                    {
+                        await SendHeartbeatAsync(installationId);
+                        nextHeartbeatAt = DateTimeOffset.UtcNow.AddMilliseconds(HEARTBEAT_INTERVAL_MS);
+                    }
+
+                    // Buscar comandos pendentes
+                    var commands = await FetchPendingCommandsAsync(installationId);
+                    if (commands != null && commands.Count > 0)
+                    {
+                        _logger.LogInfo($"{TAG} {commands.Count} comando(s) pendente(s) recebido(s).");
+                        foreach (var cmd in commands)
+                        {
+                            _logger.LogInfo($"{TAG} Executando comando: type={cmd.command_type} id={cmd.id}");
+                            await ExecuteCommandAsync(cmd);
+                            await UpdateCommandStatusAsync(cmd.id, "completed");
+                        }
+                    }
+                }
+                catch (OperationCanceledException) { break; }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning($"{TAG} Erro no poll: {ex.Message}");
+                }
+
+                await Task.Delay(POLL_INTERVAL_MS, ct).ConfigureAwait(false);
+            }
+        }
+
+        private async Task<List<RemoteCommandModel>?> FetchPendingCommandsAsync(string installationId)
+        {
+            try
+            {
+                var correlationId = CorrelationId.New("VOLTRIS-POLL");
+                using var request = new HttpRequestMessage(
+                    HttpMethod.Get,
+                    $"{API_BASE}/commands/pending?machine_id={Uri.EscapeDataString(installationId)}");
+                request.Headers.TryAddWithoutValidation("x-correlation-id", correlationId);
+
+                using var response = await _httpClient.SendAsync(request).ConfigureAwait(false);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    var err = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                    _logger.LogWarning(
+                        $"{TAG} [{correlationId}] FetchPending: HTTP {(int)response.StatusCode} - {Truncate(err)}");
+                    return null;
+                }
+
+                var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                var result = JsonSerializer.Deserialize<RemoteCommandResponseModel>(
+                    json,
+                    new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true,
+                        ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles
+                    });
+                return result?.commands;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning($"{TAG} FetchPending erro: {ex.Message}");
+                return null;
+            }
+        }
+
+        private async Task UpdateCommandStatusAsync(string commandId, string status)
+        {
+            try
+            {
+                // snake_case: a API le `command_id`. Com CamelCase virava
+                // `commandId` e o servidor respondia 400 "Invalid payload",
+                // deixando todo comando travado em `pending` para sempre.
+                var payload = JsonSerializer.Serialize(
+                    new { command_id = commandId, status },
+                    App.ApiJsonOptions);
+
+                var correlationId = CorrelationId.New("VOLTRIS-CMD");
+                using var request = new HttpRequestMessage(HttpMethod.Post, $"{API_BASE}/commands/update")
+                {
+                    Content = new StringContent(payload, Encoding.UTF8, "application/json")
+                };
+                request.Headers.TryAddWithoutValidation("x-correlation-id", correlationId);
+
+                using var response = await _httpClient.SendAsync(request).ConfigureAwait(false);
+                var body = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    _logger.LogSuccess($"{TAG} [{correlationId}] Comando {commandId} marcado como '{status}'.");
+                }
+                else
+                {
+                    _logger.LogWarning(
+                        $"{TAG} [{correlationId}] Falha ao reportar status do comando {commandId}: " +
+                        $"HTTP {(int)response.StatusCode} - {Truncate(body)}");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning($"{TAG} Erro ao atualizar status do comando {commandId}: {ex.Message}");
+            }
+        }
+
+        private async Task SendHeartbeatAsync(string installationId)
+        {
+            var correlationId = CorrelationId.New("VOLTRIS-HB");
+            try
+            {
+                // snake_case: com CamelCase o servidor recebia `installationId` e
+                // respondia 400 "Missing installation_id" — o heartbeat nunca
+                // chegava ao banco.
+                var payload = JsonSerializer.Serialize(new
+                {
+                    installation_id = installationId,
+                    app_version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "1.0.0",
+                    hardware = new
+                    {
+                        pc_name = Environment.MachineName,
+                        os_name = Environment.OSVersion.VersionString,
+                        architecture = Environment.Is64BitOperatingSystem ? "x64" : "x86"
+                    }
+                }, App.ApiJsonOptions);
+
+                using var request = new HttpRequestMessage(HttpMethod.Post, $"{API_BASE}/install")
+                {
+                    Content = new StringContent(payload, Encoding.UTF8, "application/json")
+                };
+                request.Headers.TryAddWithoutValidation("x-correlation-id", correlationId);
+
+                using var response = await _httpClient.SendAsync(request).ConfigureAwait(false);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    _logger.LogDebug($"{TAG} [{correlationId}] Heartbeat registrado.");
+                }
+                else
+                {
+                    var body = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                    // Log em warning (antes era engolido em `catch {}`): era
+                    // impossivel saber que o heartbeat estava falhando.
+                    _logger.LogWarning(
+                        $"{TAG} [{correlationId}] Heartbeat recusado: HTTP {(int)response.StatusCode} - {Truncate(body)}");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning($"{TAG} [{correlationId}] Falha de rede no heartbeat: {ex.Message}");
+            }
+        }
+
+        private static string Truncate(string value, int max = 300)
+            => value.Length <= max ? value : value[..max] + "…";
+
+        private async Task ExecuteCommandAsync(RemoteCommandModel cmd)
+        {
+            _logger.LogInfo($"{TAG} ══════════════════════════════════════════");
+            _logger.LogInfo($"{TAG} Executando comando: type={cmd.command_type} id={cmd.id}");
+            _logger.LogInfo($"{TAG} ══════════════════════════════════════════");
+
+            try
+            {
+                switch (cmd.command_type)
+                {
+                    // ═══ SISTEMA ═══
+                    case "optimize":
+                    case "quick_optimize":
+                        _logger.LogInfo($"{TAG} [Sistema] Executando otimização rápida...");
+                        await System.Windows.Application.Current.Dispatcher.InvokeAsync(async () =>
+                        {
+                            try
+                            {
+                                var dashVm = App.Services?.GetService(typeof(VoltrisOptimizer.UI.ViewModels.DashboardViewModel)) as VoltrisOptimizer.UI.ViewModels.DashboardViewModel;
+                                if (dashVm?.QuickOptimizeCommand?.CanExecute(null) == true)
+                                {
+                                    dashVm.QuickOptimizeCommand.Execute("Remote");
+                                    _logger.LogSuccess($"{TAG} [Sistema] Otimização rápida disparada via Dashboard.");
+                                }
+                                else
+                                    _logger.LogWarning($"{TAG} [Sistema] DashboardViewModel ou QuickOptimizeCommand indisponível.");
+                            }
+                            catch (Exception ex) { _logger.LogError($"{TAG} [Sistema] Erro: {ex.Message}", ex); }
+                        });
+                        break;
+
+                    case "quick_cleanup":
+                        _logger.LogInfo($"{TAG} [Limpeza] Executando limpeza rápida...");
+                        await System.Windows.Application.Current.Dispatcher.InvokeAsync(async () =>
+                        {
+                            try
+                            {
+                                var dashVm = App.Services?.GetService(typeof(VoltrisOptimizer.UI.ViewModels.DashboardViewModel)) as VoltrisOptimizer.UI.ViewModels.DashboardViewModel;
+                                if (dashVm?.QuickCleanupCommand?.CanExecute(null) == true)
+                                {
+                                    dashVm.QuickCleanupCommand.Execute("Remote");
+                                    _logger.LogSuccess($"{TAG} [Limpeza] Limpeza rápida disparada via Dashboard.");
+                                }
+                            }
+                            catch (Exception ex) { _logger.LogError($"{TAG} [Limpeza] Erro: {ex.Message}", ex); }
+                        });
+                        break;
+
+                    case "shutdown":
+                        _logger.LogWarning($"{TAG} [Sistema] DESLIGANDO sistema...");
+                        Process.Start(new ProcessStartInfo
+                        {
+                            FileName = "shutdown", Arguments = "/s /t 10 /c \"Voltris: Comando remoto de desligamento.\"",
+                            CreateNoWindow = true, UseShellExecute = false
+                        });
+                        break;
+
+                    case "restart_link":
+                        _logger.LogWarning($"{TAG} [Sistema] REINICIANDO sistema...");
+                        Process.Start(new ProcessStartInfo
+                        {
+                            FileName = "shutdown", Arguments = "/r /t 10 /c \"Voltris: Comando remoto de reinicialização.\"",
+                            CreateNoWindow = true, UseShellExecute = false
+                        });
+                        break;
+
+                    // ═══ LIMPEZA ═══
+                    case "cleanup_analyze":
+                        _logger.LogInfo($"{TAG} [Limpeza] Analisando sistema...");
+                        if (App.UltraCleaner != null)
+                        {
+                            var analysis = await App.UltraCleaner.AnalyzeAllAsync(null);
+                            _logger.LogSuccess($"{TAG} [Limpeza] Análise concluída: {analysis?.TotalFoundSpace / 1024 / 1024}MB recuperáveis.");
+                        }
+                        else _logger.LogWarning($"{TAG} [Limpeza] UltraCleaner indisponível.");
+                        break;
+
+                    case "cleanup_execute":
+                        _logger.LogInfo($"{TAG} [Limpeza] Executando limpeza completa...");
+                        if (App.UltraCleaner != null)
+                        {
+                            var analysis = await App.UltraCleaner.AnalyzeAllAsync(null);
+                            if (analysis != null)
+                            {
+                                var allItems = analysis.Categories.SelectMany(c => c.Items).Where(i => i.IsSafe).ToList();
+                                await App.UltraCleaner.CleanSelectedAsync(allItems, null);
+                                _logger.LogSuccess($"{TAG} [Limpeza] Limpeza completa executada ({allItems.Count} itens).");
+                            }
+                        }
+                        else _logger.LogWarning($"{TAG} [Limpeza] UltraCleaner indisponível.");
+                        break;
+
+                    // ═══ REPARO ═══
+                    case "repair_dism_sfc":
+                        _logger.LogInfo($"{TAG} [Reparo] Executando DISM + SFC...");
+                        await Task.Run(() =>
+                        {
+                            try
+                            {
+                                // DISM
+                                var dism = Process.Start(new ProcessStartInfo
+                                {
+                                    FileName = "dism.exe", Arguments = "/Online /Cleanup-Image /RestoreHealth",
+                                    UseShellExecute = false, CreateNoWindow = true, RedirectStandardOutput = true
+                                });
+                                dism?.WaitForExit(600000); // 10 min timeout
+                                _logger.LogInfo($"{TAG} [Reparo] DISM concluído (exit={dism?.ExitCode}).");
+
+                                // SFC
+                                var sfc = Process.Start(new ProcessStartInfo
+                                {
+                                    FileName = "sfc.exe", Arguments = "/scannow",
+                                    UseShellExecute = false, CreateNoWindow = true, RedirectStandardOutput = true
+                                });
+                                sfc?.WaitForExit(600000);
+                                _logger.LogSuccess($"{TAG} [Reparo] SFC concluído (exit={sfc?.ExitCode}).");
+                            }
+                            catch (Exception ex) { _logger.LogError($"{TAG} [Reparo] Erro DISM/SFC: {ex.Message}", ex); }
+                        });
+                        break;
+
+                    case "repair_disk_cleanup":
+                        _logger.LogInfo($"{TAG} [Reparo] Iniciando limpeza de disco...");
+                        Process.Start(new ProcessStartInfo { FileName = "cleanmgr.exe", UseShellExecute = true });
+                        break;
+
+                    case "repair_full":
+                        _logger.LogInfo($"{TAG} [Reparo] Reparo completo solicitado remotamente — requer interação local.");
+                        _logger.LogWarning($"{TAG} [Reparo] Reparo completo não pode ser executado remotamente (requer confirmação do usuário).");
+                        break;
+
+                    // ═══ GAMER ═══
+                    case "gamer_mode":
+                    case "gamer_activate":
+                        _logger.LogInfo($"{TAG} [Gamer] Ativando Modo Gamer...");
+                        await Task.Run(async () =>
+                        {
+                            try
+                            {
+                                var gamer = App.Services?.GetService(typeof(IGamerModeOrchestrator)) as IGamerModeOrchestrator;
+                                if (gamer != null && !gamer.IsActive)
+                                {
+                                    var options = new GamerOptimizationOptions();
+                                    await gamer.ActivateAsync(options, isManual: false);
+                                    _logger.LogSuccess($"{TAG} [Gamer] Modo Gamer ativado.");
+                                }
+                                else if (gamer?.IsActive == true)
+                                    _logger.LogInfo($"{TAG} [Gamer] Modo Gamer já está ativo.");
+                                else
+                                    _logger.LogWarning($"{TAG} [Gamer] IGamerModeOrchestrator indisponível.");
+                            }
+                            catch (Exception ex) { _logger.LogError($"{TAG} [Gamer] Erro: {ex.Message}", ex); }
+                        });
+                        break;
+
+                    case "gamer_deactivate":
+                        _logger.LogInfo($"{TAG} [Gamer] Desativando Modo Gamer...");
+                        await Task.Run(async () =>
+                        {
+                            try
+                            {
+                                var gamer = App.Services?.GetService(typeof(IGamerModeOrchestrator)) as IGamerModeOrchestrator;
+                                if (gamer != null && gamer.IsActive)
+                                {
+                                    await gamer.DeactivateAsync();
+                                    _logger.LogSuccess($"{TAG} [Gamer] Modo Gamer desativado.");
+                                }
+                            }
+                            catch (Exception ex) { _logger.LogError($"{TAG} [Gamer] Erro: {ex.Message}", ex); }
+                        });
+                        break;
+
+                    // ═══ REDE ═══
+                    case "network_optimize":
+                        _logger.LogInfo($"{TAG} [Rede] Otimizando rede completa...");
+                        try
+                        {
+                            if (App.NetworkOptimizer != null)
+                            {
+                                await App.NetworkOptimizer.FlushDnsAsync();
+                                _logger.LogInfo($"{TAG} [Rede] DNS flushed.");
+                                await App.NetworkOptimizer.RenewDhcpAsync();
+                                _logger.LogInfo($"{TAG} [Rede] DHCP renovado.");
+                                await App.NetworkOptimizer.ResetWinsockAsync();
+                                _logger.LogInfo($"{TAG} [Rede] Winsock resetado.");
+                                _logger.LogSuccess($"{TAG} [Rede] Otimização de rede concluída.");
+                            }
+                            else _logger.LogWarning($"{TAG} [Rede] NetworkOptimizer indisponível.");
+                        }
+                        catch (Exception ex) { _logger.LogError($"{TAG} [Rede] Erro: {ex.Message}", ex); }
+                        break;
+
+                    case "network_flush_dns":
+                        _logger.LogInfo($"{TAG} [Rede] Flush DNS...");
+                        if (App.NetworkOptimizer != null) await App.NetworkOptimizer.FlushDnsAsync();
+                        _logger.LogSuccess($"{TAG} [Rede] DNS flushed.");
+                        break;
+
+                    case "network_reset_winsock":
+                        _logger.LogInfo($"{TAG} [Rede] Reset Winsock...");
+                        if (App.NetworkOptimizer != null) await App.NetworkOptimizer.ResetWinsockAsync();
+                        _logger.LogSuccess($"{TAG} [Rede] Winsock resetado.");
+                        break;
+
+                    case "network_reset_tcp":
+                        _logger.LogInfo($"{TAG} [Rede] Reset TCP/IP...");
+                        if (App.NetworkOptimizer != null) await App.NetworkOptimizer.ResetIPStackAsync();
+                        _logger.LogSuccess($"{TAG} [Rede] TCP/IP resetado.");
+                        break;
+
+                    // ═══ DESEMPENHO ═══
+                    case "performance_optimize":
+                        _logger.LogInfo($"{TAG} [Desempenho] Otimização inteligente solicitada remotamente.");
+                        _logger.LogInfo($"{TAG} [Desempenho] Comando registrado — será processado pelo sistema.");
+                        break;
+
+                    // ═══ SHIELD ═══
+                    case "shield_quick_scan":
+                        _logger.LogInfo($"{TAG} [Shield] Scan rápido solicitado...");
+                        try
+                        {
+                            var shield = App.Services?.GetService(typeof(Services.Shield.VoltrisShieldService)) as Services.Shield.VoltrisShieldService;
+                            if (shield != null)
+                            {
+                                await shield.RunQuickScanAsync(null);
+                                _logger.LogSuccess($"{TAG} [Shield] Scan rápido concluído.");
+                            }
+                            else _logger.LogWarning($"{TAG} [Shield] VoltrisShieldService indisponível.");
+                        }
+                        catch (Exception ex) { _logger.LogError($"{TAG} [Shield] Erro: {ex.Message}", ex); }
+                        break;
+
+                    case "shield_full_scan":
+                        _logger.LogInfo($"{TAG} [Shield] Scan completo solicitado...");
+                        try
+                        {
+                            var shield = App.Services?.GetService(typeof(Services.Shield.VoltrisShieldService)) as Services.Shield.VoltrisShieldService;
+                            if (shield != null)
+                            {
+                                await shield.RunFullScanAsync(null);
+                                _logger.LogSuccess($"{TAG} [Shield] Scan completo concluído.");
+                            }
+                        }
+                        catch (Exception ex) { _logger.LogError($"{TAG} [Shield] Erro: {ex.Message}", ex); }
+                        break;
+
+                    // ═══ DRIVERS ═══
+                    case "drivers_scan":
+                        _logger.LogInfo($"{TAG} [Drivers] Scan de drivers solicitado remotamente.");
+                        _logger.LogInfo($"{TAG} [Drivers] Comando registrado — requer interação na UI.");
+                        break;
+
+                    case "prepare_pc":
+                        _logger.LogInfo($"{TAG} [Sistema] Preparar PC — limpeza + otimização leve...");
+                        try
+                        {
+                            if (App.UltraCleaner != null)
+                            {
+                                var analysis = await App.UltraCleaner.AnalyzeAllAsync(null);
+                                if (analysis != null)
+                                {
+                                    var safeItems = analysis.Categories.SelectMany(c => c.Items).Where(i => i.IsSafe).ToList();
+                                    await App.UltraCleaner.CleanSelectedAsync(safeItems, null);
+                                }
+                            }
+                            if (App.NetworkOptimizer != null)
+                                await App.NetworkOptimizer.FlushDnsAsync();
+                            _logger.LogSuccess($"{TAG} [Sistema] PC preparado.");
+                        }
+                        catch (Exception ex) { _logger.LogError($"{TAG} [Sistema] Erro: {ex.Message}", ex); }
+                        break;
+
+                    default:
+                        _logger.LogWarning($"{TAG} Comando desconhecido: {cmd.command_type}");
+                        break;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"{TAG} Erro ao executar comando '{cmd.command_type}': {ex.Message}", ex);
+            }
+
+            _logger.LogInfo($"{TAG} Comando '{cmd.command_type}' finalizado.");
+        }
+
+        public void Dispose()
+        {
+            if (_disposed) return;
+            _disposed = true;
+            Stop();
+            _httpClient.Dispose();
+            _logger.LogInfo($"{TAG} Serviço disposed.");
+        }
+    }
+}

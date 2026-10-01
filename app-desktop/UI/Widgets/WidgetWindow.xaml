@@ -1,0 +1,533 @@
+﻿<Window xmlns:services="clr-namespace:VoltrisOptimizer.Services" x:Class="VoltrisOptimizer.UI.Widgets.WidgetWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:VoltrisOptimizer.UI.Widgets"
+        mc:Ignorable="d"
+        Title="{Binding [WidgetTitle], Source={x:Static services:LocalizationService.Instance}}"
+        
+        WindowStyle="None"
+        AllowsTransparency="False"
+        Background="Transparent"
+        Topmost="True"
+        ShowInTaskbar="False"
+        ResizeMode="NoResize"
+        SizeToContent="Height"
+        WindowStartupLocation="Manual"
+        Opacity="0"
+
+        MinWidth="180"
+        MaxWidth="560"
+        Width="300"
+        Height="Auto"
+
+        
+        UseLayoutRounding="True"
+        SnapsToDevicePixels="True"
+        TextOptions.TextRenderingMode="ClearType"
+        TextOptions.TextFormattingMode="Display"
+        
+        Loaded="Window_Loaded"
+        Closing="Window_Closing"
+        SourceInitialized="Window_SourceInitialized">
+
+    <WindowChrome.WindowChrome>
+        <WindowChrome GlassFrameThickness="-1" CornerRadius="8" CaptionHeight="0" ResizeBorderThickness="0"/>
+    </WindowChrome.WindowChrome>
+
+    <Window.Resources>
+        <!-- Cores e Brushes -->
+        <Color x:Key="PrimaryColor">#8B31FF</Color>
+        <Color x:Key="PrimaryGlowColor">#B86AFE</Color>
+        <Color x:Key="BackgroundDark">#1A1A2E</Color>
+        <Color x:Key="BackgroundLight">#252545</Color>
+        <Color x:Key="WidgetAccentColor">#FF4B6B</Color>
+        <Color x:Key="WidgetBlueColor">#31A8FF</Color>
+
+        <RadialGradientBrush x:Key="WidgetPinkGlow" Center="0.5,0.5" RadiusX="0.5" RadiusY="0.5">
+            <GradientStop Color="{StaticResource WidgetAccentColor}" Offset="0"/>
+            <GradientStop Color="Transparent" Offset="1"/>
+        </RadialGradientBrush>
+        <RadialGradientBrush x:Key="WidgetPurpleGlow" Center="0.5,0.5" RadiusX="0.5" RadiusY="0.5">
+            <GradientStop Color="{StaticResource PrimaryColor}" Offset="0"/>
+            <GradientStop Color="Transparent" Offset="1"/>
+        </RadialGradientBrush>
+        <RadialGradientBrush x:Key="WidgetBlueGlow" Center="0.5,0.5" RadiusX="0.5" RadiusY="0.5">
+            <GradientStop Color="{StaticResource WidgetBlueColor}" Offset="0"/>
+            <GradientStop Color="Transparent" Offset="1"/>
+        </RadialGradientBrush>
+
+        <SolidColorBrush x:Key="PrimaryBrush" Color="{DynamicResource PrimaryColor}"/>
+        <SolidColorBrush x:Key="PrimaryGlowBrush" Color="{DynamicResource PrimaryGlowColor}"/>
+        <SolidColorBrush x:Key="TextPrimaryBrush" Color="#FFFFFF"/>
+        <SolidColorBrush x:Key="TextSecondaryBrush" Color="#B4B4C0"/>
+        <SolidColorBrush x:Key="TextMutedBrush" Color="#6B6B80"/>
+        
+        <!-- Gradient Background -->
+        <LinearGradientBrush x:Key="GlassBackground" StartPoint="0,0" EndPoint="1,1">
+            <GradientStop Offset="0" Color="#CC1A1A2E"/>
+            <GradientStop Offset="1" Color="#CC252545"/>
+        </LinearGradientBrush>
+        
+        <LinearGradientBrush x:Key="GlassBackgroundTransparent" StartPoint="0,0" EndPoint="1,1">
+            <GradientStop Offset="0" Color="#401A1A2E"/>
+            <GradientStop Offset="1" Color="#50252545"/>
+        </LinearGradientBrush>
+        
+        <SolidColorBrush x:Key="TransparentBackground" Color="#E01E1E2F"/>
+        <SolidColorBrush x:Key="SolidBackground" Color="#FF1E1E2F"/>
+        
+        <!-- Glow Effect -->
+        <DropShadowEffect x:Key="GlowEffect" 
+                           Color="#8B31FF" 
+                           BlurRadius="15" 
+                           ShadowDepth="0" 
+                           Opacity="0.25"/>
+        
+        <!-- Inner Glow -->
+        <DropShadowEffect x:Key="InnerGlow"
+                       Color="#FFFFFF"
+                           BlurRadius="1"
+                           ShadowDepth="1"
+                           Opacity="0.1"/>
+
+        <!-- Estilo dos Labels de Métrica -->
+        <Style x:Key="MetricLabelStyle" TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="Segoe UI Variable, Segoe UI"/>
+            <Setter Property="FontSize" Value="7.5"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="#94A3B8"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="Margin" Value="0,0,0,0"/>
+        </Style>
+
+        <!-- Estilo dos Valores de Métrica -->
+        <Style x:Key="MetricValueStyle" TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="Segoe UI Variable, Segoe UI"/>
+            <Setter Property="FontSize" Value="10"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="TextAlignment" Value="Center"/>
+            <Setter Property="MinWidth" Value="30"/>
+        </Style>
+
+        <!-- Estilo do Botão de Otimização -->
+        <Style x:Key="OptimizeButtonStyle" TargetType="Button">
+            <Setter Property="Width" Value="24"/>
+            <Setter Property="Height" Value="24"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="#40FFFFFF"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="BtnBorder" 
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="6">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="BtnBorder" Property="Background">
+                                    <Setter.Value>
+                                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                            <GradientStop Color="#20FF4B6B" Offset="0"/>
+                                            <GradientStop Color="#208B31FF" Offset="0.5"/>
+                                            <GradientStop Color="#2031A8FF" Offset="1"/>
+                                        </LinearGradientBrush>
+                                    </Setter.Value>
+                                </Setter>
+                                <Setter Property="BorderBrush">
+                                    <Setter.Value>
+                                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                            <GradientStop Color="#FF4B6B" Offset="0"/>
+                                            <GradientStop Color="#8B31FF" Offset="0.5"/>
+                                            <GradientStop Color="#31A8FF" Offset="1"/>
+                                        </LinearGradientBrush>
+                                    </Setter.Value>
+                                </Setter>
+                                <Setter Property="Effect">
+                                    <Setter.Value>
+                                        <DropShadowEffect Color="#8B31FF" BlurRadius="12" Opacity="0.4" ShadowDepth="0"/>
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="BtnBorder" Property="Background" Value="#40FFFFFF"/>
+                                <Setter Property="RenderTransform">
+                                    <Setter.Value>
+                                        <ScaleTransform ScaleX="0.95" ScaleY="0.95"/>
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Geometry Icons -->
+        <Geometry x:Key="RocketIcon">M12,2.5C9,2.5 7,7 7,13L17,13C17,7 15,2.5 12,2.5 M7,13L4,17L7,17 M17,13L20,17L17,17 M10,17L12,21.5L14,17 M12,7A1.5,1.5 0 1 1 12,10A1.5,1.5 0 1 1 12,7</Geometry>
+
+        <!-- Converters para visibilidade -->
+        <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
+        <local:InvertedBoolToVisibilityConverter x:Key="InvertedBoolToVisibilityConverter"/>
+        
+        <!-- ESTILO DO MENU DE CONTEXTO -->
+        <Style x:Key="WidgetContextMenuStyle" TargetType="ContextMenu">
+            <Setter Property="Background" Value="#E81A1A2E"/>
+            <Setter Property="BorderBrush" Value="#40FFFFFF"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="4"/>
+            <Setter Property="SnapsToDevicePixels" Value="True"/>
+            <Setter Property="Effect">
+                <Setter.Value>
+                    <DropShadowEffect Color="#000000" BlurRadius="20" ShadowDepth="8" Opacity="0.5"/>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        
+        <!-- Estilo dos itens do menu -->
+        <Style x:Key="WidgetMenuItemStyle" TargetType="MenuItem">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#E0E0E0"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+            <Setter Property="Padding" Value="12,8"/>
+            <Setter Property="Height" Value="36"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="MenuItem">
+                        <Border x:Name="Border" 
+                                Background="{TemplateBinding Background}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="6"
+                                Padding="{TemplateBinding Padding}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="24"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <ContentPresenter x:Name="IconPresenter" 
+                                              Content="{TemplateBinding Icon}"
+                                              Grid.Column="0"
+                                              HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"/>
+                                <ContentPresenter x:Name="HeaderPresenter"
+                                              Content="{TemplateBinding Header}"
+                                              Grid.Column="1"
+                                              VerticalAlignment="Center"/>
+                                <Path x:Name="CheckMark"
+                                      Grid.Column="2"
+                                      Data="M9.75 17.27L4.53 12.05 3 13.59 9.75 20.34 21 9.09 19.47 7.66z"
+                                      Fill="{DynamicResource PrimaryBrush}"
+                                      Stretch="Uniform"
+                                      Width="14"
+                                      Height="14"
+                                      Visibility="Collapsed"/>
+                            </Grid>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Border" Property="Background" Value="#30FFFFFF"/>
+                                <Setter Property="Foreground" Value="#FFFFFF"/>
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="CheckMark" Property="Visibility" Value="Visible"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Foreground" Value="#60FFFFFF"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        
+        <!-- Estilo do separador -->
+        <Style x:Key="WidgetSeparatorStyle" TargetType="Separator">
+            <Setter Property="Background" Value="#20FFFFFF"/>
+            <Setter Property="Height" Value="1"/>
+            <Setter Property="Margin" Value="12,4"/>
+            <Setter Property="Opacity" Value="0.5"/>
+        </Style>
+        
+        <!-- Estilo do cabeçalho de seção -->
+        <Style x:Key="WidgetHeaderStyle" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}"/>
+            <Setter Property="FontSize" Value="10"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Margin" Value="12,8,12,4"/>
+            <Setter Property="Opacity" Value="0.9"/>
+        </Style>
+        
+        <!-- MENU DE CONTEXTO DO WIDGET -->
+        <ContextMenu x:Key="WidgetContextMenu" Style="{DynamicResource WidgetContextMenuStyle}" MaxHeight="400">
+
+            <MenuItem Header="{Binding [WidgetSmartMode], Source={x:Static services:LocalizationService.Instance}}" IsCheckable="True" IsChecked="{Binding SmartMode, Mode=TwoWay}" Command="{Binding ToggleSmartModeCommand}" Style="{DynamicResource WidgetMenuItemStyle}"/>
+            <Separator Style="{DynamicResource WidgetSeparatorStyle}"/>
+            <TextBlock Style="{DynamicResource WidgetHeaderStyle}" Text="{Binding [WidgetGamerMode], Source={x:Static services:LocalizationService.Instance}}"/>
+            <MenuItem Header="{Binding [WidgetOnlyDuringGames], Source={x:Static services:LocalizationService.Instance}}" IsCheckable="True" IsChecked="{Binding GamerOnlyMode, Mode=TwoWay}" Command="{Binding ToggleGamerOnlyModeCommand}" Style="{DynamicResource WidgetMenuItemStyle}"/>
+            <Separator Style="{DynamicResource WidgetSeparatorStyle}"/>
+            <TextBlock Style="{DynamicResource WidgetHeaderStyle}" Text="{Binding [WidgetVisibleMetrics], Source={x:Static services:LocalizationService.Instance}}"/>
+            <MenuItem Header="{Binding [WidgetCpu], Source={x:Static services:LocalizationService.Instance}}" IsCheckable="True" IsChecked="{Binding ShowCpu, Mode=TwoWay}" Command="{Binding ToggleCpuCommand}" Style="{DynamicResource WidgetMenuItemStyle}"/>
+            <MenuItem Header="{Binding [WidgetRam], Source={x:Static services:LocalizationService.Instance}}" IsCheckable="True" IsChecked="{Binding ShowRam, Mode=TwoWay}" Command="{Binding ToggleRamCommand}" Style="{DynamicResource WidgetMenuItemStyle}"/>
+            <MenuItem Header="{Binding [WidgetDisk], Source={x:Static services:LocalizationService.Instance}}" IsCheckable="True" IsChecked="{Binding ShowDisk, Mode=TwoWay}" Command="{Binding ToggleDiskCommand}" Style="{DynamicResource WidgetMenuItemStyle}"/>
+            <MenuItem Header="{Binding [WidgetGpu], Source={x:Static services:LocalizationService.Instance}}" IsCheckable="True" IsChecked="{Binding ShowGpu, Mode=TwoWay}" Command="{Binding ToggleGpuCommand}" Style="{DynamicResource WidgetMenuItemStyle}"/>
+            <MenuItem Header="{Binding [WidgetTemperature], Source={x:Static services:LocalizationService.Instance}}" IsCheckable="True" IsChecked="{Binding ShowTemp, Mode=TwoWay}" Command="{Binding ToggleTempCommand}" Style="{DynamicResource WidgetMenuItemStyle}"/>
+            <MenuItem Header="{Binding [WidgetFpsDuringGames], Source={x:Static services:LocalizationService.Instance}}" IsCheckable="True" IsChecked="{Binding ShowFpsMetric, Mode=TwoWay}" Command="{Binding ToggleFpsMetricCommand}" Style="{DynamicResource WidgetMenuItemStyle}"/>
+            <Separator Style="{DynamicResource WidgetSeparatorStyle}"/>
+            <TextBlock Style="{DynamicResource WidgetHeaderStyle}" Text="{Binding [WidgetPosition], Source={x:Static services:LocalizationService.Instance}}"/>
+
+            <Separator Style="{DynamicResource WidgetSeparatorStyle}"/>
+            <TextBlock Style="{DynamicResource WidgetHeaderStyle}" Text="{Binding [WidgetSystem], Source={x:Static services:LocalizationService.Instance}}"/>
+            <MenuItem Header="{Binding [WidgetOpenDashboard], Source={x:Static services:LocalizationService.Instance}}" Command="{Binding OpenDashboardCommand}" Style="{DynamicResource WidgetMenuItemStyle}"/>
+            <MenuItem Header="{Binding [WidgetStartWithWindows], Source={x:Static services:LocalizationService.Instance}}" IsCheckable="True" IsChecked="{Binding StartWithWindows, Mode=TwoWay}" Command="{Binding ToggleStartupCommand}" Style="{DynamicResource WidgetMenuItemStyle}"/>
+            <Separator Style="{DynamicResource WidgetSeparatorStyle}"/>
+            <TextBlock Style="{DynamicResource WidgetHeaderStyle}" Text="{Binding [WidgetActions], Source={x:Static services:LocalizationService.Instance}}"/>
+            <MenuItem Header="{Binding [WidgetClose], Source={x:Static services:LocalizationService.Instance}}" Command="{Binding CloseWidgetCommand}" Style="{DynamicResource WidgetMenuItemStyle}">
+                <MenuItem.Foreground>
+                    <SolidColorBrush Color="#FF6B6B"/>
+                </MenuItem.Foreground>
+            </MenuItem>
+        </ContextMenu>
+    </Window.Resources>
+
+    <Border x:Name="MainContainer" Background="{DynamicResource WindowBackgroundBrush}" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" MinHeight="36" MaxWidth="560" ClipToBounds="True">
+        <Grid x:Name="LayerHost">
+             <Canvas IsHitTestVisible="False" ClipToBounds="True">
+                <Ellipse Width="260" Height="120" Canvas.Left="-60" Canvas.Top="-70" Fill="{StaticResource WidgetPinkGlow}" Opacity="0.30"/>
+                <Ellipse Width="220" Height="110" Canvas.Right="-50" Canvas.Bottom="-60" Fill="{StaticResource WidgetPurpleGlow}" Opacity="0.26"/>
+                <Ellipse Width="180" Height="90" Canvas.Left="0" Canvas.Top="0" Fill="{StaticResource WidgetBlueGlow}" Opacity="0.20"/>
+            </Canvas>
+             <Grid x:Name="ContentRoot">
+                 <Grid.LayoutTransform>
+                     <ScaleTransform ScaleX="0.85" ScaleY="0.85" />
+                 </Grid.LayoutTransform>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/> <!-- Metrics -->
+                    <RowDefinition Height="Auto"/> <!-- Progress Bar -->
+                    <RowDefinition Height="Auto"/> <!-- Handle/Arrow -->
+                </Grid.RowDefinitions>
+
+                <Grid x:Name="MainContent" Grid.Row="0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    
+                    <Border x:Name="DragArea" Grid.Row="0" Background="Transparent" Cursor="SizeAll" MouseLeftButtonDown="DragArea_MouseLeftButtonDown" MouseLeftButtonUp="DragArea_MouseLeftButtonUp" MouseMove="DragArea_MouseMove" MouseRightButtonUp="DragArea_MouseRightButtonUp" ContextMenu="{DynamicResource WidgetContextMenu}">
+                        <Grid x:Name="MetricsGrid" Margin="5,3,5,3">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/> <!-- 0: Logo -->
+                                <ColumnDefinition Width="Auto"/> <!-- 1: CPU -->
+                                <ColumnDefinition Width="Auto"/> <!-- 2: Sep CPU/GPU -->
+                                <ColumnDefinition Width="Auto"/> <!-- 3: GPU -->
+                                <ColumnDefinition Width="Auto"/> <!-- 4: Sep GPU/RAM -->
+                                <ColumnDefinition Width="Auto"/> <!-- 5: RAM -->
+                                <ColumnDefinition Width="Auto"/> <!-- 6: Sep RAM/DISK -->
+                                <ColumnDefinition Width="Auto"/> <!-- 7: DISK -->
+                                <ColumnDefinition Width="Auto"/> <!-- 8: Sep DISK/TEMP -->
+                                <ColumnDefinition Width="Auto"/> <!-- 9: TEMP -->
+                                <ColumnDefinition Width="Auto"/> <!-- 10: Sep FPS -->
+                                <ColumnDefinition Width="Auto"/> <!-- 11: FPS -->
+                                <ColumnDefinition Width="Auto"/> <!-- 12: Spacer -->
+                                <ColumnDefinition Width="Auto"/> <!-- 13: Button -->
+                            </Grid.ColumnDefinitions>
+
+                            <Grid Grid.Column="0" Width="18" Height="18">
+                                <Image Source="/Images/voltris.png" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality"/>
+                            </Grid>
+
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="4,0" Visibility="{Binding CpuVisible, Converter={StaticResource BoolToVisibilityConverter}}">
+                                <TextBlock Text="{Binding [WidgetCpu], Source={x:Static services:LocalizationService.Instance}}" Style="{DynamicResource MetricLabelStyle}"/>
+                                <TextBlock Style="{DynamicResource MetricValueStyle}" Text="{Binding CpuUsage, StringFormat='{}{0,3:F0}%'}"/>
+                            </StackPanel>
+
+                            <Rectangle Grid.Column="2" Width="1" Height="12" Fill="#15FFFFFF" VerticalAlignment="Center" Visibility="{Binding GpuVisible, Converter={StaticResource BoolToVisibilityConverter}}"/>
+
+                            <StackPanel Grid.Column="3" VerticalAlignment="Center" Margin="4,0" Visibility="{Binding GpuVisible, Converter={StaticResource BoolToVisibilityConverter}}">
+                                <TextBlock Text="{Binding [WidgetGpu], Source={x:Static services:LocalizationService.Instance}}" Style="{DynamicResource MetricLabelStyle}"/>
+                                <TextBlock Style="{DynamicResource MetricValueStyle}" Text="{Binding GpuUsage, StringFormat='{}{0,3:F0}%'}"/>
+                            </StackPanel>
+
+                            <Rectangle Grid.Column="4" Width="1" Height="12" Fill="#15FFFFFF" VerticalAlignment="Center" Visibility="{Binding RamVisible, Converter={StaticResource BoolToVisibilityConverter}}"/>
+
+                            <StackPanel Grid.Column="5" VerticalAlignment="Center" Margin="4,0" Visibility="{Binding RamVisible, Converter={StaticResource BoolToVisibilityConverter}}">
+                                <TextBlock Text="{Binding [WidgetRam], Source={x:Static services:LocalizationService.Instance}}" Style="{DynamicResource MetricLabelStyle}"/>
+                                <TextBlock Style="{DynamicResource MetricValueStyle}" Text="{Binding RamUsage, StringFormat='{}{0,3:F0}%'}"/>
+                            </StackPanel>
+
+                            <Rectangle Grid.Column="6" Width="1" Height="12" Fill="#15FFFFFF" VerticalAlignment="Center" Visibility="{Binding DiskVisible, Converter={StaticResource BoolToVisibilityConverter}}"/>
+
+                            <StackPanel Grid.Column="7" VerticalAlignment="Center" Margin="4,0" Visibility="{Binding DiskVisible, Converter={StaticResource BoolToVisibilityConverter}}">
+                                <TextBlock Text="{Binding [WidgetDisk], Source={x:Static services:LocalizationService.Instance}}" Style="{DynamicResource MetricLabelStyle}"/>
+                                <TextBlock Style="{DynamicResource MetricValueStyle}" Text="{Binding DiskUsage, StringFormat='{}{0,3:F0}%'}"/>
+                            </StackPanel>
+
+                            <Rectangle Grid.Column="8" Width="1" Height="12" Fill="#15FFFFFF" VerticalAlignment="Center" Visibility="{Binding TempMenuVisible, Converter={StaticResource BoolToVisibilityConverter}}"/>
+
+                            <StackPanel Grid.Column="9" VerticalAlignment="Center" Margin="4,0" Visibility="{Binding TempMenuVisible, Converter={StaticResource BoolToVisibilityConverter}}">
+                                <TextBlock Text="{Binding [WidgetTemp], Source={x:Static services:LocalizationService.Instance}}" Style="{DynamicResource MetricLabelStyle}"/>
+                                <TextBlock Style="{DynamicResource MetricValueStyle}" Text="{Binding CpuTemperature, Converter={StaticResource TemperatureText}}"/>
+                            </StackPanel>
+
+                            <Rectangle Grid.Column="10" Width="1" Height="12" Fill="#15FFFFFF" VerticalAlignment="Center" Visibility="{Binding FpsVisible, Converter={StaticResource BoolToVisibilityConverter}}"/>
+
+                            <StackPanel Grid.Column="11" VerticalAlignment="Center" Margin="4,0" Visibility="{Binding FpsVisible, Converter={StaticResource BoolToVisibilityConverter}}">
+                                <TextBlock Text="{Binding [WidgetFps], Source={x:Static services:LocalizationService.Instance}}" Style="{DynamicResource MetricLabelStyle}"/>
+                                <TextBlock Style="{DynamicResource MetricValueStyle}" Text="{Binding CurrentFps, StringFormat='{}{0,4:F0}'}" Foreground="#FF00E5FF"/>
+                            </StackPanel>
+
+                            <Grid x:Name="QuickOptButtonGrid" Grid.Column="13" Margin="4,0,0,0">
+                                <Button x:Name="QuickOptButton" Style="{DynamicResource OptimizeButtonStyle}" Command="{Binding OptimizeRamCommand}" ToolTip="{Binding [WidgetQuickMemoryOptimization], Source={x:Static services:LocalizationService.Instance}}">
+                                    <Grid>
+                                        <Grid Width="14" Height="14" Visibility="{Binding IsOptimizing, Converter={StaticResource InvertedBoolToVisibilityConverter}}" VerticalAlignment="Center" HorizontalAlignment="Center">
+                                            <Path Data="{StaticResource RocketIcon}" Width="14" Height="14" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center" RenderTransformOrigin="0.5,0.5">
+                                                <Path.Fill>
+                                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                                        <GradientStop Color="#FF4B6B" Offset="0"/>
+                                                        <GradientStop Color="#8B31FF" Offset="0.5"/>
+                                                        <GradientStop Color="#31A8FF" Offset="1"/>
+                                                    </LinearGradientBrush>
+                                                </Path.Fill>
+                                                <Path.RenderTransform>
+                                                    <RotateTransform Angle="45"/>
+                                                </Path.RenderTransform>
+                                            </Path>
+                                            <Ellipse Width="5" Height="5" Fill="#F59E0B" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,0.5,0.5">
+                                                <Ellipse.Effect>
+                                                    <DropShadowEffect BlurRadius="4" ShadowDepth="0" Color="#F59E0B" Opacity="0.6"/>
+                                                </Ellipse.Effect>
+                                            </Ellipse>
+                                        </Grid>
+                                        <Ellipse Width="14" Height="14" Stroke="{DynamicResource PrimaryBrush}" StrokeThickness="2" StrokeDashArray="3 3" Visibility="{Binding IsOptimizing, Converter={StaticResource BoolToVisibilityConverter}}" RenderTransformOrigin="0.5,0.5">
+                                            <Ellipse.RenderTransform>
+                                                <RotateTransform x:Name="LoadingRotate" Angle="0"/>
+                                            </Ellipse.RenderTransform>
+                                            <Ellipse.Style>
+                                                <Style TargetType="Ellipse">
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsOptimizing}" Value="True">
+                                                            <DataTrigger.EnterActions>
+                                                                <BeginStoryboard x:Name="LoadingStoryboard">
+                                                                    <Storyboard>
+                                                                        <DoubleAnimation Storyboard.TargetProperty="RenderTransform.Angle" From="0" To="360" Duration="0:0:1" RepeatBehavior="Forever"/>
+                                                                    </Storyboard>
+                                                                </BeginStoryboard>
+                                                            </DataTrigger.EnterActions>
+                                                            <DataTrigger.ExitActions>
+                                                                <StopStoryboard BeginStoryboardName="LoadingStoryboard"/>
+                                                            </DataTrigger.ExitActions>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Ellipse.Style>
+                                        </Ellipse>
+                                    </Grid>
+                                </Button>
+                            </Grid>
+                        </Grid>
+                    </Border>
+                </Grid>
+
+            <Border x:Name="ProgressTrack" Grid.Row="1" Width="Auto" Height="2" Background="#2A2A3F" CornerRadius="1" Margin="10,4,10,4" HorizontalAlignment="Stretch">
+                <Grid>
+                    <Border x:Name="ProgressFill" HorizontalAlignment="Stretch" CornerRadius="1" RenderTransformOrigin="0,0.5">
+                        <Border.Background>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                <GradientStop Color="#FF4B6B" Offset="0"/>
+                                <GradientStop Color="#8B31FF" Offset="0.5"/>
+                                <GradientStop Color="#31A8FF" Offset="1"/>
+                            </LinearGradientBrush>
+                        </Border.Background>
+                        <Border.RenderTransform>
+                            <ScaleTransform x:Name="ProgressScale" ScaleX="0.0"/>
+                        </Border.RenderTransform>
+                        <Border.Effect>
+                            <DropShadowEffect BlurRadius="6" ShadowDepth="0" Color="#8B31FF" Opacity="0.4"/>
+                        </Border.Effect>
+                    </Border>
+                </Grid>
+            </Border>
+
+            <StackPanel x:Name="VisibleHandle" Grid.Row="2" HorizontalAlignment="Center" Margin="0,1,0,4" Opacity="0">
+                <Button x:Name="CollapseToggle" Width="32" Height="10" HorizontalAlignment="Center" Background="Transparent" BorderThickness="0" Cursor="Hand" Click="CollapseToggle_Click">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Border Background="{TemplateBinding Background}" BorderThickness="0" CornerRadius="4" Padding="0">
+                                <Path x:Name="CollapseArrow"
+                                      Data="M6,9 L12,3 L18,9"
+                                      StrokeThickness="2"
+                                      StrokeLineJoin="Round"
+                                      StrokeStartLineCap="Round"
+                                      StrokeEndLineCap="Round"
+                                      Fill="Transparent"
+                                      Stretch="Uniform"
+                                      Width="11" Height="6"
+                                      RenderTransformOrigin="0.5,0.5">
+                                    <Path.Stroke>
+                                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                            <GradientStop Color="#90FFFFFF" Offset="0"/>
+                                            <GradientStop Color="#FFFFFFFF" Offset="0.5"/>
+                                            <GradientStop Color="#90FFFFFF" Offset="1"/>
+                                        </LinearGradientBrush>
+                                    </Path.Stroke>
+                                    <Path.Effect>
+                                        <DropShadowEffect x:Name="ArrowGlow" Color="#B86AFE" BlurRadius="6" ShadowDepth="0" Opacity="0"/>
+                                    </Path.Effect>
+                                    <Path.RenderTransform>
+                                        <TransformGroup>
+                                            <ScaleTransform x:Name="ArrowScale" ScaleX="1" ScaleY="1"/>
+                                            <RotateTransform x:Name="ArrowRotation" Angle="0"/>
+                                            <TranslateTransform x:Name="ArrowTranslate" X="0" Y="0"/>
+                                        </TransformGroup>
+                                    </Path.RenderTransform>
+                                </Path>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Trigger.EnterActions>
+                                            <BeginStoryboard>
+                                                <Storyboard>
+                                                    <DoubleAnimation Storyboard.TargetName="ArrowGlow" Storyboard.TargetProperty="Opacity" To="0.85" Duration="0:0:0.15"/>
+                                                    <DoubleAnimation Storyboard.TargetName="ArrowScale" Storyboard.TargetProperty="ScaleX" To="1.15" Duration="0:0:0.15"/>
+                                                    <DoubleAnimation Storyboard.TargetName="ArrowScale" Storyboard.TargetProperty="ScaleY" To="1.15" Duration="0:0:0.15"/>
+                                                    <DoubleAnimation Storyboard.TargetName="ArrowTranslate" Storyboard.TargetProperty="Y" To="-1" Duration="0:0:0.15">
+                                                        <DoubleAnimation.EasingFunction>
+                                                            <QuadraticEase EasingMode="EaseOut"/>
+                                                        </DoubleAnimation.EasingFunction>
+                                                    </DoubleAnimation>
+                                                </Storyboard>
+                                            </BeginStoryboard>
+                                        </Trigger.EnterActions>
+                                        <Trigger.ExitActions>
+                                            <BeginStoryboard>
+                                                <Storyboard>
+                                                    <DoubleAnimation Storyboard.TargetName="ArrowGlow" Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.15"/>
+                                                    <DoubleAnimation Storyboard.TargetName="ArrowScale" Storyboard.TargetProperty="ScaleX" To="1.0" Duration="0:0:0.15"/>
+                                                    <DoubleAnimation Storyboard.TargetName="ArrowScale" Storyboard.TargetProperty="ScaleY" To="1.0" Duration="0:0:0.15"/>
+                                                    <DoubleAnimation Storyboard.TargetName="ArrowTranslate" Storyboard.TargetProperty="Y" To="0" Duration="0:0:0.15">
+                                                        <DoubleAnimation.EasingFunction>
+                                                            <QuadraticEase EasingMode="EaseOut"/>
+                                                        </DoubleAnimation.EasingFunction>
+                                                    </DoubleAnimation>
+                                                </Storyboard>
+                                            </BeginStoryboard>
+                                        </Trigger.ExitActions>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Button.Template>
+                </Button>
+             </StackPanel>
+         </Grid>
+    </Grid>
+</Border>
+</Window>

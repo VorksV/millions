@@ -1,0 +1,8 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    
+    <!-- TransparencyOff: apenas garante que não há transparência nos fundos.
+         As cores reais são definidas pelo tema ativo (DarkTheme.xaml ou LightTheme.xaml).
+         Este arquivo não sobrescreve cores de tema para ser compatível com ambos. -->
+
+</ResourceDictionary>

@@ -1,0 +1,42 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="18.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="D:\APLICATIVO VOLTRIS\DLLS\RecoveryEngine\dllmain.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\APLICATIVO VOLTRIS\DLLS\RecoveryEngine\Scanner.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\APLICATIVO VOLTRIS\DLLS\RecoveryEngine\NTFSParser.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\APLICATIVO VOLTRIS\DLLS\RecoveryEngine\UsnJournal.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="D:\APLICATIVO VOLTRIS\DLLS\RecoveryEngine\RecoveryEngine.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\APLICATIVO VOLTRIS\DLLS\RecoveryEngine\Scanner.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\APLICATIVO VOLTRIS\DLLS\RecoveryEngine\NTFSParser.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\APLICATIVO VOLTRIS\DLLS\RecoveryEngine\FileSignatures.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="D:\APLICATIVO VOLTRIS\DLLS\RecoveryEngine\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{444D3AC2-7023-3532-93E2-D5972705501F}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{32682488-C21B-3BDE-8305-BB31661A8DE9}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

@@ -3,11 +3,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-hot-toast';
-import { 
-  FiUser, FiMail, FiPhone, FiMapPin, FiCalendar, 
-  FiEdit3, FiSave, FiX, FiShield, FiLock, 
-  FiCpu, FiCheckCircle, FiActivity
-} from 'react-icons/fi';
+import VoltrisIcon from '@/components/dashboard/VoltrisIcon';
+import VoltrisIconTile, { DASHBOARD_ACCENT } from '@/components/dashboard/VoltrisIconTile';
 import { createClient } from '@/utils/supabase/client';
 import { useAuth } from '@/app/hooks/useAuth';
 import AuthGuard from '@/components/AuthGuard';
@@ -86,10 +83,7 @@ export default function ProfileClient() {
 
       if (error) throw error;
 
-      toast.success('Perfil atualizado!', {
-        icon: '✅',
-        style: { background: 'rgba(10, 10, 15, 0.9)', color: '#fff', border: '1px solid rgba(49, 168, 255, 0.2)' }
-      });
+      toast.success('Perfil atualizado com sucesso!');
       setIsEditing(false);
       
       const { data: updatedData } = await supabase
@@ -107,244 +101,224 @@ export default function ProfileClient() {
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 gap-6">
-        <div className="w-16 h-16 border-t-4 border-r-4 border-[#8B31FF] rounded-full animate-spin"></div>
-        <p className="text-gray-500 font-black uppercase tracking-[0.3em] text-[10px] animate-pulse">Sincronizando Identidade do Usuário...</p>
+      <div className="flex flex-col items-center justify-center py-32 gap-3 text-slate-400">
+        <div className="w-8 h-8 rounded-full border-2 border-slate-700 border-t-indigo-500 animate-spin"></div>
+        <p className="text-xs font-medium text-slate-400">Carregando dados do usuário...</p>
       </div>
     );
   }
 
   return (
     <AuthGuard>
-      <div className="flex flex-col gap-10">
+      <div className="flex flex-col gap-6 w-full max-w-full">
         
-        {/* Profile Identity Card */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className={`relative p-10 rounded-[3.5rem] border overflow-hidden ${transparencyMode ? 'voltris-glass' : 'bg-white border-gray-200 shadow-xl'}`}
-        >
-          <div className="absolute -right-20 -top-20 w-[600px] h-[600px] bg-[#8B31FF]/5 blur-[150px] rounded-full"></div>
-          
-          <div className="relative z-10 flex flex-col md:flex-row gap-10 items-center md:items-start text-center md:text-left">
-             <div className="relative group">
-                <div className="w-40 h-40 rounded-[3rem] bg-gradient-to-br from-[#8B31FF] via-[#31A8FF] to-[#FF4B6B] p-[2px] shadow-2xl transition-transform duration-500 group-hover:scale-105">
-                   <div className="w-full h-full rounded-[2.85rem] bg-gray-100 flex items-center justify-center overflow-hidden">
-                      <FiUser className="w-16 h-16 text-gray-400 group-hover:text-gray-900 group-hover:scale-110 transition-all duration-500" />
-                   </div>
-                </div>
-                <div className="absolute -bottom-2 -right-2 w-12 h-12 rounded-2xl bg-[#00FF88] flex items-center justify-center shadow-lg border-4 border-white">
-                   <FiCheckCircle className="w-6 h-6 text-black" />
-                </div>
-             </div>
-
-             <div className="flex-1 space-y-4">
-                <div className="space-y-1">
-                   <div className="flex items-center gap-3 justify-center md:justify-start">
-                      <h1 className="text-xl md:text-2xl font-black text-gray-900 uppercase tracking-tighter leading-tight break-words">{profile?.full_name || 'Agente de Otimização'}</h1>
-                   </div>
-                   <p className="text-gray-600 font-bold text-xs uppercase tracking-widest">{user?.email}</p>
-                </div>
-
-                <div className="flex flex-wrap gap-4 justify-center md:justify-start pt-2">
-                   <div className="flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-xl border border-gray-200">
-                      <FiCpu className="w-4 h-4 text-[#31A8FF]" />
-                      <span className="text-[10px] font-black text-gray-900 uppercase tracking-widest">ID: {user?.id.slice(0, 8).toUpperCase()}</span>
-                   </div>
-                   <div className="flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-xl border border-gray-200">
-                      <FiActivity className="w-4 h-4 text-[#00FF88]" />
-                      <span className="text-[10px] font-black text-gray-900 uppercase tracking-widest">Status: Ativo</span>
-                   </div>
-                </div>
-             </div>
-
-             {!isEditing && (
-                <button
-                  onClick={() => setIsEditing(true)}
-                  className="px-8 py-4 bg-white text-black font-black uppercase italic tracking-widest rounded-2xl hover:scale-105 transition-all shadow-3xl text-sm"
-                >
-                  Editar Perfil
-                </button>
-             )}
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-slate-800/80">
+          <div>
+            <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight">Meu Perfil</h2>
+            <p className="text-xs text-slate-400 mt-0.5">Gerenciamento de credenciais, informações de contato e endereço</p>
           </div>
-        </motion.div>
 
-        {/* Form Sections */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+          {!isEditing ? (
+            <button
+              onClick={() => setIsEditing(true)}
+              className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs rounded-xl shadow-md shadow-indigo-600/20 transition-all flex items-center gap-2 active:scale-95"
+            >
+              <VoltrisIcon name="edit" size={14} />
+              <span>Editar Informações</span>
+            </button>
+          ) : (
+            <div className="flex items-center gap-2.5">
+              <button
+                onClick={() => setIsEditing(false)}
+                className="px-3.5 py-2 rounded-xl bg-slate-800 text-slate-300 font-semibold text-xs hover:bg-slate-700 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleSave}
+                disabled={saving}
+                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs rounded-xl shadow-md shadow-indigo-600/20 transition-all flex items-center gap-2 disabled:opacity-50"
+              >
+                <VoltrisIcon name="save" size={14} />
+                <span>{saving ? 'Salvando...' : 'Salvar Alterações'}</span>
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Profile Card */}
+        <div className={`p-6 sm:p-7 rounded-2xl border ${transparencyMode ? 'voltris-glass' : 'bg-slate-900/60 border-slate-800 shadow-xl'}`}>
+          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 text-center sm:text-left">
+             <div className="relative shrink-0">
+                <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-indigo-500 to-slate-700 flex items-center justify-center text-white text-2xl font-bold shadow-lg shadow-indigo-500/10">
+                  {user?.email?.[0]?.toUpperCase() || 'U'}
+                </div>
+                <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-emerald-500 border-2 border-slate-900 flex items-center justify-center text-slate-950">
+                  <VoltrisIcon name="check" size={14} />
+                </div>
+             </div>
+
+             <div className="flex-1 space-y-2 min-w-0">
+                <div className="space-y-0.5">
+                   <h3 className="text-lg font-bold text-white tracking-tight truncate">{profile?.full_name || 'Nome não configurado'}</h3>
+                   <p className="text-xs text-slate-400 font-mono truncate">{user?.email}</p>
+                </div>
+
+                <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 pt-1">
+                   <div className="flex items-center gap-1.5 px-2.5 py-1 bg-slate-950/60 rounded-lg border border-slate-800 text-[11px] font-mono text-slate-300">
+                      <VoltrisIcon name="system" size={12} className="text-indigo-400" />
+                      <span>ID: {user?.id.slice(0, 8).toUpperCase()}</span>
+                   </div>
+                   <div className="flex items-center gap-1.5 px-2.5 py-1 bg-emerald-500/10 rounded-lg border border-emerald-500/20 text-[11px] font-medium text-emerald-400">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                      <span>Conta Ativa</span>
+                   </div>
+                </div>
+             </div>
+          </div>
+        </div>
+
+        {/* Form Details Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           
-          {/* Detailed Information */}
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className={`p-10 rounded-[3.5rem] border ${transparencyMode ? 'voltris-glass' : 'bg-white border-gray-200 shadow-xl'}`}
-          >
-            <div className="flex items-center gap-4 mb-10">
-               <div className="p-3 bg-[#31A8FF]/10 text-[#31A8FF] rounded-2xl">
-                 <FiUser className="w-6 h-6" />
+          {/* Personal Info */}
+          <div className={`p-6 rounded-2xl border ${transparencyMode ? 'voltris-glass' : 'bg-slate-900/60 border-slate-800 shadow-xl'} space-y-4`}>
+            <div className="flex items-center gap-2.5 pb-3 border-b border-slate-800/80">
+               <VoltrisIconTile icon="person" accent={DASHBOARD_ACCENT.brand} size={8} />
+               <div>
+                 <h3 className="text-sm font-bold text-white tracking-tight">Dados Pessoais</h3>
+                 <p className="text-[11px] text-slate-500">Informações cadastrais e contato principal</p>
                </div>
-               <h3 className="text-xl font-black text-gray-900 italic uppercase tracking-tighter leading-none">Dados <span className="text-[#31A8FF]">Pessoais</span></h3>
             </div>
 
-            <div className="space-y-8">
-               <div className="space-y-3">
-                 <label className="text-[10px] font-black text-gray-600 uppercase tracking-[0.3em] font-mono">E-mail de Autenticação</label>
-                 <div className="p-5 rounded-2xl bg-gray-100 border border-gray-200 text-gray-600 italic font-bold">
+            <div className="space-y-4">
+               <div className="space-y-1.5">
+                 <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">E-mail Cadastrado</label>
+                 <div className="px-3.5 py-2.5 rounded-xl bg-slate-950/50 border border-slate-800 text-xs text-slate-400 font-mono">
                     {user?.email}
                  </div>
                </div>
 
-               <div className="space-y-3">
-                 <label className="text-[10px] font-black text-gray-600 uppercase tracking-[0.3em] font-mono">Nome Operacional</label>
+               <div className="space-y-1.5">
+                 <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">Nome Completo</label>
                  {isEditing ? (
                     <input
                       type="text"
                       value={formData.full_name}
                       onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-                      className="w-full p-5 rounded-2xl bg-gray-100 border border-gray-300 text-gray-900 focus:border-[#31A8FF] outline-none transition-all placeholder:text-gray-400"
-                      placeholder="Identificação do Agente"
+                      className="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs focus:border-indigo-500 outline-none transition-colors"
+                      placeholder="Seu nome completo"
                     />
                  ) : (
-                    <div className="p-5 rounded-2xl bg-gray-100 border border-gray-200 text-gray-900 font-bold">
-                      {profile?.full_name || 'Pendente'}
+                    <div className="px-3.5 py-2.5 rounded-xl bg-slate-950/30 border border-slate-800/80 text-xs text-slate-200 font-medium">
+                      {profile?.full_name || 'Não informado'}
                     </div>
                  )}
                </div>
 
-               <div className="space-y-3">
-                 <label className="text-[10px] font-black text-gray-600 uppercase tracking-[0.3em] font-mono">Linha de Contato Segura</label>
+               <div className="space-y-1.5">
+                 <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">Telefone / WhatsApp</label>
                  {isEditing ? (
                     <input
                       type="tel"
                       value={formData.phone}
                       onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                      className="w-full p-5 rounded-2xl bg-gray-100 border border-gray-300 text-gray-900 focus:border-[#31A8FF] outline-none transition-all placeholder:text-gray-400"
-                      placeholder="+55 (00) 00000-0000"
+                      className="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs focus:border-indigo-500 outline-none transition-colors"
+                      placeholder="(00) 00000-0000"
                     />
                  ) : (
-                    <div className="p-5 rounded-2xl bg-gray-100 border border-gray-200 text-gray-900 font-bold">
-                      {profile?.phone || 'Pendente'}
+                    <div className="px-3.5 py-2.5 rounded-xl bg-slate-950/30 border border-slate-800/80 text-xs text-slate-200 font-medium">
+                      {profile?.phone || 'Não informado'}
                     </div>
                  )}
                </div>
             </div>
-          </motion.div>
+          </div>
 
-          {/* Secure Location Link */}
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className={`p-10 rounded-[3.5rem] border ${transparencyMode ? 'voltris-glass' : 'bg-white border-gray-200 shadow-xl'}`}
-          >
-            <div className="flex items-center gap-4 mb-10">
-               <div className="p-3 bg-[#8B31FF]/10 text-[#8B31FF] rounded-2xl">
-                 <FiMapPin className="w-6 h-6" />
+          {/* Location Info */}
+          <div className={`p-6 rounded-2xl border ${transparencyMode ? 'voltris-glass' : 'bg-slate-900/60 border-slate-800 shadow-xl'} space-y-4`}>
+            <div className="flex items-center gap-2.5 pb-3 border-b border-slate-800/80">
+                 <VoltrisIconTile icon="mapPin" accent={DASHBOARD_ACCENT.success} size={8} />
+               <div>
+                 <h3 className="text-sm font-bold text-white tracking-tight">Endereço & Localização</h3>
+                 <p className="text-[11px] text-slate-500">Dados para emissão de notas fiscais e suporte</p>
                </div>
-               <h3 className="text-xl font-black text-gray-900 italic uppercase tracking-tighter leading-none">Link <span className="text-[#8B31FF]">Geográfico</span></h3>
             </div>
 
-            <div className="space-y-8">
-               <div className="space-y-3">
-                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] font-mono">Endereço Base</label>
+            <div className="space-y-4">
+               <div className="space-y-1.5">
+                 <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">Endereço Residencial</label>
                  {isEditing ? (
                     <input
                       type="text"
                       value={formData.address}
                       onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                      className="w-full p-5 rounded-2xl bg-gray-100 border border-gray-300 text-gray-900 focus:border-[#8B31FF] outline-none transition-all placeholder:text-gray-400"
-                      placeholder="Vila, Logradouro, Número"
+                      className="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs focus:border-indigo-500 outline-none transition-colors"
+                      placeholder="Rua, número, complemento, bairro"
                     />
                  ) : (
-                    <div className="p-5 rounded-2xl bg-gray-100 border border-gray-200 text-gray-900 font-bold">
-                      {profile?.address || 'Pendente'}
+                    <div className="px-3.5 py-2.5 rounded-xl bg-slate-950/30 border border-slate-800/80 text-xs text-slate-200 font-medium truncate">
+                      {profile?.address || 'Não informado'}
                     </div>
                  )}
                </div>
 
-               <div className="grid grid-cols-2 gap-6">
-                 <div className="space-y-3">
-                   <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] font-mono">Cidade / Distrito</label>
+               <div className="grid grid-cols-2 gap-3">
+                 <div className="space-y-1.5">
+                   <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">Cidade</label>
                    {isEditing ? (
                       <input
                         type="text"
                         value={formData.city}
                         onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                        className="w-full p-5 rounded-2xl bg-gray-100 border border-gray-300 text-gray-900 focus:border-[#8B31FF] outline-none transition-all placeholder:text-gray-400"
+                        className="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs focus:border-indigo-500 outline-none transition-colors"
+                        placeholder="Sua cidade"
                       />
                    ) : (
-                      <div className="p-5 rounded-2xl bg-gray-100 border border-gray-200 text-gray-900 font-bold">
-                        {profile?.city || 'PD'}
+                      <div className="px-3.5 py-2.5 rounded-xl bg-slate-950/30 border border-slate-800/80 text-xs text-slate-200 font-medium">
+                        {profile?.city || 'Não informado'}
                       </div>
                    )}
                  </div>
-                 <div className="space-y-3">
-                   <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] font-mono">Código do Estado</label>
+                 <div className="space-y-1.5">
+                   <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">Estado (UF)</label>
                    {isEditing ? (
                       <input
                         type="text"
+                        maxLength={2}
                         value={formData.state}
-                        onChange={(e) => setFormData({ ...formData, state: e.target.value })}
-                        className="w-full p-5 rounded-2xl bg-gray-100 border border-gray-300 text-gray-900 focus:border-[#8B31FF] outline-none transition-all placeholder:text-gray-400"
+                        onChange={(e) => setFormData({ ...formData, state: e.target.value.toUpperCase() })}
+                        className="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs focus:border-indigo-500 outline-none transition-colors uppercase"
+                        placeholder="UF"
                       />
                    ) : (
-                      <div className="p-5 rounded-2xl bg-gray-100 border border-gray-200 text-gray-900 font-bold">
-                        {profile?.state || 'PD'}
+                      <div className="px-3.5 py-2.5 rounded-xl bg-slate-950/30 border border-slate-800/80 text-xs text-slate-200 font-medium">
+                        {profile?.state || 'Não informado'}
                       </div>
                    )}
                  </div>
                </div>
 
-               <div className="space-y-3">
-                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] font-mono">Código CEP do Sistema</label>
+               <div className="space-y-1.5">
+                 <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">CEP</label>
                  {isEditing ? (
                     <input
                       type="text"
                       value={formData.cep}
                       onChange={(e) => setFormData({ ...formData, cep: e.target.value })}
-                      className="w-full p-5 rounded-2xl bg-gray-100 border border-gray-300 text-gray-900 focus:border-[#8B31FF] outline-none transition-all placeholder:text-gray-400"
+                      className="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs focus:border-indigo-500 outline-none transition-colors"
+                      placeholder="00000-000"
                     />
                  ) : (
-                    <div className="p-5 rounded-2xl bg-gray-100 border border-gray-200 text-gray-900 font-bold">
-                      {profile?.cep || 'Pendente'}
+                    <div className="px-3.5 py-2.5 rounded-xl bg-slate-950/30 border border-slate-800/80 text-xs text-slate-200 font-medium">
+                      {profile?.cep || 'Não informado'}
                     </div>
                  )}
                </div>
             </div>
-          </motion.div>
+          </div>
         </div>
-
-        {/* Footer Actions */}
-        <AnimatePresence>
-          {isEditing && (
-             <motion.div 
-               initial={{ opacity: 0, y: 50 }}
-               animate={{ opacity: 1, y: 0 }}
-               exit={{ opacity: 0, y: 50 }}
-               className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[150] w-[90%] max-w-2xl"
-             >
-                <div className="bg-white/90 backdrop-blur-2xl border border-gray-200 p-6 rounded-[2.5rem] shadow-xl flex items-center justify-between gap-6">
-                   <div className="flex flex-col">
-                      <span className="text-xs font-black text-gray-900 italic uppercase tracking-tighter">Modo de Edição</span>
-                      <span className="text-[9px] font-bold text-gray-500 uppercase tracking-widest leading-none">Você possui alterações não salvas</span>
-                   </div>
-                   <div className="flex gap-4">
-                      <button 
-                        onClick={() => { setIsEditing(false); }} 
-                        className="px-6 py-3 rounded-xl bg-gray-100 text-gray-600 font-black uppercase text-[10px] tracking-widest hover:bg-gray-200 transition-all"
-                      >
-                        Abortar Alterações
-                      </button>
-                      <button 
-                        onClick={handleSave} 
-                        disabled={saving}
-                        className="px-8 py-3 rounded-xl bg-[#00FF88] text-black font-black uppercase text-[10px] tracking-widest hover:scale-105 active:scale-95 transition-all shadow-lg shadow-[#00FF88]/20 disabled:grayscale"
-                      >
-                        {saving ? 'Salvando Sistema...' : 'Sincronizar Identidade'}
-                      </button>
-                   </div>
-                </div>
-             </motion.div>
-          )}
-        </AnimatePresence>
 
       </div>
     </AuthGuard>

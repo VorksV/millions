@@ -1,0 +1,1 @@
+dotnet build VoltrisOptimizer.csproj -c Release 2>&1

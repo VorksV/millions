@@ -1,0 +1,20 @@
+﻿VoltrisOptimizer
+1.0.2.8
+
+winexe
+C#
+.cs
+D:\Minhas Coisas\Minhas Coisas\Voltris\VOLTRIS\app-desktop\obj\Debug\net8.0-windows10.0.17763.0\
+VoltrisOptimizer
+none
+false
+TRACE;DEBUG;NET;NET8_0;NETCOREAPP
+D:\Minhas Coisas\Minhas Coisas\Voltris\VOLTRIS\app-desktop\App.xaml
+81666063287
+6651117484951
+1388242025998
+303-1960969723
+Core\PreparePc\UI\Views\PreparePcConfirmationView.xaml;Core\PreparePc\UI\Views\PreparePcIntroView.xaml;Core\PreparePc\UI\Views\PreparePcProgressView.xaml;Core\SystemIntelligenceProfiler\UI\Views\LogConsoleView.xaml;Core\SystemIntelligenceProfiler\UI\Views\ProfilerQuestionnaireView.xaml;Core\Updater\UpdateWindow.xaml;Services\Gamer\GamerModeManager\UI\GamerModeDashboard.xaml;UI\Controls\AiFaceView.xaml;UI\Controls\HealthHeartIcon.xaml;UI\Controls\LicenseShieldIcon.xaml;UI\Controls\LoadingOverlay.xaml;UI\Controls\LoadingSpinner.xaml;UI\Controls\ModernMessageBox.xaml;UI\Controls\ModernTrayTooltip.xaml;UI\Controls\NotificationDrawer.xaml;UI\Controls\OnboardingLockModal.xaml;UI\Controls\ProBadge.xaml;UI\Controls\ProfessionalApplyAllDialog.xaml;UI\Controls\UnlinkConfirmationDialog.xaml;UI\MainWindow.xaml;UI\Overlay\ProfessionalGameOverlayWindow.xaml;UI\Themes\Colors.xaml;UI\Themes\Converters.xaml;UI\Themes\DarkTheme.xaml;UI\Themes\DriverIcons.xaml;UI\Themes\Icons.xaml;UI\Themes\LightTheme.xaml;UI\Themes\LightTransparencyOn.xaml;UI\Themes\SidebarPremium.xaml;UI\Themes\Styles.xaml;UI\Themes\ToolTipTheme.xaml;UI\Themes\TransparencyOff.xaml;UI\Themes\TransparencyOn.xaml;UI\Themes\VoltrisDesignSystem.xaml;UI\Views\BenchmarkPage.xaml;UI\Views\BenchmarkView.xaml;UI\Views\DashboardView.xaml;UI\Views\DebloatView.xaml;UI\Views\DeviceInfoView.xaml;UI\Views\DisplayView.xaml;UI\Views\DpcHealthView.xaml;UI\Views\DriverDetailsModal.xaml;UI\Views\DriversView.xaml;UI\Views\GameDiagnosticsView.xaml;UI\Views\GamerDiagnosticsView.xaml;UI\Views\GamerView.xaml;UI\Views\HistoryView.xaml;UI\Views\LicenseActivationView.xaml;UI\Views\LicenseManagementView.xaml;UI\Views\LicensePurchaseModal.xaml;UI\Views\NetworkView.xaml;UI\Views\OnboardingView.xaml;UI\Views\PerformanceView.xaml;UI\Views\PersonalizeView.xaml;UI\Views\PrivacyView.xaml;UI\Views\RecoveryInfoPage.xaml;UI\Views\RecoveryView.xaml;UI\Views\RepairView.xaml;UI\Views\SchedulerView.xaml;UI\Views\SecurityView.xaml;UI\Views\SettingsView.xaml;UI\Views\ShieldView.xaml;UI\Views\ShortcutsView.xaml;UI\Views\SmartRepairView.xaml;UI\Views\StreamHubView.xaml;UI\Views\SystemView.xaml;UI\Widgets\WidgetWindow.xaml;UI\Windows\AboutWindow.xaml;UI\Windows\CustomToastWindow.xaml;UI\Windows\LoginWindow.xaml;UI\Windows\ModernAlertWindow.xaml;UI\Windows\OnboardingWizard.xaml;UI\Windows\OperationQueueDialog.xaml;UI\Windows\ProfileSelectionWindow.xaml;UI\Windows\PurchasePlansWindow.xaml;UI\Windows\RestartConfirmationModal.xaml;UI\Windows\SecurityVerificationWindow.xaml;UI\Windows\SmartRepairConfirmationModal.xaml;UI\Windows\SplashWindow.xaml;UI\Windows\UninstallSuccessModal.xaml;UI\Windows\WelcomeLinkWindow.xaml;
+
+False
+

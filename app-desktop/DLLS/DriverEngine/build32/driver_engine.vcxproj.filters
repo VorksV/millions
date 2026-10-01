@@ -1,0 +1,24 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="18.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="E:\Minhas Coisas\Desktop\APLICATIVO VOLTRIS\DLLS\DriverEngine\DriverEngine.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="E:\Minhas Coisas\Desktop\APLICATIVO VOLTRIS\DLLS\DriverEngine\DriverEngine.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="E:\Minhas Coisas\Desktop\APLICATIVO VOLTRIS\DLLS\DriverEngine\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{86593BAE-C5C5-3B27-BECC-726609DD330F}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{B9E82DC5-3D89-3233-B29F-67951515DEB1}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

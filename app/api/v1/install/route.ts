@@ -13,13 +13,13 @@ import {
 
 export const runtime = 'nodejs';
 
-// Cache em memória para evitar rodar upserts pesados no banco a cada 15 segundos
+// Cache em memória para evitar rodar upserts pesados no banco repetidamente.
 const recentHeartbeatCache = new Map<string, { lastSaved: number; isLinked: boolean }>();
 
-// Rate limiting em memoria. O heartbeat do app desktop chega a cada 15 s
-// (4/min); 30/min nao encosta no polling normal e so corta flood/bot.
+// Rate limiting em memória. O app desktop envia heartbeat a cada 10 minutos.
+// 20/min fica muito acima do uso legítimo e corta flood/bot.
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
-const RATE_LIMIT = 30;
+const RATE_LIMIT = 20;
 
 function checkRateLimit(ip: string): boolean {
     const now = Date.now();
@@ -84,10 +84,10 @@ export async function POST(request: NextRequest) {
     }
     ctx.installationId = installationId;
 
-    // Se a máquina já atualizou no banco há menos de 60s, confirma imediatamente em 1ms
+    // Se a máquina já atualizou no banco há menos de 3 minutos, confirma imediatamente em 1ms
     const nowMs = Date.now();
     const recent = recentHeartbeatCache.get(installationId);
-    if (recent && nowMs - recent.lastSaved < 60_000) {
+    if (recent && nowMs - recent.lastSaved < 180_000) {
         return jsonWithCorrelation(ctx, {
             success: true,
             installation_id: installationId,

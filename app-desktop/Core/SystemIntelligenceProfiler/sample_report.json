@@ -1,0 +1,30 @@
+{
+  "Audit": {
+    "Cpu": "Intel(R) Core(TM) i7",
+    "LogicalCores": 8,
+    "MemoryMb": 16384,
+    "IsLaptop": true,
+    "HasBattery": true,
+    "Gpu": "NVIDIA GeForce GTX",
+    "IsAdmin": false,
+    "OsVersion": "Windows 11 (64-bit)",
+    "SupportsHighPerformancePlan": true
+  },
+  "Answers": {
+    "PlaysCompetitively": true,
+    "Preference": "Performance",
+    "IsLaptop": true,
+    "AcceptRiskyTweaks": false
+  },
+  "Recommendations": [
+    { "Name": "Limpeza de Sistema", "Category": "Safe", "Module": "SystemCleaner" },
+    { "Name": "Otimização de Rede", "Category": "Conditional", "Module": "NetworkOptimizer" },
+    { "Name": "Plano de Energia de Alto Desempenho", "Category": "Safe", "Module": "PerformanceOptimizer" },
+    { "Name": "Modo Gamer", "Category": "Conditional", "Module": "GamerOptimizerService" },
+    { "Name": "Otimizações Avançadas", "Category": "Risky", "Module": "AdvancedOptimizer" }
+  ],
+  "Backups": [],
+  "Applied": [],
+  "Timestamp": "2025-11-27T12:00:00"
+}
+

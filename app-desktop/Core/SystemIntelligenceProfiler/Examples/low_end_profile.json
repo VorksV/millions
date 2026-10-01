@@ -1,0 +1,13 @@
+{
+  "UseCase": "Jogos competitivos",
+  "Priority": "Performance",
+  "IsLaptop": true,
+  "AutoRestartServices": true,
+  "AllowRegistryChanges": true,
+  "ApplyMode": "Manual",
+  "Hardware": {
+    "cpuCores": 4,
+    "ramMb": 8192,
+    "gpu": "integrated"
+  }
+}

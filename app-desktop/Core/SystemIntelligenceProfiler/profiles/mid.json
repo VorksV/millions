@@ -1,0 +1,13 @@
+{
+  "Audit": {
+    "Cpu": { "Model": "AMD Ryzen 5", "LogicalCores": 12, "PhysicalCores": 6 },
+    "Ram": { "TotalMb": 16384 },
+    "Gpu": { "Vendor": "NVIDIA", "Model": "GeForce GTX 1660", "IsIntegrated": false },
+    "Battery": { "Present": false },
+    "Windows": { "Build": 22621 },
+    "Nic": { "SupportsRss": true },
+    "DpcLatency": { "DpcRate": 80 }
+  },
+  "Answers": { "UseCase": "Uso geral", "Priority": "Balanced" }
+}
+

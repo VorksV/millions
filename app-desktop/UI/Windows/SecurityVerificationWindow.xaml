@@ -1,0 +1,196 @@
+<Window xmlns:services="clr-namespace:VoltrisOptimizer.Services" x:Class="VoltrisOptimizer.UI.Windows.SecurityVerificationWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:properties="clr-namespace:VoltrisOptimizer.Properties"
+        Title="{Binding [Loc_SecurityCheck_2], Source={x:Static services:LocalizationService.Instance}}"
+        Width="580" Height="580"
+        WindowStartupLocation="CenterScreen"
+        ResizeMode="NoResize"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        MouseDown="Window_MouseDown"
+        Icon="/Images/favicon.ico">
+    
+    <Window.Resources>
+        <Style x:Key="SecurityCard" TargetType="Border">
+            <Setter Property="Background" Value="{DynamicResource BgCardGlass}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderLight}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="12"/>
+            <Setter Property="Padding" Value="15"/>
+            <Setter Property="Margin" Value="0,0,0,12"/>
+        </Style>
+
+        <Style x:Key="OkButton" TargetType="Button">
+            <Setter Property="Background" Value="{DynamicResource PrimaryBrush}"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Height" Value="40"/>
+            <Setter Property="Width" Value="200"/>
+            <Setter Property="Padding" Value="15,0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="bd" Background="{TemplateBinding Background}"
+                                CornerRadius="10">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bd" Property="Opacity" Value="0.9"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+    
+    <Border CornerRadius="16" BorderThickness="1" BorderBrush="{DynamicResource BorderLight}" ClipToBounds="True">
+        <Grid>
+            <!-- Fundo base dinâmico — transparente quando acrylic ativo, sólido caso contrário -->
+            <Border Background="{DynamicResource WindowBackgroundBrush}"/>
+            
+            <!-- Overlay para legibilidade — semi-transparente quando acrylic ativo -->
+            <Border Opacity="0.45" IsHitTestVisible="False"
+                    Background="{DynamicResource WindowBackgroundBrush}"/>
+
+            <Grid Margin="0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+            
+            <!-- HEADER -->
+            <Grid Grid.Row="0" Margin="20,15,20,10">
+                <TextBlock Text="{Binding [Loc_LayersOfProtection], Source={x:Static services:LocalizationService.Instance}}" Foreground="{DynamicResource TextMutedBrush}" 
+                           FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                <Button HorizontalAlignment="Right" VerticalAlignment="Center"
+                        Width="30" Height="30" Cursor="Hand" Click="CloseButton_Click"
+                        ToolTip="{Binding [Loc_ToClose], Source={x:Static services:LocalizationService.Instance}}">
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Setter Property="Background" Value="Transparent"/>
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border x:Name="bd" Background="{TemplateBinding Background}" CornerRadius="15">
+                                            <Path Data="M0,0 L10,10 M10,0 L0,10" Stroke="{DynamicResource TextSecondaryBrush}" 
+                                                  StrokeThickness="1.5" HorizontalAlignment="Center" VerticalAlignment="Center" Width="10" Height="10"/>
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="bd" Property="Background" Value="#1AFF0000"/>
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </Button.Style>
+                </Button>
+            </Grid>
+
+            <!-- CONTENT -->
+            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Margin="20,0,20,0">
+                <StackPanel>
+                    <!-- TITLE SECTION -->
+                    <Border Style="{StaticResource SecurityCard}" Background="Transparent" BorderThickness="0" Padding="0,10,0,20">
+                        <StackPanel HorizontalAlignment="Center">
+                            <TextBlock Text="🛡️" FontSize="48" HorizontalAlignment="Center" Margin="0,0,0,15"/>
+                            <TextBlock Text="{Binding [Loc_SecurityCheck], Source={x:Static services:LocalizationService.Instance}}" FontSize="26" FontWeight="Bold" HorizontalAlignment="Center"
+                                       Foreground="{DynamicResource DefaultTextBrush}"/>
+                            <TextBlock Text="{Binding [Loc_YourSystemProtectedByAdvanced], Source={x:Static services:LocalizationService.Instance}}" FontSize="13" 
+                                       Foreground="{DynamicResource TextSecondaryBrush}" HorizontalAlignment="Center" Margin="0,5,0,0"/>
+                        </StackPanel>
+                    </Border>
+                    
+                    <!-- PROTECTIONS -->
+                    <TextBlock Text="{Binding [Loc_SecurityInfrastructure], Source={x:Static services:LocalizationService.Instance}}" FontWeight="Bold" FontSize="10" 
+                               Foreground="{DynamicResource PrimaryBrush}" Margin="2,0,0,10"/>
+                    <Border Style="{StaticResource SecurityCard}">
+                        <StackPanel>
+                            <Grid Margin="0,0,0,10">
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                <TextBlock Text="🔒" FontSize="16" Margin="0,0,12,0"/>
+                                <StackPanel Grid.Column="1">
+                                    <TextBlock Text="{Binding [Loc_Aes256Encryption], Source={x:Static services:LocalizationService.Instance}}" FontWeight="SemiBold" Foreground="{DynamicResource DefaultTextBrush}"/>
+                                    <TextBlock Text="{Binding [Loc_FullProtectionForYourSensitive], Source={x:Static services:LocalizationService.Instance}}" FontSize="11" Foreground="{DynamicResource TextMutedBrush}"/>
+                                </StackPanel>
+                            </Grid>
+                            <Grid Margin="0,0,0,10">
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                <TextBlock Text="🛰️" FontSize="16" Margin="0,0,12,0"/>
+                                <StackPanel Grid.Column="1">
+                                    <TextBlock Text="{Binding [Loc_HttpstlsCommunication], Source={x:Static services:LocalizationService.Instance}}" FontWeight="SemiBold" Foreground="{DynamicResource DefaultTextBrush}"/>
+                                    <TextBlock Text="{Binding [Loc_EveryConnectionToVoltrisCloud], Source={x:Static services:LocalizationService.Instance}}" FontSize="11" Foreground="{DynamicResource TextMutedBrush}"/>
+                                </StackPanel>
+                            </Grid>
+                            <Grid Margin="0,0,0,10">
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                <TextBlock Text="🧬" FontSize="16" Margin="0,0,12,0"/>
+                                <StackPanel Grid.Column="1">
+                                    <TextBlock Text="{Binding [Loc_AssemblyGuard], Source={x:Static services:LocalizationService.Instance}}" FontWeight="SemiBold" Foreground="{DynamicResource DefaultTextBrush}"/>
+                                    <TextBlock Text="{Binding [Loc_ActivePreventionAgainstReverseEngineering], Source={x:Static services:LocalizationService.Instance}}" FontSize="11" Foreground="{DynamicResource TextMutedBrush}"/>
+                                </StackPanel>
+                            </Grid>
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                <TextBlock Text="🎫" FontSize="16" Margin="0,0,12,0"/>
+                                <StackPanel Grid.Column="1">
+                                    <TextBlock Text="{Binding [Loc_HwidLicensing], Source={x:Static services:LocalizationService.Instance}}" FontWeight="SemiBold" Foreground="{DynamicResource DefaultTextBrush}"/>
+                                    <TextBlock Text="{Binding [Loc_SingleBondWithYourHardware], Source={x:Static services:LocalizationService.Instance}}" FontSize="11" Foreground="{DynamicResource TextMutedBrush}"/>
+                                </StackPanel>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- PRIVACY -->
+                    <TextBlock Text="{Binding [Loc_PrivacyPolicies], Source={x:Static services:LocalizationService.Instance}}" FontWeight="Bold" FontSize="10" 
+                               Foreground="{DynamicResource PrimaryBrush}" Margin="2,10,0,10"/>
+                    <Border Style="{StaticResource SecurityCard}">
+                        <StackPanel>
+                            <BulletDecorator Margin="0,0,0,8">
+                                <BulletDecorator.Bullet>
+                                    <Ellipse Width="4" Height="4" Fill="{DynamicResource PrimaryBrush}" Margin="0,6,0,0"/>
+                                </BulletDecorator.Bullet>
+                                <TextBlock Text="{Binding [Loc_NoPersonalDataIsCollected], Source={x:Static services:LocalizationService.Instance}}" 
+                                           FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" Margin="10,0,0,0" TextWrapping="Wrap"/>
+                            </BulletDecorator>
+                            <BulletDecorator Margin="0,0,0,8">
+                                <BulletDecorator.Bullet>
+                                    <Ellipse Width="4" Height="4" Fill="{DynamicResource PrimaryBrush}" Margin="0,6,0,0"/>
+                                </BulletDecorator.Bullet>
+                                <TextBlock Text="{Binding [Loc_TheCapturedHwidIsUsed], Source={x:Static services:LocalizationService.Instance}}" 
+                                           FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" Margin="10,0,0,0" TextWrapping="Wrap"/>
+                            </BulletDecorator>
+                            <BulletDecorator Margin="0,0,0,8">
+                                <BulletDecorator.Bullet>
+                                    <Ellipse Width="4" Height="4" Fill="{DynamicResource PrimaryBrush}" Margin="0,6,0,0"/>
+                                </BulletDecorator.Bullet>
+                                <TextBlock Text="{Binding [Loc_ZeroInvasiveTelemetryOrInformation], Source={x:Static services:LocalizationService.Instance}}" 
+                                           FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" Margin="10,0,0,0" TextWrapping="Wrap"/>
+                            </BulletDecorator>
+                            <BulletDecorator>
+                                <BulletDecorator.Bullet>
+                                    <Ellipse Width="4" Height="4" Fill="{DynamicResource PrimaryBrush}" Margin="0,6,0,0"/>
+                                </BulletDecorator.Bullet>
+                                <TextBlock Text="{Binding [Loc_AllOptimizationLogsRemainUnder], Source={x:Static services:LocalizationService.Instance}}" 
+                                           FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" Margin="10,0,0,0" TextWrapping="Wrap"/>
+                            </BulletDecorator>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </ScrollViewer>
+            
+            <!-- FOOTER -->
+            <Border Grid.Row="2" Padding="20,15,20,20" Background="#0AFFFFFF" CornerRadius="0,0,16,16">
+                <Button Content="{Binding [Loc_UnderstoodAndProtected], Source={x:Static services:LocalizationService.Instance}}" Style="{StaticResource OkButton}" Click="OkButton_Click" HorizontalAlignment="Center"/>
+            </Border>
+        </Grid>
+    </Grid>
+</Border>
+</Window>

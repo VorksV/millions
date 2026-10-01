@@ -1233,6 +1233,142 @@ html {
   border-image: linear-gradient(135deg, #31A8FF 0%, #8B31FF 50%, #FF4B6B 100%) 1;
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   SISTEMA DE ÍCONES DAS TABS — DASHBOARD DO USUÁRIO
+   Fonte: D:\APLICATIVO VOLTRIS\UI\Themes\SidebarPremium.xaml (209-256, 463-496)
+
+   Invariantes portada do XAML:
+   • O glifo é SOMENTE preenchimento; a cor vem de --vtab-color, nunca de
+     `currentColor` neutro nem de cinza.
+   • A caixa do ícone é 22x22 SEMPRE nos dois estados. A diferença visual vem
+     só de `transform: scale()`, para que o rótulo nunca reflui ao trocar de aba.
+   • Escala: 0.93 normal → 0.985 hover → 1.0 ativo. O hover é CAPAADO abaixo
+     de 1.0 de propósito: um item não selecionado maior que o selecionado
+     apagaria o estado de seleção.
+   • O item ativo recebe a pílula de gradiente de marca a 15% de opacidade, o
+     indicador lateral de 4x22px e um glow na PRÓPRIA cor do glifo
+     (DropShadowEffect 15px @ 50%, ligado a Fill.Color no XAML).
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.vtab {
+  --vtab-color: #31a8ff;
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  border-radius: 0.75rem;
+  border: 1px solid transparent;
+  color: #94a3b8;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.vtab:hover {
+  background-color: rgba(255, 255, 255, 0.07);
+  color: #f1f5f9;
+}
+
+.vtab[aria-current="page"] {
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.08);
+  background-color: rgba(255, 255, 255, 0.03);
+}
+
+/* Pílula de gradiente do item ativo (15% de opacidade, como no XAML). */
+.vtab[aria-current="page"]::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 75, 107, 0.15) 0%,
+    rgba(139, 49, 255, 0.15) 50%,
+    rgba(49, 168, 255, 0.15) 100%
+  );
+}
+
+/* Indicador lateral 4x22px preenchido com o gradiente da marca. */
+.vtab[aria-current="page"]::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 4px;
+  height: 22px;
+  transform: translateY(-50%);
+  border-radius: 0 3px 3px 0;
+  background: linear-gradient(90deg, #ff4b6b 0%, #8b31ff 50%, #31a8ff 100%);
+  box-shadow: 0 0 12px rgba(139, 49, 255, 0.6);
+}
+
+.vtab__ico {
+  position: relative;
+  z-index: 1;
+  flex: 0 0 auto;
+  width: 22px;
+  height: 22px;
+  color: var(--vtab-color);
+  opacity: 0.72;
+  transform: scale(0.93);
+  transform-origin: 50% 50%;
+  transition: transform 0.16s cubic-bezier(0.33, 1, 0.68, 1), opacity 0.2s ease,
+    filter 0.22s ease;
+}
+
+.vtab:hover .vtab__ico {
+  transform: scale(0.985);
+  opacity: 0.92;
+}
+
+/* Ativo: escala cheia + glow na própria cor do glifo. */
+.vtab[aria-current="page"] .vtab__ico {
+  transform: scale(1);
+  opacity: 1;
+  filter: drop-shadow(0 0 15px var(--vtab-color));
+}
+
+.vtab__label {
+  position: relative;
+  z-index: 1;
+}
+
+/* Modo barra horizontal (MobileTabs) — o indicador de baixo substitui o
+   trilho lateral, que ficaria redundante numa pilha horizontal. */
+.vtab--bar[aria-current="page"]::after {
+  display: none;
+}
+
+/* Modo rail — sidebar recolhida (caixa 20x20, glow reduzido, como no app). */
+.vtab--rail {
+  justify-content: center;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.vtab--rail .vtab__ico {
+  width: 20px;
+  height: 20px;
+}
+
+.vtab--rail[aria-current="page"]::after {
+  height: 20px;
+}
+
+.vtab--rail[aria-current="page"] .vtab__ico {
+  filter: drop-shadow(0 0 8px var(--vtab-color));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vtab__ico {
+    transition: none;
+  }
+  .vtab:hover .vtab__ico,
+  .vtab[aria-current="page"] .vtab__ico {
+    transform: none;
+  }
+}
+
 @keyframes animate-spin-reverse {
   from { transform: rotate(360deg); }
   to { transform: rotate(0deg); }
@@ -1244,9 +1380,14 @@ html {
 
 
 /* Scrollbars Customizadas Enterprise */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.12) transparent;
+}
+
 .custom-scrollbar::-webkit-scrollbar {
-  width: 4px;
-  height: 4px;
+  width: 5px;
+  height: 5px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
@@ -1254,12 +1395,12 @@ html {
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.12);
   border-radius: 99px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.3);
+  background: rgba(99, 102, 241, 0.4);
 }
 
 .no-scrollbar::-webkit-scrollbar {

@@ -1,0 +1,23 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v8.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v8.0": {
+      "CriticalSystemAudit/1.0.0": {
+        "runtime": {
+          "CriticalSystemAudit.dll": {}
+        }
+      }
+    }
+  },
+  "libraries": {
+    "CriticalSystemAudit/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    }
+  }
+}

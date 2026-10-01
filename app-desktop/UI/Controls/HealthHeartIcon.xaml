@@ -1,0 +1,156 @@
+<UserControl x:Class="VoltrisOptimizer.UI.Controls.HealthHeartIcon"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Width="20" Height="20"
+             Background="Transparent"
+             TextOptions.TextFormattingMode="Ideal"
+             UseLayoutRounding="True"
+             SnapsToDevicePixels="True">
+
+    <!--
+        CORAÇÃO DE SAÚDE - desenho e batimento.
+
+        O QUE MUDOU EM RELAÇÃO AO ÍCONE ANTIGO: antes o "coração" era o Path
+        material de sempre (duas metades simétricas, parecendo um adesivo de
+        Dia dos Namorados) e a animação era um DoubleAnimation de OPACIDADE
+        fazendo fade de 0,62 a 1. Um fade de opacidade não é um batimento: é uma
+        luz piscando. O olho lê como "algo piscou", não como "um coração bateu".
+
+        aqui o movimento é um CICLO CARDIACO DE VERDADE, modelado em
+        HealthHeartIcon.xaml.cs a partir da fase 0..1 do ciclo Whole (sístole +
+        diastole), com os quatro eventos que um coração real produz nesta ordem:
+
+          0,16  SÍSTOLE VENTRICULAR  - o "LUB". Subida rápida, relaxamento longo.
+          0,32  RECOIL ELÁSTICO       - o ventrículo volta ALÉM do repouso.
+          0,46  ONDA DICRÓTICA       - o "DUB". Fecha a válvula aórtica. Menor,
+                                      mais atrasado: não é uma cópia do primeiro.
+          0,90  SÍSTOLE AURICULAR    - o "a" da onda a, fechando o ciclo em 1,0.
+
+        Cada um desses eventos também acende um anel de choque, um por som, o que
+        dá a ritmia dupla (lub-dub) que o mercado confunde com uma animação
+        linear qualquer.
+
+        A anatomia também é intencional: a silhueta NÃO é simétrica (o ápice é
+        deslocado para a direita e o ventrículo direito é maior que o esquerdo, o
+        que é a vista frontal real), e o sulco interventricular é desenhado com
+        um traço escuro e um traço claro ao lado - par que o olho lê como sulco,
+        e não como um risco.
+
+        NENHUM Binding de ViewModel aqui dentro: a cor e o ritmo são decididos em
+        código a partir de <see cref="HealthIconState"/>, porque a paleta precisa
+        trocar junto com o ritmo e um Setter de XAML não consegue fazer as duas
+        coisas de uma vez.
+    -->
+
+    <!-- O Viewbox SEM Width/Height fixo: esticado pelo pai, ele escala o palco
+         de 140 unidades para whatever o controle medir. No Dashboard ele mede
+         20px (dentro do tile de 32) e dá o tamanho pretendido; e se um dia
+         alguém quiser o coração maior noutro lugar, o controle acompanha sem
+         tocar em um número. -->
+    <Viewbox>
+        <!-- Palco 140x140 para o coração (100x100) ter margem onde os anéis de
+             choque crescem sem serem cortados pela borda do ícone. -->
+        <Grid x:Name="Stage" Width="140" Height="140" RenderTransformOrigin="0.5,0.5">
+            <Grid.RenderTransform>
+                <ScaleTransform x:Name="HoverScale" ScaleX="1" ScaleY="1"/>
+            </Grid.RenderTransform>
+
+            <!-- ══ ANÉIS DE CHOQUE ══════════════════════════════════════════
+                 Dois anéis, um por som cardíaco, cada um com sua própria
+                 janela de fase dentro do ciclo. Não são "ping-pong" genérico:
+                 o anel A nasce na sístole (forte, lento) e o anel B na onda
+                 dicrotica (fraco, rápido). O preenchimento é um gradiente
+                 radial TRANSLÚCIDO no meio e aceso perto de 1,0 - ou seja, um
+                 anel de verdade, sem Stroke e sem Effect. -->
+            <Ellipse x:Name="ShockA" Width="100" Height="100"
+                     HorizontalAlignment="Center" VerticalAlignment="Center"
+                     RenderTransformOrigin="0.5,0.5" Opacity="0" IsHitTestVisible="False">
+                <Ellipse.RenderTransform>
+                    <ScaleTransform x:Name="ShockAScale" ScaleX="0.94" ScaleY="0.94"/>
+                </Ellipse.RenderTransform>
+            </Ellipse>
+
+            <Ellipse x:Name="ShockB" Width="100" Height="100"
+                     HorizontalAlignment="Center" VerticalAlignment="Center"
+                     RenderTransformOrigin="0.5,0.5" Opacity="0" IsHitTestVisible="False">
+                <Ellipse.RenderTransform>
+                    <ScaleTransform x:Name="ShockBScale" ScaleX="0.94" ScaleY="0.94"/>
+                </Ellipse.RenderTransform>
+            </Ellipse>
+
+            <!-- ══ AURA ═══════════════════════════════════════════════════
+                 A PRÓPRIA silhueta, dilatada e com opacidade baixa. É o brilho
+                 de expansão do miocárdio: como é a mesma geometria, a aura
+                 acompanha a forma em vez de virar um círculo genérico atrás. -->
+            <Path x:Name="Aura" Width="100" Height="100"
+                  HorizontalAlignment="Center" VerticalAlignment="Center"
+                  RenderTransformOrigin="0.5,0.55" Opacity="0.18" IsHitTestVisible="False"
+                 >
+                <Path.RenderTransform>
+                    <ScaleTransform x:Name="AuraScale" ScaleX="1.08" ScaleY="1.08"/>
+                </Path.RenderTransform>
+            </Path>
+
+            <!-- ══ CORAÇÃO ══════════════════════════════════════════════════
+                 O pivô do RenderTransform é (0,5; 0,26) - a BASE do coração,
+                 na altura dos átrios. É por aí que o ventrículo se contrai
+                 (o ápex bate contra a parede do tórax), então a escala
+                 acontece em torno da base e o ápex desloca ~7 unidades. Se o
+                 pivô fosse o centro, o coração "respiraria" como um balão. -->
+            <Grid x:Name="HeartGroup" Width="100" Height="100"
+                  HorizontalAlignment="Center" VerticalAlignment="Center"
+                  RenderTransformOrigin="0.5,0.26" IsHitTestVisible="False">
+                <Grid.RenderTransform>
+                    <TransformGroup>
+                        <ScaleTransform x:Name="BeatScale" ScaleX="1" ScaleY="1"/>
+                        <RotateTransform x:Name="BeatRotate" Angle="0"/>
+                    </TransformGroup>
+                </Grid.RenderTransform>
+
+                <!-- Volume: gradiente radial com a luz vinda do alto-esquerda. -->
+                <Path x:Name="HeartBody" Width="100" Height="100"/>
+
+                <!-- Sombra de forma: o degradê diagonal que impede a silhueta de
+                     ler como um adesivo chapado. É o que dá o volume do
+                     ventrículo esquerdo. -->
+                <Path x:Name="HeartShade" Width="100" Height="100" Opacity="0.55"/>
+
+                <!-- Sulco interventricular: par escuro + claro deslocado. -->
+                <Path x:Name="Groove" Width="100" Height="100"/>
+                <Path x:Name="GrooveHi" Width="100" Height="100"/>
+
+                <!-- Luz de contorno na borda inferior-direita: o rim light que
+                     separa o órgão do fundo escuro sem engrossar a linha. -->
+                <Path x:Name="RimLight" Width="100" Height="100"/>
+
+                <!-- Especulares. A bolster grande fica no lobo atrial; a
+                     pequena, no bordo oposto, é o segundo rebote de luz. -->
+                <Ellipse x:Name="Specular" Width="30" Height="17"
+                         HorizontalAlignment="Left" VerticalAlignment="Top"
+                         Margin="19,17,0,0" RenderTransformOrigin="0.5,0.5" Opacity="0.42">
+                    <Ellipse.RenderTransform>
+                        <RotateTransform Angle="-32"/>
+                    </Ellipse.RenderTransform>
+                </Ellipse>
+                <Ellipse x:Name="Specular2" Width="15" Height="8"
+                         HorizontalAlignment="Left" VerticalAlignment="Top"
+                         Margin="60,14,0,0" RenderTransformOrigin="0.5,0.5" Opacity="0.30">
+                    <Ellipse.RenderTransform>
+                        <RotateTransform Angle="-24"/>
+                    </Ellipse.RenderTransform>
+                </Ellipse>
+
+                <!-- Clarão do batimento: um branco posicionado na MESMA origem do
+                     especular, para o pico ler como luz batendo no órgão e não
+                     como um branco chapado sobre ele. -->
+                <Path x:Name="Flash" Width="100" Height="100" Opacity="0"/>
+
+                <!-- Rachadura (só em CRITICAL). Gap escuro + núcleo quente +
+                     halo, desenhados sobre a superfície do miocárdio. -->
+                <Path x:Name="CrackGap" Width="100" Height="100" Opacity="0"/>
+                <Path x:Name="CrackHotGlow" Width="100" Height="100" Opacity="0"/>
+                <Path x:Name="CrackHot" Width="100" Height="100" Opacity="0"/>
+            </Grid>
+        </Grid>
+    </Viewbox>
+</UserControl>

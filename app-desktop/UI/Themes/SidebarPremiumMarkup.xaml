@@ -1,0 +1,318 @@
+<!-- ============================================ -->
+<!-- VOLTRIS PREMIUM SIDEBAR - MARKUP COMPLETO   -->
+<!-- Substituir a seção do sidebar no MainWindow -->
+<!-- ============================================ -->
+
+<!-- 
+    INSTRUÇÕES DE USO:
+    1. Copie este código e substitua a seção do sidebar no MainWindow.xaml
+    2. Adicione a referência ao SidebarPremium.xaml no App.xaml:
+       <ResourceDictionary Source="pack://application:,,,/UI/Themes/SidebarPremium.xaml" />
+    3. Para Windows 11 com Acrylic, use a versão com AcrylicBrush
+    4. Para Windows 10, use a versão com fallback (LinearGradientBrush)
+-->
+
+<!-- ============================================ -->
+<!-- SIDEBAR PREMIUM COM ACRYLIC (Windows 11)    -->
+<!-- ============================================ -->
+<Border Grid.Column="0" 
+        x:Name="PremiumSidebar"
+        Background="#0A0F1C"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:services="clr-namespace:VoltrisOptimizer.Services">
+    
+    <Border.Style>
+        <Style TargetType="Border" BasedOn="{StaticResource PremiumSidebarContainerStyle}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=Tag}" Value="NoAcrylic">
+                    <Setter Property="Background">
+                        <Setter.Value>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                <GradientStop Color="#0D0D14" Offset="0"/>
+                                <GradientStop Color="#0A0F1C" Offset="0.5"/>
+                                <GradientStop Color="#12121A" Offset="1"/>
+                            </LinearGradientBrush>
+                        </Setter.Value>
+                    </Setter>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </Border.Style>
+    
+    <Grid>
+        
+        <!-- Glass Overlay Layer -->
+        <Border Opacity="0.95" IsHitTestVisible="False" Grid.RowSpan="3">
+            <Border.Background>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                    <GradientStop Color="#15FFFFFF" Offset="0"/>
+                    <GradientStop Color="#08FFFFFF" Offset="0.5"/>
+                    <GradientStop Color="#05FFFFFF" Offset="1"/>
+                </LinearGradientBrush>
+            </Border.Background>
+        </Border>
+        
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            
+            <!-- ============================================ -->
+            <!-- HEADER: LOGO E BRANDING                     -->
+            <!-- ============================================ -->
+            <Border Grid.Row="0" Style="{StaticResource PremiumSidebarHeaderStyle}">
+                <Grid>
+                    <!-- Glass Overlay Sutil -->
+                    <Border Opacity="0.2" IsHitTestVisible="False">
+                        <Border.Background>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                <GradientStop Color="#20FFFFFF" Offset="0"/>
+                                <GradientStop Color="#00FFFFFF" Offset="1"/>
+                            </LinearGradientBrush>
+                        </Border.Background>
+                    </Border>
+                    
+                    <StackPanel HorizontalAlignment="Center" 
+                                VerticalAlignment="Center">
+                        <!-- Logo Voltris com Glow -->
+                        <Image Source="pack://siteoforigin:,,,/Images/logo.png"
+                               Width="180"
+                               Height="60"
+                               Stretch="Uniform"
+                               HorizontalAlignment="Center"
+                               RenderOptions.BitmapScalingMode="HighQuality"
+                               Margin="0,0,0,8">
+                            <Image.Effect>
+                                <DropShadowEffect BlurRadius="10" 
+                                                  ShadowDepth="0" 
+                                                  Color="#8B31FF" 
+                                                  Opacity="0.3"/>
+                            </Image.Effect>
+                        </Image>
+                        
+                        <!-- Version Text -->
+                        <TextBlock x:Name="SidebarVersionText"
+                                   Text="{Binding [Loc_V100], Source={x:Static services:LocalizationService.Instance}}"
+                                   Foreground="{DynamicResource TextMutedBrush}"
+                                   FontFamily="Segoe UI Variable, Segoe UI"
+                                   FontSize="11"
+                                   HorizontalAlignment="Center"
+                                   TextWrapping="NoWrap"
+                                   Opacity="0.7"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+            
+            <!-- ============================================ -->
+            <!-- NAVIGATION MENU                              -->
+            <!-- ============================================ -->
+            <ScrollViewer Grid.Row="1" 
+                          Style="{StaticResource PremiumSidebarScrollViewerStyle}">
+                <StackPanel>
+                    <!-- Dashboard -->
+                    <Button x:Name="NavDashboard" 
+                            Style="{StaticResource PremiumNavButtonStyle}"
+                           
+                            Tag="Dashboard">
+                        <StackPanel Orientation="Horizontal">
+                            <Path Data="{StaticResource HomeIcon}" 
+                                  Fill="{DynamicResource TextSecondaryBrush}"
+                                  Width="18" Height="18" 
+                                  Stretch="Uniform" 
+                                  Margin="0,0,12,0"
+                                  RenderOptions.BitmapScalingMode="HighQuality"/>
+                            <TextBlock Text="{Binding [Loc_Dashboard], Source={x:Static services:LocalizationService.Instance}}" 
+                                       VerticalAlignment="Center"
+                                       FontWeight="Medium"/>
+                        </StackPanel>
+                    </Button>
+                    
+                    <!-- Limpeza -->
+                    <Button x:Name="NavCleanup" 
+                            Style="{StaticResource PremiumNavButtonStyle}"
+                           
+                            Tag="Cleanup">
+                        <StackPanel Orientation="Horizontal">
+                            <Path Data="{StaticResource CleanupIcon}" 
+                                  Fill="{DynamicResource TextSecondaryBrush}"
+                                  Width="18" Height="18" 
+                                  Stretch="Uniform" 
+                                  Margin="0,0,12,0"
+                                  RenderOptions.BitmapScalingMode="HighQuality"/>
+                            <TextBlock Text="{Binding [Loc_Cleaning], Source={x:Static services:LocalizationService.Instance}}" 
+                                       VerticalAlignment="Center"
+                                       FontWeight="Medium"/>
+                        </StackPanel>
+                    </Button>
+                    
+                    <!-- Desempenho -->
+                    <Button x:Name="NavPerformance" 
+                            Style="{StaticResource PremiumNavButtonStyle}"
+                           
+                            Tag="Performance">
+                        <StackPanel Orientation="Horizontal">
+                            <Path Data="{StaticResource PerformanceIcon}" 
+                                  Fill="{DynamicResource TextSecondaryBrush}"
+                                  Width="18" Height="18" 
+                                  Stretch="Uniform" 
+                                  Margin="0,0,12,0"
+                                  RenderOptions.BitmapScalingMode="HighQuality"/>
+                            <TextBlock Text="{Binding [Loc_Performance], Source={x:Static services:LocalizationService.Instance}}" 
+                                       VerticalAlignment="Center"
+                                       FontWeight="Medium"/>
+                        </StackPanel>
+                    </Button>
+                    
+                    <!-- Rede -->
+                    <Button x:Name="NavNetwork" 
+                            Style="{StaticResource PremiumNavButtonStyle}"
+                           
+                            Tag="Network">
+                        <StackPanel Orientation="Horizontal">
+                            <Path Data="{StaticResource NetworkIcon}" 
+                                  Fill="{DynamicResource TextSecondaryBrush}"
+                                  Width="18" Height="18" 
+                                  Stretch="Uniform" 
+                                  Margin="0,0,12,0"
+                                  RenderOptions.BitmapScalingMode="HighQuality"/>
+                            <TextBlock Text="{Binding [Loc_Network], Source={x:Static services:LocalizationService.Instance}}" 
+                                       VerticalAlignment="Center"
+                                       FontWeight="Medium"/>
+                        </StackPanel>
+                    </Button>
+                    
+                    <!-- Sistema -->
+                    <Button x:Name="NavSystem" 
+                            Style="{StaticResource PremiumNavButtonStyle}"
+                           
+                            Tag="System">
+                        <StackPanel Orientation="Horizontal">
+                            <Path Data="{StaticResource SystemIcon}" 
+                                  Fill="{DynamicResource TextSecondaryBrush}"
+                                  Width="18" Height="18" 
+                                  Stretch="Uniform" 
+                                  Margin="0,0,12,0"
+                                  RenderOptions.BitmapScalingMode="HighQuality"/>
+                            <TextBlock Text="{Binding [Loc_System], Source={x:Static services:LocalizationService.Instance}}" 
+                                       VerticalAlignment="Center"
+                                       FontWeight="Medium"/>
+                        </StackPanel>
+                    </Button>
+                    
+                    <!-- Gamer -->
+                    <Button x:Name="NavGamer" 
+                            Style="{StaticResource PremiumNavButtonActiveStyle}"
+                           
+                            Tag="Gamer">
+                        <StackPanel Orientation="Horizontal">
+                            <Path Data="{StaticResource GamerIcon}" 
+                                  Fill="#00D4FF"
+                                  Width="18" Height="18" 
+                                  Stretch="Uniform" 
+                                  Margin="0,0,12,0"
+                                  RenderOptions.BitmapScalingMode="HighQuality">
+                                <Path.Effect>
+                                    <DropShadowEffect BlurRadius="6" 
+                                                      ShadowDepth="0" 
+                                                      Color="#00D4FF" 
+                                                      Opacity="0.6"/>
+                                </Path.Effect>
+                            </Path>
+                            <TextBlock Text="{Binding [Loc_Gamer], Source={x:Static services:LocalizationService.Instance}}" 
+                                       VerticalAlignment="Center"
+                                       FontWeight="SemiBold"
+                                        Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        </StackPanel>
+                    </Button>
+                    
+                    <!-- Diagnóstico -->
+                    <Button x:Name="NavDiagnostics" 
+                            Style="{StaticResource PremiumNavButtonStyle}"
+                           
+                            Tag="Diagnostics">
+                        <StackPanel Orientation="Horizontal">
+                            <Path Data="{StaticResource DiagnosticsIcon}" 
+                                  Fill="{DynamicResource TextSecondaryBrush}"
+                                  Width="18" Height="18" 
+                                  Stretch="Uniform" 
+                                  Margin="0,0,12,0"
+                                  RenderOptions.BitmapScalingMode="HighQuality"/>
+                            <TextBlock Text="{Binding [Loc_Diagnosis], Source={x:Static services:LocalizationService.Instance}}" 
+                                       VerticalAlignment="Center"
+                                       FontWeight="Medium"/>
+                        </StackPanel>
+                    </Button>
+                    
+                    <!-- Histórico -->
+                    <Button x:Name="NavHistory" 
+                            Style="{StaticResource PremiumNavButtonStyle}"
+                           
+                            Tag="History">
+                        <StackPanel Orientation="Horizontal">
+                            <Path Data="{StaticResource HistoryIcon}" 
+                                  Fill="{DynamicResource TextSecondaryBrush}"
+                                  Width="18" Height="18" 
+                                  Stretch="Uniform" 
+                                  Margin="0,0,12,0"
+                                  RenderOptions.BitmapScalingMode="HighQuality"/>
+                            <TextBlock Text="{Binding [Loc_History], Source={x:Static services:LocalizationService.Instance}}" 
+                                       VerticalAlignment="Center"
+                                       FontWeight="Medium"/>
+                        </StackPanel>
+                    </Button>
+                    
+                    <!-- Agendamento -->
+                    <Button x:Name="NavScheduler" 
+                            Style="{StaticResource PremiumNavButtonStyle}"
+                           
+                            Tag="Scheduler">
+                        <StackPanel Orientation="Horizontal">
+                            <Path Data="{StaticResource SchedulerIcon}" 
+                                  Fill="{DynamicResource TextSecondaryBrush}"
+                                  Width="18" Height="18" 
+                                  Stretch="Uniform" 
+                                  Margin="0,0,12,0"
+                                  RenderOptions.BitmapScalingMode="HighQuality"/>
+                            <TextBlock Text="{Binding [Loc_Scheduling], Source={x:Static services:LocalizationService.Instance}}" 
+                                       VerticalAlignment="Center"
+                                       FontWeight="Medium"/>
+                        </StackPanel>
+                    </Button>
+                   
+                    <!-- Página de Logs removida da interface. O sistema de logging
+                         (pasta LOGS na raiz + ILoggingService) permanece intacto. -->
+
+                </StackPanel>
+            </ScrollViewer>
+            
+        </Grid>
+    </Grid>
+</Border>
+
+<!-- ============================================ -->
+<!-- VERSÃO FALLBACK (SEM ACRYLIC) - Windows 10  -->
+<!-- ============================================ -->
+<!-- 
+    Use esta versão se AcrylicBrush não estiver disponível
+    Substitua apenas o Background do Border principal:
+-->
+
+<!--
+<Border Grid.Column="0" 
+        Style="{StaticResource PremiumSidebarContainerStyle}"
+        x:Name="PremiumSidebar">
+    
+    <Border.Background>
+        <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+            <GradientStop Color="#0D0D14" Offset="0"/>
+            <GradientStop Color="#0A0F1C" Offset="0.5"/>
+            <GradientStop Color="#12121A" Offset="1"/>
+        </LinearGradientBrush>
+    </Border.Background>
+    
+    ... resto do código igual ...
+    
+</Border>
+-->

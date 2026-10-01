@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { createClient } from '@/utils/supabase/client';
-import { FiSearch, FiFilter, FiEye, FiEdit, FiCheckCircle, FiClock, FiXCircle } from 'react-icons/fi';
+import { FiSearch, FiFilter, FiEye, FiCheckCircle, FiClock, FiXCircle, FiPackage } from 'react-icons/fi';
 import { toast } from 'react-hot-toast';
 import type { Order } from '@/types/order';
 
@@ -46,7 +46,7 @@ export default function AdminOrdersTab() {
   }, [page]);
 
   const addLog = (msg: string) => {
-    setLogs((prev) => [msg, ...prev.slice(0, 19)]); // máximo 20 logs
+    setLogs((prev) => [msg, ...prev.slice(0, 19)]);
   };
 
   const fetchOrders = async (pageToFetch = 1, reset = false) => {
@@ -61,12 +61,11 @@ export default function AdminOrdersTab() {
         .order('created_at', { ascending: false })
         .range(from, to);
       if (filter !== 'all') query = query.eq('status', filter);
-      if (searchTerm) { }
       const { data, error } = await query;
       if (error) throw error;
       let newOrders = data || [];
       if (searchTerm) {
-        newOrders = newOrders.filter(order =>
+        newOrders = newOrders.filter((order: any) =>
           order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
           order.profiles?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
           order.profiles?.email?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -74,8 +73,8 @@ export default function AdminOrdersTab() {
       }
       if (reset || pageToFetch === 1) setOrders(newOrders);
       else setOrders(prev => {
-        const existingIds = new Set(prev.map(o => o.id));
-        return [...prev, ...newOrders.filter(o => !existingIds.has(o.id))];
+        const existingIds = new Set(prev.map((o: any) => o.id));
+        return [...prev, ...newOrders.filter((o: any) => !existingIds.has(o.id))];
       });
       setHasMore(newOrders.length === PAGE_SIZE);
     } catch (error) {
@@ -88,7 +87,6 @@ export default function AdminOrdersTab() {
     }
   };
 
-  // Infinite scroll observer
   const handleObserver = useCallback((entries: IntersectionObserverEntry[]) => {
     const target = entries[0];
     if (target.isIntersecting && hasMore && !loadingMore && !loading) {
@@ -97,41 +95,24 @@ export default function AdminOrdersTab() {
   }, [hasMore, loadingMore, loading]);
 
   useEffect(() => {
-    const option = {
-      root: null,
-      rootMargin: '0px',
-      threshold: 0.1
-    };
+    const option = { root: null, rootMargin: '0px', threshold: 0.1 };
     const observer = new window.IntersectionObserver(handleObserver, option);
     if (loaderRef.current) observer.observe(loaderRef.current);
-    return () => {
-      if (loaderRef.current) observer.unobserve(loaderRef.current);
-    };
+    return () => { if (loaderRef.current) observer.unobserve(loaderRef.current); };
   }, [handleObserver]);
 
   const handleStatusChange = async (orderId: string, newStatus: Order['status']) => {
     try {
       let updateObj: any = { status: newStatus };
-      if (newStatus === 'cancelled') {
-        updateObj.cancelled_by = 'admin';
-      }
-      const { error } = await supabase
-        .from('orders')
-        .update(updateObj)
-        .eq('id', orderId);
+      if (newStatus === 'cancelled') updateObj.cancelled_by = 'admin';
+      const { error } = await supabase.from('orders').update(updateObj).eq('id', orderId);
       if (error) throw error;
       addLog(`Status do pedido ${orderId} atualizado para '${newStatus}'.`);
-      toast.success('Status do pedido atualizado com sucesso!');
-      // Atualiza o status localmente, sem recarregar toda a lista
-      setOrders(prevOrders =>
-        prevOrders.map(order =>
-          order.id === orderId ? { ...order, ...updateObj } : order
-        )
-      );
+      toast.success('Status atualizado!');
+      setOrders(prev => prev.map(o => o.id === orderId ? { ...o, ...updateObj } : o));
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
       addLog('Erro ao atualizar status: ' + errorMsg);
-      console.error('Erro ao atualizar status:', error);
       toast.error('Erro ao atualizar status do pedido');
     }
   };
@@ -145,207 +126,124 @@ export default function AdminOrdersTab() {
     return matchesFilter && matchesSearch;
   });
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return <FiCheckCircle className="w-4 h-4 text-green-500" />;
-      case 'pending':
-        return <FiClock className="w-4 h-4 text-yellow-500" />;
-      case 'processing':
-        return <FiClock className="w-4 h-4 text-blue-500" />;
-      case 'cancelled':
-        return <FiXCircle className="w-4 h-4 text-red-500" />;
-      default:
-        return <FiClock className="w-4 h-4 text-gray-500" />;
-    }
-  };
-
-  // Função para exibir texto de status de cancelamento detalhado
   const getStatusText = (status: string, cancelled_by?: string) => {
     if (status === 'cancelled') {
-      if (cancelled_by === 'client') return 'Pedido Cancelado Pelo Cliente';
-      if (cancelled_by === 'admin') return 'Cancelado pelo Administrador';
+      if (cancelled_by === 'client') return 'Cancelado pelo Cliente';
+      if (cancelled_by === 'admin') return 'Cancelado pelo Admin';
       return 'Cancelado';
     }
     switch (status) {
-      case 'completed':
-        return 'Concluído';
-      case 'pending':
-        return 'Pendente';
-      case 'processing':
-        return 'Em Processamento';
-      default:
-        return 'Desconhecido';
+      case 'completed': return 'Concluído';
+      case 'pending': return 'Pendente';
+      case 'processing': return 'Em Processamento';
+      default: return 'Desconhecido';
     }
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'completed':
-        return 'bg-green-500/10 text-green-400 border-green-500/30';
-      case 'pending':
-        return 'bg-yellow-500/10 text-yellow-400 border-yellow-500/30';
-      case 'processing':
-        return 'bg-blue-500/10 text-blue-400 border-blue-500/30';
-      case 'cancelled':
-        return 'bg-red-500/10 text-red-400 border-red-500/30';
-      default:
-        return 'bg-gray-500/10 text-gray-400 border-gray-500/30';
+      case 'completed':  return { cls: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20', icon: <FiCheckCircle className="w-3 h-3" /> };
+      case 'pending':    return { cls: 'bg-amber-500/10 text-amber-400 border-amber-500/20', icon: <FiClock className="w-3 h-3" /> };
+      case 'processing': return { cls: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20', icon: <FiClock className="w-3 h-3" /> };
+      case 'cancelled':  return { cls: 'bg-rose-500/10 text-rose-400 border-rose-500/20', icon: <FiXCircle className="w-3 h-3" /> };
+      default:           return { cls: 'bg-slate-500/10 text-slate-400 border-slate-500/20', icon: <FiClock className="w-3 h-3" /> };
     }
   };
 
-  // Listener Realtime para pedidos (admin)
+  // Realtime listener
   useEffect(() => {
     let channel: any;
-    let isMounted = true;
     async function setupRealtime() {
       channel = supabase.channel('orders-admin-realtime')
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'orders',
-          },
-          async (payload) => {
-            console.log('[Admin Realtime] Evento recebido:', payload);
-            const changedOrder = payload.new as OrderWithUser;
-            if (!changedOrder) return;
-            // Função para buscar o pedido completo (com join em profiles)
-            const fetchFullOrder = async (orderId: string) => {
-              const { data, error } = await supabase
-                .from('orders')
-                .select('*, cancelled_by, profiles:user_id (full_name, email)')
-                .eq('id', orderId)
-                .single();
-              if (!error && data) return data;
-              return null;
-            };
-            if (payload.eventType === 'UPDATE') {
-              const fullOrder = await fetchFullOrder(changedOrder.id);
-              if (fullOrder) {
-                setOrders(prevOrders => {
-                  const updated = prevOrders.map(order =>
-                    order.id === fullOrder.id ? { ...order, ...fullOrder } : order
-                  );
-                  return updated;
-                });
-              }
-            } else if (payload.eventType === 'INSERT') {
-              // Tocar som de alerta para novos pedidos
-              try {
-                const audio = new Audio('/alert.mp3');
-                audio.volume = 0.8;
-                audio.play().catch(e => console.warn('Erro ao tocar som:', e));
-                toast.success('💰 Novo pedido recebido!', {
-                  style: {
-                    background: '#1E1E1E',
-                    color: '#fff',
-                    border: '1px solid #8B31FF'
-                  }
-                });
-              } catch (e) {
-                console.error('Erro no audio:', e);
-              }
-
-              const fullOrder = await fetchFullOrder(changedOrder.id);
-              if (fullOrder) {
-                setOrders(prevOrders => {
-                  if (prevOrders.some(order => order.id === fullOrder.id)) return prevOrders;
-                  return [fullOrder, ...prevOrders];
-                });
-              }
-            } else if (payload.eventType === 'DELETE') {
-              setOrders(prevOrders => prevOrders.filter(order => order.id !== payload.old.id));
-            }
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, async (payload: any) => {
+          const changedOrder = payload.new as OrderWithUser;
+          if (!changedOrder) return;
+          const fetchFullOrder = async (orderId: string) => {
+            const { data, error } = await supabase
+              .from('orders')
+              .select('*, cancelled_by, profiles:user_id (full_name, email)')
+              .eq('id', orderId)
+              .single();
+            if (!error && data) return data;
+            return null;
+          };
+          if (payload.eventType === 'UPDATE') {
+            const fullOrder = await fetchFullOrder(changedOrder.id);
+            if (fullOrder) setOrders(prev => prev.map(o => o.id === fullOrder.id ? { ...o, ...fullOrder } : o));
+          } else if (payload.eventType === 'INSERT') {
+            try {
+              const audio = new Audio('/alert.mp3');
+              audio.volume = 0.8;
+              audio.play().catch(() => {});
+              toast.success('💰 Novo pedido recebido!');
+            } catch {}
+            const fullOrder = await fetchFullOrder(changedOrder.id);
+            if (fullOrder) setOrders(prev => {
+              if (prev.some(o => o.id === fullOrder.id)) return prev;
+              return [fullOrder, ...prev];
+            });
+          } else if (payload.eventType === 'DELETE') {
+            setOrders(prev => prev.filter(o => o.id !== payload.old.id));
           }
-        )
-        .subscribe((status) => {
-          console.log('[Admin Realtime] Canal subscribe status:', status);
-        });
+        })
+        .subscribe();
     }
     setupRealtime();
-    return () => {
-      isMounted = false;
-      if (channel) supabase.removeChannel(channel);
-      console.log('[Admin Realtime] Canal removido');
-    };
+    return () => { if (channel) supabase.removeChannel(channel); };
   }, []);
 
   if (loading && page === 1) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <div className="w-12 h-12 border-4 border-[#FF4B6B] border-t-transparent rounded-full animate-spin"></div>
+      <div className="flex items-center justify-center py-20">
+        <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      {/* Painel de logs administrativos */}
-      <div className="bg-[#1E1E1E]/80 border border-[#8B31FF]/20 rounded-xl p-4 mb-2 max-h-48 overflow-y-auto text-xs text-gray-300">
-        <div className="font-bold text-[#8B31FF] mb-1">Logs do Painel</div>
-        {logs.length === 0 ? (
-          <div className="text-gray-500">Nenhuma ação registrada.</div>
-        ) : (
-          <ul className="space-y-1">
-            {logs.map((log, i) => (
-              <li key={i}>{log}</li>
-            ))}
-          </ul>
-        )}
+    <div className="space-y-5">
+      {/* Page Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h1 className="text-lg font-bold text-slate-100">Gerenciar Pedidos</h1>
+          <p className="text-xs text-slate-500 mt-0.5">{orders.length} pedido(s) carregado(s)</p>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+          <span className="text-xs text-slate-500">Ao vivo</span>
+        </div>
       </div>
 
-      {/* Header otimizado */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="relative bg-gradient-to-br from-[#1E1E1E]/90 to-[#171313]/90 backdrop-blur-xl p-6 rounded-2xl border border-gray-800/30"
-      >
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div className="w-full">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-3">
-              <div className="bg-gradient-to-br from-[#FF4B6B] to-[#8B31FF] rounded-xl p-3 shadow-lg">
-                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                </svg>
-              </div>
-              <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-[#FF4B6B] via-[#8B31FF] to-[#31A8FF] text-transparent bg-clip-text leading-tight">
-                Gerenciar Pedidos
-              </h1>
-            </div>
-            <p className="text-gray-300 text-base md:text-lg leading-relaxed">Visualize e gerencie todos os pedidos dos clientes</p>
-          </div>
-          <div className="flex items-center gap-4 text-sm text-gray-400">
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-              <span>Total: {orders.length} pedidos</span>
-            </div>
-          </div>
+      {/* Logs Panel */}
+      {logs.length > 0 && (
+        <div className="bg-slate-900 border border-slate-800 rounded-xl p-3 max-h-28 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <p className="text-[10px] font-semibold text-indigo-400 uppercase tracking-widest mb-1.5">Log de Ações</p>
+          <ul className="space-y-1">
+            {logs.map((log, i) => (
+              <li key={i} className="text-[11px] text-slate-500">{log}</li>
+            ))}
+          </ul>
         </div>
-      </motion.div>
+      )}
 
-      {/* Filtros e busca otimizados */}
-      <div className="flex flex-col sm:flex-row gap-4">
+      {/* Filters */}
+      <div className="flex flex-col sm:flex-row gap-3">
         <div className="flex-1 relative">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <FiSearch className="text-gray-400" />
-          </div>
+          <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 w-3.5 h-3.5" />
           <input
             type="text"
             placeholder="Buscar por ID, nome ou email..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-3 bg-[#1E1E1E]/40 backdrop-blur-xl border border-gray-800/30 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-[#8B31FF] transition-colors duration-300 text-sm"
+            className="w-full pl-9 pr-4 py-2 bg-slate-900 border border-slate-800 rounded-xl text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-indigo-500/50 transition"
           />
         </div>
         <div className="flex items-center gap-2">
-          <FiFilter className="text-gray-400" />
+          <FiFilter className="text-slate-500 w-3.5 h-3.5 flex-shrink-0" />
           <select
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
-            className="bg-[#1E1E1E]/40 backdrop-blur-xl border border-gray-800/30 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#8B31FF] transition-colors duration-300 text-sm min-w-[140px]"
+            className="bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-300 focus:outline-none focus:border-indigo-500/50 transition min-w-[150px]"
           >
             <option value="all">Todos os Status</option>
             <option value="pending">Pendentes</option>
@@ -356,213 +254,152 @@ export default function AdminOrdersTab() {
         </div>
       </div>
 
-      {/* Lista de pedidos - layout fluido */}
-      <div className="space-y-4">
+      {/* Orders List */}
+      <div className="space-y-3">
         {filteredOrders.length === 0 ? (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-center py-12"
-          >
-            <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-[#FF4B6B] to-[#8B31FF] rounded-full flex items-center justify-center">
-              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
+          <div className="text-center py-16 bg-slate-900 border border-slate-800 rounded-2xl">
+            <div className="w-12 h-12 mx-auto mb-3 bg-slate-800 rounded-xl flex items-center justify-center">
+              <FiPackage className="w-5 h-5 text-slate-600" />
             </div>
-            <h3 className="text-lg font-semibold text-white mb-2">Nenhum pedido encontrado</h3>
-            <p className="text-gray-400">Não há pedidos que correspondam aos filtros aplicados.</p>
-          </motion.div>
+            <p className="text-sm text-slate-500 font-medium">Nenhum pedido encontrado</p>
+            <p className="text-xs text-slate-700 mt-1">Ajuste os filtros ou aguarde novos pedidos</p>
+          </div>
         ) : (
-          <div className="grid gap-4">
-            {filteredOrders.map((order, index) => (
-              <motion.div
-                key={order.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: index * 0.1 }}
-                className="bg-gradient-to-br from-[#1E1E1E]/60 to-[#171313]/60 backdrop-blur-xl rounded-xl border border-gray-800/30 p-6 hover:border-[#8B31FF]/30 transition-all duration-300"
-              >
-                <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
-                  <div className="flex-1">
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-3">
-                      <span className="text-xs font-mono text-gray-400 bg-gray-800/50 px-2 py-1 rounded">
-                        #{order.id.slice(0, 8)}...
-                      </span>
-                      <span className={`inline-flex flex-row items-center gap-2 px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(order.status)}`}>
-                        {getStatusIcon(order.status)}
-                        <span>{getStatusText(order.status, order.cancelled_by)}</span>
-                      </span>
-                    </div>
-
-                    <div className="space-y-2">
-                      <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-                        <div className="flex items-center gap-2">
-                          <span className="text-gray-400 text-sm">Cliente:</span>
-                          <span className="text-white font-medium">
-                            {order.profiles?.full_name || 'Nome não informado'}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-gray-400 text-sm">Email:</span>
-                          <span className="text-white font-medium">
-                            {order.profiles?.email || 'Email não informado'}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-                        <div className="flex items-center gap-2">
-                          <span className="text-gray-400 text-sm">Serviço:</span>
-                          <span className="text-white font-medium">{order.service_name}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-gray-400 text-sm">Valor:</span>
-                          <span className="text-white font-medium">
-                            R$ {order.total ? order.total.toFixed(2) : '0.00'}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        <span className="text-gray-400 text-sm">Data:</span>
-                        <span className="text-white font-medium">
-                          {new Date(order.created_at).toLocaleDateString('pt-BR', {
-                            day: '2-digit',
-                            month: '2-digit',
-                            year: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit'
-                          })}
+          <>
+            {filteredOrders.map((order, index) => {
+              const badge = getStatusBadge(order.status);
+              return (
+                <motion.div
+                  key={order.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.2, delay: index < 10 ? index * 0.04 : 0 }}
+                  className="bg-slate-900 border border-slate-800 rounded-xl p-4 hover:border-slate-700 transition-all"
+                >
+                  <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+                    {/* Left: info */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-wrap items-center gap-2 mb-2">
+                        <span className="text-[10px] font-mono text-slate-600 bg-slate-800 px-2 py-0.5 rounded">
+                          #{order.id.slice(0, 8)}
+                        </span>
+                        <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold border ${badge.cls}`}>
+                          {badge.icon}
+                          {getStatusText(order.status, order.cancelled_by)}
                         </span>
                       </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1 text-xs">
+                        <div className="flex gap-2">
+                          <span className="text-slate-600">Cliente:</span>
+                          <span className="text-slate-300 truncate">{order.profiles?.full_name || '—'}</span>
+                        </div>
+                        <div className="flex gap-2">
+                          <span className="text-slate-600">Email:</span>
+                          <span className="text-slate-300 truncate">{order.profiles?.email || '—'}</span>
+                        </div>
+                        <div className="flex gap-2">
+                          <span className="text-slate-600">Serviço:</span>
+                          <span className="text-slate-300 truncate">{order.service_name || '—'}</span>
+                        </div>
+                        <div className="flex gap-2">
+                          <span className="text-slate-600">Data:</span>
+                          <span className="text-slate-300">{new Date(order.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Right: value + actions */}
+                    <div className="flex items-center gap-3 flex-shrink-0">
+                      <div className="text-right">
+                        <p className="text-base font-bold text-slate-100">R$ {order.total?.toFixed(2) ?? '0.00'}</p>
+                        <p className="text-[10px] text-slate-600">{order.items?.length || 0} item(s)</p>
+                      </div>
+                      <button
+                        onClick={() => { setSelectedOrder(order); setShowOrderModal(true); }}
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/20 rounded-lg transition text-xs font-medium"
+                      >
+                        <FiEye className="w-3.5 h-3.5" />
+                        Detalhes
+                      </button>
+                      <select
+                        value={order.status}
+                        onChange={(e) => handleStatusChange(order.id, e.target.value as Order['status'])}
+                        className="bg-slate-800 border border-slate-700 rounded-lg px-2 py-1.5 text-slate-300 focus:outline-none focus:border-indigo-500/50 transition text-xs"
+                      >
+                        <option value="pending">Pendente</option>
+                        <option value="processing">Em Processamento</option>
+                        <option value="completed">Concluído</option>
+                        <option value="cancelled">Cancelado</option>
+                      </select>
                     </div>
                   </div>
-
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => {
-                        setSelectedOrder(order);
-                        setShowOrderModal(true);
-                      }}
-                      className="flex items-center gap-2 px-3 py-2 bg-[#31A8FF]/10 hover:bg-[#31A8FF]/20 text-[#31A8FF] rounded-lg transition-colors duration-300 text-sm"
-                    >
-                      <FiEye className="w-4 h-4" />
-                      Ver Detalhes
-                    </button>
-
-                    <select
-                      value={order.status}
-                      onChange={(e) => handleStatusChange(order.id, e.target.value as Order['status'])}
-                      className="px-3 py-2 bg-[#1E1E1E]/40 backdrop-blur-xl border border-gray-800/30 rounded-lg text-white focus:outline-none focus:border-[#8B31FF] transition-colors duration-300 text-sm"
-                    >
-                      <option value="pending">Pendente</option>
-                      <option value="processing">Em Processamento</option>
-                      <option value="completed">Concluído</option>
-                      <option value="cancelled">Cancelado</option>
-                    </select>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-            {/* Loader para infinite scroll */}
+                </motion.div>
+              );
+            })}
             {hasMore && (
-              <div ref={loaderRef} className="flex justify-center py-6">
-                <div className="w-8 h-8 border-4 border-[#8B31FF] border-t-transparent rounded-full animate-spin"></div>
+              <div ref={loaderRef} className="flex justify-center py-4">
+                {loadingMore && <div className="w-6 h-6 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />}
               </div>
             )}
-          </div>
+          </>
         )}
       </div>
 
-      {/* Modal de detalhes do pedido */}
+      {/* Order Detail Modal */}
       {showOrderModal && selectedOrder && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
+            initial={{ opacity: 0, scale: 0.96 }}
             animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.9 }}
-            className="bg-gradient-to-br from-[#1E1E1E] to-[#171313] rounded-2xl border border-gray-800/50 p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+            exit={{ opacity: 0, scale: 0.96 }}
+            className="bg-slate-900 border border-slate-800 rounded-2xl p-6 max-w-2xl w-full max-h-[85vh] overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           >
-            <div className="flex justify-between items-start mb-6">
-              <h2 className="text-xl font-bold text-white">Detalhes do Pedido</h2>
-              <button
-                onClick={() => setShowOrderModal(false)}
-                className="text-gray-400 hover:text-white transition-colors duration-300"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
+            <div className="flex justify-between items-center mb-5">
+              <h2 className="text-base font-bold text-slate-100">Detalhes do Pedido</h2>
+              <button onClick={() => setShowOrderModal(false)} className="p-1.5 rounded-lg text-slate-500 hover:text-white hover:bg-slate-800 transition">
+                <FiXCircle className="w-5 h-5" />
               </button>
             </div>
-
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <span className="text-gray-400 text-sm">ID do Pedido</span>
-                  <p className="text-white font-mono">{selectedOrder.id}</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {[
+                { label: 'ID do Pedido', value: <span className="font-mono text-[11px]">{selectedOrder.id}</span> },
+                { label: 'Status', value: (() => { const b = getStatusBadge(selectedOrder.status); return <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold border ${b.cls}`}>{b.icon}{getStatusText(selectedOrder.status, selectedOrder.cancelled_by)}</span>; })() },
+                { label: 'Cliente', value: selectedOrder.profiles?.full_name || '—' },
+                { label: 'Email', value: selectedOrder.profiles?.email || '—' },
+                { label: 'Serviço', value: selectedOrder.service_name || '—' },
+                { label: 'Valor Total', value: <span className="font-bold text-slate-100">R$ {selectedOrder.total?.toFixed(2) ?? '0.00'}</span> },
+                { label: 'Criado em', value: new Date(selectedOrder.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) },
+                { label: 'Atualizado em', value: selectedOrder.updated_at ? new Date(selectedOrder.updated_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—' },
+              ].map(({ label, value }) => (
+                <div key={label} className="bg-slate-800/50 rounded-xl p-3">
+                  <p className="text-[10px] text-slate-600 uppercase tracking-wider mb-1">{label}</p>
+                  <div className="text-sm text-slate-300">{value}</div>
                 </div>
-                <div>
-                  <span className="text-gray-400 text-sm">Status</span>
-                  <span className={`inline-flex flex-row items-center gap-2 px-4 py-2 rounded-full text-sm font-medium border ml-3 ${getStatusColor(selectedOrder.status)}`}>
-                    {getStatusIcon(selectedOrder.status)}
-                    <span>{getStatusText(selectedOrder.status, selectedOrder.cancelled_by)}</span>
-                  </span>
-                </div>
-                <div>
-                  <span className="text-gray-400 text-sm">Cliente</span>
-                  <p className="text-white">{selectedOrder.profiles?.full_name || 'Nome não informado'}</p>
-                </div>
-                <div>
-                  <span className="text-gray-400 text-sm">Email</span>
-                  <p className="text-white">{selectedOrder.profiles?.email || 'Email não informado'}</p>
-                </div>
-                <div>
-                  <span className="text-gray-400 text-sm">Serviço</span>
-                  <p className="text-white">{selectedOrder.service_name}</p>
-                  {selectedOrder.items && selectedOrder.items[0]?.service_description && (
-                    <>
-                      <span className="text-gray-400 text-sm mt-4 block">Detalhes do Plano</span>
-                      <p className="text-white">{selectedOrder.items[0].service_description}</p>
-                    </>
-                  )}
-                  <span className="text-gray-400 text-sm mt-4 block">Valor</span>
-                  <p className="text-white">R$ {selectedOrder.total ? selectedOrder.total.toFixed(2) : '0.00'}</p>
-                  <span className="text-gray-400 text-sm mt-4 block">Última Atualização</span>
-                  <p className="text-white">
-                    {new Date(selectedOrder.updated_at).toLocaleDateString('pt-BR', {
-                      day: '2-digit',
-                      month: '2-digit',
-                      year: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    })}
-                  </p>
-                </div>
-                {/* Data de Criação à direita */}
-                <div>
-                  <span className="text-gray-400 text-sm">Data de Criação</span>
-                  <p className="text-white">
-                    {new Date(selectedOrder.created_at).toLocaleDateString('pt-BR', {
-                      day: '2-digit',
-                      month: '2-digit',
-                      year: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    })}
-                  </p>
+              ))}
+            </div>
+            {selectedOrder.notes && (
+              <div className="mt-4 bg-slate-800/50 rounded-xl p-3">
+                <p className="text-[10px] text-slate-600 uppercase tracking-wider mb-1">Informações Adicionais</p>
+                <p className="text-sm text-slate-300 whitespace-pre-line">{selectedOrder.notes}</p>
+              </div>
+            )}
+            {selectedOrder.items && selectedOrder.items.length > 0 && (
+              <div className="mt-4">
+                <p className="text-[10px] text-slate-600 uppercase tracking-wider mb-2">Itens do Pedido</p>
+                <div className="space-y-2">
+                  {selectedOrder.items.map((item: any, i: number) => (
+                    <div key={i} className="bg-slate-800/50 rounded-xl p-3 border border-slate-700/50">
+                      <p className="text-sm font-medium text-slate-200">{item.service_name}</p>
+                      {item.service_description && <p className="text-xs text-slate-500 mt-0.5">{item.service_description}</p>}
+                      <p className="text-sm font-semibold text-indigo-400 mt-1">R$ {item.price?.toFixed(2) ?? '0.00'}</p>
+                    </div>
+                  ))}
                 </div>
               </div>
-
-              {selectedOrder.notes && (
-                <div>
-                  <span className="text-gray-400 text-sm">Informações Adicionais</span>
-                  <p className="text-white mt-1 whitespace-pre-line">{selectedOrder.notes}</p>
-                </div>
-              )}
-            </div>
+            )}
           </motion.div>
         </div>
       )}
     </div>
   );
-} 
+}

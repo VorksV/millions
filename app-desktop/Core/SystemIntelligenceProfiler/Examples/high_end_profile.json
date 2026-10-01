@@ -1,0 +1,13 @@
+{
+  "UseCase": "Edição",
+  "Priority": "Stability",
+  "IsLaptop": false,
+  "AutoRestartServices": false,
+  "AllowRegistryChanges": false,
+  "ApplyMode": "Manual",
+  "Hardware": {
+    "cpuCores": 16,
+    "ramMb": 32768,
+    "gpu": "discrete-high"
+  }
+}

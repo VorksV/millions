@@ -1,16 +1,15 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
-import { 
-  FiHome, FiShoppingBag, FiUser, FiHeadphones, 
-  FiBell, FiX, FiLogOut, FiMonitor, 
-  FiLayout, FiChevronLeft, FiChevronRight, FiCreditCard, FiShield
-} from 'react-icons/fi';
-import { useDashboard } from '@/app/context/DashboardContext';
+import { FiLogOut, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
+import { useAuth } from '@/app/hooks/useAuth';
+import VoltrisIcon from './VoltrisIcon';
+import { DASHBOARD_TABS, isDashboardTabActive } from './dashboardTabs';
 
 interface SidebarProps {
   mobileOpen?: boolean;
@@ -20,32 +19,10 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ mobileOpen = false, setMobileOpen, collapsed, setCollapsed }: SidebarProps) {
-  const { transparencyMode } = useDashboard();
+  const { user } = useAuth();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const [user, setUser] = useState<any>(null);
   const supabase = useMemo(() => createClient(), []);
-
-  // Sync user info
-  useEffect(() => {
-    const fetchUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      setUser(user);
-    };
-    fetchUser();
-  }, [supabase.auth]);
-
-  const tabs = [
-    { label: 'Visão Geral', value: 'overview', icon: FiHome, path: '/dashboard', query: { tab: 'overview' }, color: '#31A8FF' },
-    { label: 'Minhas Licenças', value: 'licenses', icon: FiCreditCard, path: '/dashboard', query: { tab: 'licenses' }, color: '#8B31FF' },
-    { label: 'Pedidos', value: 'orders', icon: FiShoppingBag, path: '/dashboard', query: { tab: 'orders' }, color: '#FF4B6B' },
-    { label: 'Monitor', value: 'pc', icon: FiMonitor, path: '/dashboard', query: { tab: 'pc' }, color: '#00C9A7' },
-    { label: 'Segurança', value: 'security', icon: FiShield, path: '/dashboard', query: { tab: 'security' }, color: '#FFD700' },
-    { label: 'Novos Pedidos', value: 'new-order', icon: FiShoppingBag, path: '/dashboard/new-order', color: '#FF4B6B' },
-    { label: 'Empresas', value: 'companies', icon: FiLayout, path: '/dashboard/companies', color: '#FF9F43' },
-    { label: 'Meu Perfil', value: 'profile', icon: FiUser, path: '/dashboard/profile', color: '#00D2FF' },
-    { label: 'Suporte', value: 'tickets', icon: FiHeadphones, path: '/dashboard/tickets', color: '#FF3E3E' },
-  ];
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -53,22 +30,25 @@ export default function Sidebar({ mobileOpen = false, setMobileOpen, collapsed, 
   };
 
   const SidebarContent = ({ isMobile = false }) => (
-    <div className={`h-full flex flex-col transition-all duration-500 ${!isMobile && collapsed ? 'items-center px-4' : 'px-6'} py-8 relative`}>
+    <div className={`h-full flex flex-col transition-all duration-300 ${!isMobile && collapsed ? 'items-center px-3' : 'px-5'} py-6 relative`}>
       
-      {/* Sidebar Header / Logo (Mobile/Collapsed Desktop) */}
-      <div className={`flex items-center gap-4 mb-10 transition-all duration-500 ${!isMobile && collapsed ? 'justify-center' : ''}`}>
-        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#31A8FF] via-[#8B31FF] to-[#FF4B6B] flex items-center justify-center text-white shadow-[0_0_25px_rgba(139,49,255,0.4)] flex-shrink-0 animate-float">
-          <span className="text-xl font-black">V</span>
-        </div>
+      {/* Sidebar Header / Logo */}
+      <div className={`flex items-center gap-3.5 mb-8 transition-all duration-300 ${!isMobile && collapsed ? 'justify-center' : ''}`}>
+        <Link href="/" className="relative flex items-center justify-center shrink-0 group">
+          <Image
+            src="/logo.png"
+            alt="Voltris"
+            width={40}
+            height={40}
+            className="w-10 h-10 object-contain transition-transform duration-300 group-hover:scale-105"
+            priority
+          />
+        </Link>
         {(!collapsed || isMobile) && (
-          <motion.div 
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="flex flex-col"
-          >
-            <span className="font-black text-xs tracking-[0.3em] uppercase text-white leading-none mb-1">Voltris</span>
-            <span className="text-[10px] font-bold text-[#31A8FF] uppercase tracking-widest leading-none">Dashboard</span>
-          </motion.div>
+          <Link href="/" className="flex flex-col group">
+            <span className="font-bold text-sm tracking-wider uppercase text-white leading-tight group-hover:text-indigo-300 transition-colors">Voltris</span>
+            <span className="text-[10px] font-medium text-indigo-400 uppercase tracking-widest leading-none">Console</span>
+          </Link>
         )}
       </div>
 
@@ -76,25 +56,28 @@ export default function Sidebar({ mobileOpen = false, setMobileOpen, collapsed, 
       {!isMobile && (
         <button 
           onClick={() => setCollapsed?.(!collapsed)}
-          className="absolute -right-3 top-10 w-6 h-6 rounded-full bg-[#12121A] hover:bg-[#31A8FF] border border-white/10 flex items-center justify-center text-white hover:text-white transition-all z-50 backdrop-blur-xl group hover:scale-110"
+          className="absolute -right-3 top-8 w-6 h-6 rounded-full bg-slate-900 hover:bg-indigo-600 border border-slate-700/80 flex items-center justify-center text-slate-400 hover:text-white transition-all z-50 shadow-md group hover:scale-105"
+          title={collapsed ? "Expandir" : "Recolher"}
         >
-          {collapsed ? <FiChevronRight className="w-3 h-3" /> : <FiChevronLeft className="w-3 h-3" />}
+          {collapsed ? <FiChevronRight className="w-3.5 h-3.5" /> : <FiChevronLeft className="w-3.5 h-3.5" />}
         </button>
       )}
 
       {/* Profile Section */}
-      <div className={`mb-10 transition-all duration-500 ${!isMobile && collapsed ? 'w-12 mx-auto overflow-hidden' : 'w-full'}`}>
-        <div className={`flex items-center gap-4 p-3 rounded-2xl voltris-glass border border-white/5 transition-all group overflow-hidden ${!isMobile && collapsed ? 'justify-center' : ''}`}>
-           <div className="w-10 h-10 rounded-xl bg-[#12121A] border border-white/10 flex items-center justify-center text-white flex-shrink-0 relative overflow-hidden group-hover:border-[#31A8FF]/50">
-             <span className="text-sm font-black relative z-10">{user?.email?.[0]?.toUpperCase() || '?'}</span>
-             <div className="absolute inset-x-0 bottom-0 h-[2px] bg-[#31A8FF] opacity-50"></div>
+      <div className={`mb-6 transition-all duration-300 ${!isMobile && collapsed ? 'w-10 mx-auto overflow-hidden' : 'w-full'}`}>
+        <div className={`flex items-center gap-3 p-2.5 rounded-xl bg-slate-900/60 border border-slate-800/80 transition-all group overflow-hidden ${!isMobile && collapsed ? 'justify-center p-2' : ''}`}>
+           <div className="w-8 h-8 rounded-lg bg-slate-800 border border-slate-700/70 flex items-center justify-center text-white flex-shrink-0 font-semibold text-xs">
+             {user?.email?.[0]?.toUpperCase() || '?'}
            </div>
            {(!collapsed || isMobile) && (
              <div className="min-w-0 flex-1 flex flex-col">
-                <h3 className="text-white font-black text-xs truncate uppercase tracking-wider">
-                  {user?.user_metadata?.full_name?.split(' ')[0] || 'Gamer'}
+                <h3 className="text-slate-200 font-semibold text-xs truncate">
+                  {user?.user_metadata?.full_name?.split(' ')[0] || user?.email?.split('@')[0] || 'Usuário'}
                 </h3>
-                <span className="text-[9px] font-bold text-emerald-400/80 uppercase tracking-widest">Ativo Agora</span>
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-400"></div>
+                  <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Conectado</span>
+                </div>
              </div>
            )}
         </div>
@@ -102,59 +85,25 @@ export default function Sidebar({ mobileOpen = false, setMobileOpen, collapsed, 
 
       {/* Navigation Menu */}
       <nav className="flex-1 space-y-1 overflow-y-auto no-scrollbar relative z-10">
-         {tabs.map((tab) => {
-            const Icon = tab.icon;
-            let isActive = false;
-            
-            if (tab.path === '/dashboard') {
-              if (tab.query?.tab === 'overview') {
-                isActive = pathname === '/dashboard' && (!searchParams.get('tab') || searchParams.get('tab') === 'overview');
-              } else {
-                isActive = pathname === '/dashboard' && searchParams.get('tab') === tab.query?.tab;
-              }
-            } else {
-              isActive = pathname.startsWith(tab.path);
-            }
+         {DASHBOARD_TABS.map((tab) => {
+            const isActive = isDashboardTabActive(tab, pathname, searchParams);
+            const isRail = !isMobile && collapsed;
 
             return (
               <Link
-                key={tab.label}
+                key={tab.value}
                 href={tab.query ? { pathname: tab.path, query: tab.query } : tab.path}
                 onClick={() => setMobileOpen?.(false)}
-                className={`group flex items-center gap-4 transition-all duration-300 rounded-2xl relative
-                  ${!isMobile && collapsed ? 'p-4 justify-center' : 'p-4'}
-                  ${isActive ? 'text-white' : 'text-gray-400 hover:text-white hover:bg-white/5'}
-                `}
-                title={collapsed && !isMobile ? tab.label : ''}
+                aria-current={isActive ? 'page' : undefined}
+                title={isRail ? tab.label : ''}
+                style={{ '--vtab-color': tab.color } as React.CSSProperties}
+                className={`vtab text-xs font-medium tracking-wide ${isRail ? 'vtab--rail p-3' : 'px-3.5 py-2.5'}`}
               >
-                {isActive && (
-                  <motion.div
-                    layoutId="sidebar-active"
-                    className="absolute inset-0 rounded-2xl"
-                    style={{ 
-                      background: `linear-gradient(to right, ${tab.color}15, transparent)`,
-                      border: `1px solid ${tab.color}20`
-                    }}
-                    transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
-                  />
-                )}
-                <Icon 
-                  className={`w-5 h-5 relative z-10 transition-all duration-300 ${isActive ? 'scale-110' : 'opacity-70 group-hover:opacity-100'}`} 
-                  style={{ color: tab.color }}
-                />
-                {(!collapsed || isMobile) && (
-                  <span className={`relative z-10 font-bold text-xs uppercase tracking-widest transition-all ${isActive ? 'opacity-100' : 'opacity-80 group-hover:opacity-100'}`} style={{ color: isActive ? tab.color : '#9CA3AF' }}>
+                <VoltrisIcon name={tab.icon} className="vtab__ico" />
+                {!isRail && (
+                  <span className="vtab__label truncate">
                     {tab.label}
                   </span>
-                )}
-                {isActive && (
-                  <div 
-                    className="absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-6 rounded-r-full" 
-                    style={{ 
-                      background: `linear-gradient(to bottom, ${tab.color}, ${tab.color}bb)`,
-                      boxShadow: `0 0 15px ${tab.color}`
-                    }}
-                  ></div>
                 )}
               </Link>
             );
@@ -162,14 +111,14 @@ export default function Sidebar({ mobileOpen = false, setMobileOpen, collapsed, 
       </nav>
 
       {/* Logout / Bottom */}
-      <div className="pt-8 mt-4 border-t border-white/5 flex-shrink-0">
+      <div className="pt-4 mt-2 border-t border-slate-800/80 flex-shrink-0">
         <button
           onClick={handleLogout}
-          className={`w-full flex items-center gap-4 p-4 rounded-2xl text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-all group overflow-hidden ${!isMobile && collapsed ? 'justify-center' : ''}`}
+          className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-medium text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 border border-transparent hover:border-rose-500/20 transition-all group overflow-hidden ${!isMobile && collapsed ? 'justify-center p-3' : ''}`}
         >
-          <FiLogOut className="w-5 h-5 group-hover:-translate-x-1 transition-transform flex-shrink-0" />
+          <FiLogOut className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform flex-shrink-0" />
           {(!collapsed || isMobile) && (
-            <span className="font-black text-[10px] uppercase tracking-[0.2em]">Sair</span>
+            <span>Sair da Conta</span>
           )}
         </button>
       </div>

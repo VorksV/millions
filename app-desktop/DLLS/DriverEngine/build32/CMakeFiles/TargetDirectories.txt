@@ -1,0 +1,3 @@
+E:/Minhas Coisas/Desktop/APLICATIVO VOLTRIS/DLLS/DriverEngine/build32/CMakeFiles/driver_engine.dir
+E:/Minhas Coisas/Desktop/APLICATIVO VOLTRIS/DLLS/DriverEngine/build32/CMakeFiles/ALL_BUILD.dir
+E:/Minhas Coisas/Desktop/APLICATIVO VOLTRIS/DLLS/DriverEngine/build32/CMakeFiles/ZERO_CHECK.dir

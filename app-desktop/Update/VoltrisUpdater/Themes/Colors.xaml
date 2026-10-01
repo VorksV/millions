@@ -1,0 +1,50 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    
+    <!-- Cores do Site Voltris -->
+    <Color x:Key="DarkColor">#171313</Color>
+    <Color x:Key="DarkPanelColor">#1c1c1e</Color>
+    <Color x:Key="DarkPanelAltColor">#2a2a2e</Color>
+    <Color x:Key="DarkBorderColor">#3a3a3e</Color>
+    
+    <!-- Cores do Gradiente -->
+    <Color x:Key="PrimaryColor">#31A8FF</Color>
+    <Color x:Key="SecondaryColor">#8B31FF</Color>
+    <Color x:Key="AccentColor">#FF4B6B</Color>
+    
+    <!-- Cores de Texto -->
+    <Color x:Key="TextPrimaryColor">#FFFFFF</Color>
+    <Color x:Key="TextSecondaryColor">#E0E0E0</Color>
+    
+    <!-- Brushes -->
+    <SolidColorBrush x:Key="DarkBrush" Color="{StaticResource DarkColor}"/>
+    <SolidColorBrush x:Key="DarkPanelBrush" Color="{StaticResource DarkPanelColor}"/>
+    <SolidColorBrush x:Key="DarkPanelAltBrush" Color="{StaticResource DarkPanelAltColor}"/>
+    <SolidColorBrush x:Key="DarkBorderBrush" Color="{StaticResource DarkBorderColor}"/>
+    <SolidColorBrush x:Key="PrimaryBrush" Color="{StaticResource PrimaryColor}"/>
+    <SolidColorBrush x:Key="SecondaryBrush" Color="{StaticResource SecondaryColor}"/>
+    <SolidColorBrush x:Key="AccentBrush" Color="{StaticResource AccentColor}"/>
+    <SolidColorBrush x:Key="TextPrimaryBrush" Color="{StaticResource TextPrimaryColor}"/>
+    <SolidColorBrush x:Key="TextSecondaryBrush" Color="{StaticResource TextSecondaryColor}"/>
+    
+    <!-- Gradiente Voltris -->
+    <LinearGradientBrush x:Key="VoltrisGradientBrush" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="{StaticResource AccentColor}" Offset="0"/>
+        <GradientStop Color="{StaticResource SecondaryColor}" Offset="0.5"/>
+        <GradientStop Color="{StaticResource PrimaryColor}" Offset="1"/>
+    </LinearGradientBrush>
+    
+    <LinearGradientBrush x:Key="VoltrisGradientHorizontalBrush" StartPoint="0,0" EndPoint="1,0">
+        <GradientStop Color="{StaticResource AccentColor}" Offset="0"/>
+        <GradientStop Color="{StaticResource SecondaryColor}" Offset="0.5"/>
+        <GradientStop Color="{StaticResource PrimaryColor}" Offset="1"/>
+    </LinearGradientBrush>
+    
+    <!-- Cores para efeitos de blur -->
+    <SolidColorBrush x:Key="AccentBlurBrush" Color="{StaticResource AccentColor}" Opacity="0.15"/>
+    <SolidColorBrush x:Key="SecondaryBlurBrush" Color="{StaticResource SecondaryColor}" Opacity="0.15"/>
+    <SolidColorBrush x:Key="PrimaryBlurBrush" Color="{StaticResource PrimaryColor}" Opacity="0.15"/>
+    
+</ResourceDictionary>
+
+

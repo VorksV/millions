@@ -1,0 +1,10 @@
+^D:\APLICATIVO VOLTRIS\DLLS\RECOVERYENGINE\BUILD32\CMAKEFILES\8BAFB9DBD1272B41CDAF2A83AB8302BE\GENERATE.STAMP.RULE
+setlocal
+"C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" "-SD:/APLICATIVO VOLTRIS/DLLS/RecoveryEngine" "-BD:/APLICATIVO VOLTRIS/DLLS/RecoveryEngine/build32" --check-stamp-list CMakeFiles/generate.stamp.list --vs-solution-file "D:/APLICATIVO VOLTRIS/DLLS/RecoveryEngine/build32/RecoveryEngine.slnx"
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

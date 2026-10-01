@@ -1,0 +1,1023 @@
+<Window xmlns:services="clr-namespace:VoltrisOptimizer.Services" x:Class="VoltrisOptimizer.UI.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:views="clr-namespace:VoltrisOptimizer.UI.Views"
+        xmlns:controls="clr-namespace:VoltrisOptimizer.UI.Controls"
+        mc:Ignorable="d"
+        Title="{Binding [AppTitle], Source={x:Static services:LocalizationService.Instance}}"
+        MinHeight="600" MinWidth="640"
+        Width="1152" Height="720"
+        Background="Transparent"
+        WindowStartupLocation="Manual"
+        ResizeMode="CanResize"
+        SizeToContent="Manual"
+        WindowStyle="None"
+        ShowInTaskbar="True"
+        AllowsTransparency="True"
+        BorderThickness="0"
+        BorderBrush="Transparent"
+        Icon="pack://application:,,,/Images/favicon.ico"
+        KeyDown="Window_KeyDown"
+        SourceInitialized="Window_SourceInitialized"
+        SizeChanged="MainWindow_SizeChanged"
+        TextOptions.TextFormattingMode="Display"
+        TextOptions.TextRenderingMode="ClearType"
+        RenderOptions.ClearTypeHint="Enabled"
+        UseLayoutRounding="True"
+        SnapsToDevicePixels="True">
+    
+    <Window.Resources>
+    </Window.Resources>
+    
+    <!-- Container principal -->
+    <Grid x:Name="RootContainer" ClipToBounds="True">
+        
+        <!-- Fundo base dinâmico — transparente quando acrylic ativo, sólido caso contrário -->
+        <Border x:Name="BackgroundBorder" CornerRadius="8" Background="{DynamicResource WindowBackgroundBrush}"/>
+        
+        <!-- Borda decorativa -->
+        <Border x:Name="MainBorder"
+                CornerRadius="8"
+                BorderThickness="1" 
+                BorderBrush="{DynamicResource DarkBorderBrush}"
+                UseLayoutRounding="True"
+                SnapsToDevicePixels="True"
+                Background="Transparent">
+        </Border>
+        
+        <!-- Container de conteúdo com clipping perfeito -->
+        <Border x:Name="ContentClipBorder" Grid.Row="1" ClipToBounds="True" Background="Transparent">
+            <Grid UseLayoutRounding="True" 
+                  SnapsToDevicePixels="True" 
+                  ClipToBounds="True"
+                  TextOptions.TextFormattingMode="Display"
+                  TextOptions.TextRenderingMode="ClearType"
+                  TextOptions.TextHintingMode="Fixed">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+            
+<!-- Efeitos de Blur Decorativos - LAZY LOADING para performance -->
+    <Border x:Name="DecorativeBlurBorder" ClipToBounds="True" Grid.RowSpan="2" CornerRadius="16" Visibility="Collapsed">
+        <Grid>
+        <Viewbox HorizontalAlignment="Left" 
+                 VerticalAlignment="Top"
+                 Margin="30,20,0,0"
+                 Stretch="Uniform"
+                 MaxWidth="350" MaxHeight="350"
+                 IsHitTestVisible="False">
+            <Ellipse Width="350" Height="350" Opacity="0.35">
+                <Ellipse.Fill>
+                    <RadialGradientBrush>
+                        <GradientStop Color="{DynamicResource AccentBlurColor}" Offset="0"/>
+                        <GradientStop Color="Transparent" Offset="1"/>
+                    </RadialGradientBrush>
+                </Ellipse.Fill>
+            </Ellipse>
+        </Viewbox>
+        
+        <Viewbox HorizontalAlignment="Right" 
+                 VerticalAlignment="Bottom"
+                 Margin="0,0,60,40"
+                 Stretch="Uniform"
+                 MaxWidth="300" MaxHeight="300"
+                 IsHitTestVisible="False">
+            <Ellipse Width="300" Height="300" Opacity="0.30">
+                <Ellipse.Fill>
+                    <RadialGradientBrush>
+                        <GradientStop Color="{DynamicResource SecondaryBlurColor}" Offset="0"/>
+                        <GradientStop Color="Transparent" Offset="1"/>
+                    </RadialGradientBrush>
+                </Ellipse.Fill>
+            </Ellipse>
+        </Viewbox>
+        
+        <Viewbox HorizontalAlignment="Center" 
+                 VerticalAlignment="Center"
+                 Stretch="Uniform"
+                 MaxWidth="200" MaxHeight="200"
+                 IsHitTestVisible="False">
+            <Ellipse Width="200" Height="200" Opacity="0.25">
+                <Ellipse.Fill>
+                    <RadialGradientBrush>
+                        <GradientStop Color="{DynamicResource PrimaryBlurColor}" Offset="0"/>
+                        <GradientStop Color="Transparent" Offset="1"/>
+                    </RadialGradientBrush>
+                </Ellipse.Fill>
+            </Ellipse>
+        </Viewbox>
+        </Grid>
+    </Border>
+            
+            <!-- Overlay para legibilidade — REDUZIDO para evitar efeito de vazamento -->
+            <Border Opacity="0.15" CornerRadius="16" Grid.RowSpan="2" IsHitTestVisible="False"
+                    Background="{DynamicResource WindowBackgroundBrush}"/>
+            
+            <!-- ============================================ -->
+            <!-- BARRA DE TÍTULO MODERNA -->
+            <!-- ============================================ -->
+            <Border x:Name="TitleBarBorder" Grid.Row="0"
+                    VerticalAlignment="Top"
+                    CornerRadius="15,15,0,0"
+                    Background="Transparent">
+                <Border.BorderBrush>
+                    <SolidColorBrush Color="{DynamicResource DarkBorderColor}"/>
+                </Border.BorderBrush>
+                <Border.BorderThickness>
+                    <Thickness>0,0,0,1</Thickness>
+                </Border.BorderThickness>
+                <Grid MinHeight="44" MaxHeight="56">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    
+                    <!-- Logo e Título -->
+                    <StackPanel Grid.Column="0" 
+                                Orientation="Horizontal" 
+                                VerticalAlignment="Center"
+                                HorizontalAlignment="Left"
+                                Margin="8,0,12,0">
+                        <!-- Botão Ocultar/Mostrar Sidebar -->
+                        <Button x:Name="SidebarToggleButton"
+                                Style="{StaticResource TitleBarButtonStyle}"
+                                Click="SidebarToggleButton_Click"
+                                MinWidth="40"
+                                MinHeight="32"
+                                Margin="0,0,8,0">
+                            <Path x:Name="SidebarToggleIcon"
+                                  Data="M3,6h18M3,12h18M3,18h18"
+                                  Stroke="#94A3B8"
+                                  StrokeThickness="1.8"
+                                  StrokeStartLineCap="Round"
+                                  StrokeEndLineCap="Round"
+                                  Width="18" Height="18"
+                                  Stretch="Uniform"
+                                  HorizontalAlignment="Center"
+                                  VerticalAlignment="Center"/>
+                        </Button>
+                        <!-- Ícone da Logo -->
+                        <Image Source="pack://application:,,,/Images/voltris.png"
+                               MaxWidth="120" MaxHeight="34" 
+                               Stretch="Uniform"
+                               VerticalAlignment="Center"
+                               Margin="0,0,12,0"
+                               SnapsToDevicePixels="True"
+                               UseLayoutRounding="True"
+                               RenderOptions.BitmapScalingMode="HighQuality"/>
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="{Binding [Loc_VoltrisOptimizer], Source={x:Static services:LocalizationService.Instance}}"
+                                       FontFamily="Segoe UI Variable Display, Segoe UI"
+                                       FontSize="14"
+                                       FontWeight="SemiBold"
+                                       TextWrapping="NoWrap"
+                                       TextTrimming="CharacterEllipsis"
+                                       TextOptions.TextFormattingMode="Display"
+                                       TextOptions.TextRenderingMode="ClearType">
+                                <TextBlock.Foreground>
+                                    <StaticResource ResourceKey="VoltrisGradientHorizontalBrush"/>
+                                </TextBlock.Foreground>
+                            </TextBlock>
+                            <TextBlock x:Name="VersionText"
+                                       Text="{Binding [Loc_V1012], Source={x:Static services:LocalizationService.Instance}}"
+                                       Foreground="{DynamicResource TextMutedBrush}"
+                                       FontFamily="Segoe UI Variable, Segoe UI"
+                                       FontSize="10"
+                                       Margin="0,1,0,0"
+                                       TextWrapping="NoWrap"/>
+                        </StackPanel>
+                    </StackPanel>
+                    
+                    <!-- Área arrastável -->
+                    <Border Grid.Column="1" 
+                            MouseDown="TitleBar_MouseDown"
+                            MouseMove="TitleBar_MouseMove"
+                            MouseUp="TitleBar_MouseUp"
+                            Background="Transparent"
+                            Cursor="SizeAll"
+                            HorizontalAlignment="Stretch"
+                            VerticalAlignment="Stretch"/>
+                    
+                    <!-- Botões da Barra de Título -->
+                    <StackPanel Grid.Column="2" 
+                                Orientation="Horizontal"
+                                HorizontalAlignment="Right"
+                                VerticalAlignment="Stretch">
+                        <!-- Login da conta: saiu daqui e virou o chip de conta no
+                             topo direito do Dashboard. O ícone de nuvem não dizia
+                             se o usuário estava logado, e o Dashboard é onde o
+                             usuário já está para agir. -->
+
+                        <!-- Botão Shield -->
+                        <Button x:Name="ShieldHeaderButton"
+                                Style="{StaticResource TitleBarButtonStyle}"
+                                Click="ShieldHeaderButton_Click"
+                                MinWidth="46"
+                                MinHeight="32"
+                                ToolTip="{Binding [TooltipSystemProtection], Source={x:Static services:LocalizationService.Instance}}">
+                            <Path Data="M12,1L3,5V11C3,16.55 6.84,21.74 12,23C17.16,21.74 21,16.55 21,11V5L12,1M12,3.27L18.53,6.31C18.4,11.23 15.68,15.7 12,17.29C8.32,15.7 5.6,11.23 5.47,6.31L12,3.27Z"
+                                  Fill="#8B31FF"
+                                  Width="16" Height="16"
+                                  Stretch="Uniform"
+                                  VerticalAlignment="Center"
+                                  HorizontalAlignment="Center"/>
+                        </Button>
+
+
+                        <!-- Botão Ativar Licença -->
+                        <Button x:Name="ActivateLicenseHeaderButton"
+                                Style="{StaticResource TitleBarButtonStyle}"
+                                Click="ActivateLicenseHeaderButton_Click"
+                                MinWidth="46"
+                                MinHeight="32"
+                                ToolTip="{Binding [TooltipActivateLicense], Source={x:Static services:LocalizationService.Instance}}">
+                            <Path Data="M7,14A2,2 0 0,1 5,12A2,2 0 0,1 7,10A2,2 0 0,1 9,12A2,2 0 0,1 7,14M12.65,10C11.83,7.67 9.61,6 7,6A6,6 0 0,0 1,12A6,6 0 0,0 7,18C9.61,18 11.83,16.33 12.65,14H17V18H21V14H23V10H12.65Z"
+                                  Fill="#10B981"
+                                  Width="16" Height="16"
+                                  Stretch="Uniform"
+                                  VerticalAlignment="Center"
+                                  HorizontalAlignment="Center"/>
+                        </Button>
+                        
+                        <!-- Botão Tema (Dark/Light) -->
+                        <Button x:Name="ThemeToggleButton"
+                                Style="{StaticResource TitleBarButtonStyle}"
+                                Click="ThemeToggleButton_Click"
+                                MinWidth="46"
+                                MinHeight="32"
+                                ToolTip="{Binding [TooltipToggleTheme], Source={x:Static services:LocalizationService.Instance}}">
+                            <Path x:Name="ThemeToggleIcon"
+                                  Data="M17.75,4.09L15.22,6.03L16.13,9.09L13.5,7.28L10.87,9.09L11.78,6.03L9.25,4.09L12.44,4L13.5,1L14.56,4L17.75,4.09M21.25,11L19.61,12.25L20.2,14.23L18.5,13.06L16.8,14.23L17.39,12.25L15.75,11L17.81,10.95L18.5,9L19.19,10.95L21.25,11M18.97,15.95C19.8,15.87 20.69,17.05 20.16,17.8C19.84,18.25 19.5,18.67 19.08,19.07C15.17,23 8.84,23 4.94,19.07C1.03,15.17 1.03,8.83 4.94,4.93C5.34,4.53 5.76,4.17 6.21,3.85C6.96,3.32 8.14,4.21 8.06,5.04C7.79,7.9 8.75,10.87 10.95,13.06C13.14,15.26 16.1,16.22 18.97,15.95Z"
+                                  Fill="#94A3B8"
+                                  Width="16" Height="16"
+                                  Stretch="Uniform"
+                                  VerticalAlignment="Center"
+                                  HorizontalAlignment="Center"/>
+                        </Button>
+
+                        <!-- Botão Transparência -->
+                        <Button x:Name="TransparencyToggleButton"
+                                Style="{StaticResource TitleBarButtonStyle}"
+                                Click="TransparencyToggleButton_Click"
+                                MinWidth="46"
+                                MinHeight="32"
+                                ToolTip="{Binding [TooltipToggleTransparency], Source={x:Static services:LocalizationService.Instance}}">
+                            <Path x:Name="TransparencyToggleIcon"
+                                  Data="M12,3C7.05,3 3,7.05 3,12C3,16.95 7.05,21 12,21C16.95,21 21,16.95 21,12C21,7.05 16.95,3 12,3M12,5C15.87,5 19,8.13 19,12C19,15.87 15.87,19 12,19V5Z"
+                                  Fill="#94A3B8"
+                                  Width="16" Height="16"
+                                  Stretch="Uniform"
+                                  VerticalAlignment="Center"
+                                  HorizontalAlignment="Center"/>
+                        </Button>
+
+                        <!-- Botão Widget -->
+                        <Button x:Name="WidgetToggleButton"
+                                Style="{StaticResource TitleBarButtonStyle}"
+                                Click="WidgetToggleButton_Click"
+                                MinWidth="46"
+                                MinHeight="32"
+                                ToolTip="{Binding [TooltipToggleWidget], Source={x:Static services:LocalizationService.Instance}}">
+                            <Path x:Name="WidgetToggleIcon"
+                                  Data="M3,3H21V21H3V3M5,5V19H19V5H5M11,7H17V11H11V7M7,7H9V17H7V7M11,13H17V17H11V13Z"
+                                  Fill="#94A3B8"
+                                  Width="16" Height="16"
+                                  Stretch="Uniform"
+                                  VerticalAlignment="Center"
+                                  HorizontalAlignment="Center"/>
+                        </Button>
+
+                        <!-- Botão de Notificações -->
+                        <Button x:Name="NotificationBellButton"
+                                Style="{StaticResource TitleBarButtonStyle}"
+                                Click="NotificationBellButton_Click"
+                                MinWidth="46"
+                                MinHeight="32"
+                                ToolTip="{Binding [TooltipNotifications], Source={x:Static services:LocalizationService.Instance}}">
+                            <Button.Resources>
+                                <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+                            </Button.Resources>
+                            <Grid Width="16" Height="16">
+                                <Grid.Style>
+                                    <Style TargetType="Grid">
+                                        <!-- Animação Nativa Acelerada por Hardware -->
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding NotificationDrawer.HasUnread, Source={StaticResource Locator}}" Value="True">
+                                                <DataTrigger.EnterActions>
+                                                    <BeginStoryboard x:Name="NotificationPulseStoryboard">
+                                                        <Storyboard>
+                                                            <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                                                             From="1.0" To="0.4" Duration="0:0:1.2"
+                                                                             AutoReverse="True" RepeatBehavior="Forever">
+                                                                <DoubleAnimation.EasingFunction>
+                                                                    <SineEase EasingMode="EaseInOut"/>
+                                                                </DoubleAnimation.EasingFunction>
+                                                            </DoubleAnimation>
+                                                        </Storyboard>
+                                                    </BeginStoryboard>
+                                                </DataTrigger.EnterActions>
+                                                <DataTrigger.ExitActions>
+                                                    <StopStoryboard BeginStoryboardName="NotificationPulseStoryboard"/>
+                                                    <BeginStoryboard>
+                                                        <Storyboard>
+                                                            <DoubleAnimation Storyboard.TargetProperty="Opacity" To="1.0" Duration="0:0:0.2"/>
+                                                        </Storyboard>
+                                                    </BeginStoryboard>
+                                                </DataTrigger.ExitActions>
+                                            </DataTrigger>
+                                            <!-- Pausa automática se a janela estiver invisível -->
+                                            <DataTrigger Binding="{Binding Visibility, RelativeSource={RelativeSource AncestorType=Window}}" Value="Hidden">
+                                                <DataTrigger.EnterActions>
+                                                    <StopStoryboard BeginStoryboardName="NotificationPulseStoryboard"/>
+                                                </DataTrigger.EnterActions>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Grid.Style>
+                                <Path x:Name="NotificationBellIcon"
+                                      Data="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"
+                                      Fill="#31A8FF"
+                                      Stretch="Uniform"
+                                      VerticalAlignment="Center"
+                                      HorizontalAlignment="Center"/>
+                                
+                                <!-- Badge de Não Lidos com Contador -->
+                                <Border Background="#EF4444" 
+                                        CornerRadius="5" 
+                                        MinWidth="10" Height="10" 
+                                        HorizontalAlignment="Right" 
+                                        VerticalAlignment="Top" 
+                                        Margin="0,-3,-3,0"
+                                        Padding="1,0"
+                                        Visibility="{Binding NotificationDrawer.HasUnread, Source={StaticResource Locator}, Converter={StaticResource BoolToVis}, FallbackValue=Collapsed}">
+                                    <TextBlock Text="{Binding NotificationDrawer.UnreadCount, Source={StaticResource Locator}}"
+                                               Foreground="{DynamicResource TextPrimaryBrush}"
+                                               FontSize="7"
+                                               FontWeight="Bold"
+                                               HorizontalAlignment="Center"
+                                               VerticalAlignment="Center"/>
+                                </Border>
+                            </Grid>
+                        </Button>
+
+                        <Button x:Name="SettingsButton"
+                                Style="{StaticResource TitleBarButtonStyle}"
+                                Click="SettingsButton_Click"
+                                MinWidth="46"
+                                MinHeight="32"
+                                ToolTip="{Binding [TooltipSettings], Source={x:Static services:LocalizationService.Instance}}">
+                            <Path Data="{StaticResource SettingsIcon}"
+                                  Fill="#94A3B8"
+                                  Width="16" Height="16"
+                                  Stretch="Uniform"
+                                  VerticalAlignment="Center"
+                                  HorizontalAlignment="Center"/>
+                        </Button>
+
+                        <Button x:Name="MinimizeButton"
+                                Style="{StaticResource TitleBarButtonStyle}"
+                                Click="MinimizeButton_Click"
+                                Width="46"
+                                Height="32"
+                                ToolTip="{Binding [TooltipMinimize], Source={x:Static services:LocalizationService.Instance}}">
+                            <Path Data="M4,12 L20,12" 
+                                  Stroke="{DynamicResource TextSecondaryBrush}"
+                                  StrokeThickness="1.5"
+                                  Width="12" Height="12"
+                                  Stretch="Uniform"
+                                  HorizontalAlignment="Center"
+                                  VerticalAlignment="Center"/>
+                        </Button>
+
+                        <Button x:Name="MaximizeButton"
+                                Style="{StaticResource TitleBarButtonStyle}"
+                                Click="MaximizeButton_Click"
+                                Width="46"
+                                Height="32"
+                                ToolTip="{Binding [TooltipMaximize], Source={x:Static services:LocalizationService.Instance}}">
+                            <Path x:Name="MaximizeIcon"
+                                  Data="M4,4 L20,4 L20,20 L4,20 Z" 
+                                  Stroke="{DynamicResource TextSecondaryBrush}"
+                                  StrokeThickness="1.5"
+                                  Fill="Transparent"
+                                  Width="11" Height="11"
+                                  Stretch="Uniform"
+                                  HorizontalAlignment="Center"
+                                  VerticalAlignment="Center"/>
+                        </Button>
+
+                        <Button x:Name="CloseButton"
+                                Style="{StaticResource TitleBarCloseButtonStyle}"
+                                Click="CloseButton_Click"
+                                Width="46"
+                                Height="32"
+                                ToolTip="{Binding [TooltipClose], Source={x:Static services:LocalizationService.Instance}}">
+                            <Path Data="M4,4 L20,20 M20,4 L4,20" 
+                                  Stroke="{DynamicResource TextSecondaryBrush}"
+                                  StrokeThickness="1.5"
+                                  Width="11" Height="11"
+                                  Stretch="Uniform"
+                                  HorizontalAlignment="Center"
+                                  VerticalAlignment="Center"/>
+                        </Button>
+                    </StackPanel>
+                </Grid>
+            </Border>
+            
+            <!-- ============================================ -->
+            <!-- CONTEÚDO PRINCIPAL -->
+            <!-- ============================================ -->
+            <!-- ============================================ -->
+            <!-- CONTEÚDO PRINCIPAL (COM SCROLLVIEWER GLOBAL) -->
+            <!-- ============================================ -->
+            <!-- ============================================ -->
+            <!-- CONTEÚDO PRINCIPAL (LAYOUT GRID DIRETO) -->
+            <!-- ============================================ -->
+            <Grid Grid.Row="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition x:Name="SidebarColumn" Width="240" MinWidth="56"/> <!-- Sidebar colapsável: 240px completo / 56px modo ícones -->
+                    <ColumnDefinition Width="*" MinWidth="400"/>   <!-- Conteúdo: mínimo 400px -->
+                </Grid.ColumnDefinitions>
+                
+                <!-- ============================================ -->
+                <!-- SIDEBAR MODERNA COM TRANSPARÊNCIA PROFISSIONAL -->
+                <!-- ============================================ -->
+                <Border Grid.Column="0" 
+                        x:Name="SidebarBorder"
+                        VerticalAlignment="Stretch"
+                        Style="{StaticResource PremiumSidebarContainerStyle}">
+                    
+                    <Grid VerticalAlignment="Stretch" ClipToBounds="True">
+                        <!-- Atmospheric Glow (SaaS Style) -->
+                        <Ellipse x:Name="SidebarGlowEllipse" Width="300" Height="300" 
+                                 HorizontalAlignment="Center" VerticalAlignment="Bottom"
+                                 Margin="0,0,0,-150" Opacity="0.15"
+                                 IsHitTestVisible="False">
+                            <Ellipse.Fill>
+                                <RadialGradientBrush>
+                                    <GradientStop Color="{DynamicResource AccentBlurColor}" Offset="0"/>
+                                    <GradientStop Color="Transparent" Offset="1"/>
+                                </RadialGradientBrush>
+                            </Ellipse.Fill>
+                        </Ellipse>
+                        
+                        <Grid VerticalAlignment="Stretch">
+                        <Grid.RowDefinitions>
+                            <!-- Header fixo -->
+                            <RowDefinition Height="Auto"/>
+                            <!-- Scroll area flexível — ocupa todo espaço restante -->
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        
+                        <!-- Logo e Branding (Modern SaaS Header) -->
+                        <Border Grid.Row="0" x:Name="SidebarHeaderPanel" Style="{StaticResource PremiumSidebarHeaderStyle}">
+                            <StackPanel HorizontalAlignment="Center">
+                                <!-- Logo Container with Enhanced Quality and Size -->
+                                <Grid Margin="0,0,0,8">
+                                    <Image x:Name="SidebarLogo"
+                                           Source="pack://application:,,,/Images/logo.png"
+                                           Width="192"
+                                           Height="64"
+                                           Stretch="Uniform"
+                                           HorizontalAlignment="Center"
+                                           SnapsToDevicePixels="True"
+                                           UseLayoutRounding="True"
+                                           RenderOptions.BitmapScalingMode="HighQuality">
+                                        <Image.Effect>
+                                            <DropShadowEffect BlurRadius="20" ShadowDepth="2" Opacity="0.3" Color="Black"/>
+                                        </Image.Effect>
+                                    </Image>
+                                </Grid>
+                                           
+                                <!-- Version Badge (Professional SaaS Style) -->
+                                <Border x:Name="SidebarVersionBadge" Style="{StaticResource VersionBadgeStyle}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <!-- Green Pulse Status Dot -->
+                                        <Ellipse Style="{StaticResource StatusDotStyle}"/>
+                                        
+                                        <TextBlock x:Name="SidebarVersionText"
+                                                   Text="{Binding [Loc_EngineV1012], Source={x:Static services:LocalizationService.Instance}}"
+                                                   Foreground="{DynamicResource TextPrimaryBrush}"
+                                                   FontFamily="Segoe UI Variable, Segoe UI"
+                                                   FontSize="11"
+                                                   FontWeight="Bold"
+                                                   Typography.Capitals="AllSmallCaps"
+                                                   VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+                        </Border>
+                        
+                        <!-- Menu de Navegação Premium com altura controlada e DPI-aware -->
+                        <ScrollViewer Grid.Row="1" 
+                                      x:Name="SidebarScrollViewer"
+                                      Style="{DynamicResource PremiumSidebarScrollViewerStyle}"
+                                      VerticalScrollBarVisibility="Auto"
+                                      VerticalAlignment="Stretch"
+                                      UseLayoutRounding="True"
+                                      SnapsToDevicePixels="True">
+                            <ScrollViewer.Resources>
+                                <Style TargetType="TextBlock">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsSidebarExpanded, RelativeSource={RelativeSource AncestorType=Window}}" Value="False">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </ScrollViewer.Resources>
+                            <StackPanel Margin="0,8,0,24"
+                                        UseLayoutRounding="True"
+                                        SnapsToDevicePixels="True">
+                                <!-- SEÇÃO PRINCIPAL -->
+                                <TextBlock Text="{Binding [HeaderPrincipal], Source={x:Static services:LocalizationService.Instance}}" Style="{StaticResource SidebarGroupLabelStyle}" Margin="24,8,16,6"/>
+
+                                <Button x:Name="NavDashboard" Style="{StaticResource PremiumNavButtonStyle}" Click="NavButton_Click" Tag="Dashboard">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Path Data="{StaticResource HomeIcon}" Fill="#31A8FF" Stretch="Uniform"/>
+                                        <TextBlock Text="{Binding [Dashboard], Source={x:Static services:LocalizationService.Instance}}"/>
+                                    </StackPanel>
+                                </Button>
+
+                                <Button x:Name="NavPerformance" Style="{StaticResource PremiumNavButtonStyle}" Click="NavButton_Click" Tag="Performance">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Path Data="{StaticResource PerformanceIcon}" Fill="#FF4B6B" Stretch="Uniform"/>
+                                        <TextBlock Text="{Binding [Performance], Source={x:Static services:LocalizationService.Instance}}"/>
+                                    </StackPanel>
+                                </Button>
+
+                                <Button x:Name="NavNetwork" Style="{StaticResource PremiumNavButtonStyle}" Click="NavButton_Click" Tag="Network">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Path Data="{StaticResource NetworkIcon}" Fill="#00D4FF" Stretch="Uniform"/>
+                                        <TextBlock Text="{Binding [Network], Source={x:Static services:LocalizationService.Instance}}"/>
+                                    </StackPanel>
+                                </Button>
+
+                                <Button x:Name="NavRepair" Style="{StaticResource PremiumNavButtonStyle}" Click="NavButton_Click" Tag="Repair">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Path Data="{StaticResource RepairIcon}" Fill="#FB923C" Stretch="Uniform"/>
+                                        <TextBlock Text="{Binding [Repair], Source={x:Static services:LocalizationService.Instance}}"/>
+                                    </StackPanel>
+                                </Button>
+
+                                <Button x:Name="NavSystem" Style="{StaticResource PremiumNavButtonStyle}" Click="NavButton_Click" Tag="System">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Path Data="{StaticResource SystemIcon}" Fill="#64748B" Stretch="Uniform"/>
+                                        <TextBlock Text="{Binding [System], Source={x:Static services:LocalizationService.Instance}}"/>
+                                    </StackPanel>
+                                </Button>
+
+                                <Button x:Name="NavDebloat" Style="{StaticResource PremiumNavButtonStyle}" Click="NavButton_Click" Tag="Debloat">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Path Data="{StaticResource DebloatIcon}" Fill="#EC4899" Stretch="Uniform"/>
+                                        <TextBlock Text="{Binding [Debloat], Source={x:Static services:LocalizationService.Instance}}"/>
+                                    </StackPanel>
+                                </Button>
+
+                                <Button x:Name="NavRecovery" Style="{StaticResource PremiumNavButtonStyle}" Click="NavButton_Click" Tag="Recovery">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Path Data="{StaticResource RecoveryIcon}" Fill="#10B981" Stretch="Uniform"/>
+                                        <TextBlock Text="{Binding [Recovery], Source={x:Static services:LocalizationService.Instance}}"/>
+                                    </StackPanel>
+                                </Button>
+
+                                <Button x:Name="NavDrivers" Style="{StaticResource PremiumNavButtonStyle}" Click="NavButton_Click" Tag="Drivers">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Path Data="{StaticResource RecoveryIcon}" Fill="#06B6D4" Stretch="Uniform"/>
+                                        <TextBlock Text="{Binding [Drivers], Source={x:Static services:LocalizationService.Instance}}"/>
+                                    </StackPanel>
+                                </Button>
+
+                                <Button x:Name="NavGamer" Style="{StaticResource PremiumNavButtonStyle}" Click="NavButton_Click" Tag="Gamer">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Path Data="{StaticResource GamerIcon}" Fill="#FF6B35" Stretch="Uniform"/>
+                                        <TextBlock Text="{Binding [Gamer], Source={x:Static services:LocalizationService.Instance}}"/>
+                                    </StackPanel>
+                                </Button>
+
+                                <Button x:Name="NavShield" Style="{StaticResource PremiumNavButtonStyle}" Click="NavButton_Click" Tag="Shield">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Path Data="{StaticResource ShieldIcon}" Fill="#8B31FF" Stretch="Uniform"/>
+                                        <TextBlock Text="{Binding [Shield], Source={x:Static services:LocalizationService.Instance}}"/>
+                                    </StackPanel>
+                                </Button>
+
+                                <!-- SEÇÃO STREAMING -->
+                                <TextBlock Text="{Binding [HeaderStreaming], Source={x:Static services:LocalizationService.Instance}}" Style="{StaticResource SidebarGroupLabelStyle}"/>
+
+                                <Button x:Name="NavStreamHub" Style="{StaticResource PremiumNavButtonStyle}" Click="NavButton_Click" Tag="StreamHub">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Path Data="{StaticResource StreamHubIcon}" Fill="#9146FF" Stretch="Uniform"/>
+                                        <TextBlock Text="{Binding [StreamHub], Source={x:Static services:LocalizationService.Instance}}"/>
+                                    </StackPanel>
+                                </Button>
+
+                                <!-- SEÇÃO FERRAMENTAS -->
+                                <TextBlock Text="{Binding [HeaderTools], Source={x:Static services:LocalizationService.Instance}}" Style="{StaticResource SidebarGroupLabelStyle}"/>
+
+                                <Button x:Name="NavPersonalize" Style="{StaticResource PremiumNavButtonStyle}" Click="NavButton_Click" Tag="Personalize">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Path Data="{StaticResource PersonalizeIcon}" Fill="#F59E0B" Stretch="Uniform"/>
+                                        <TextBlock Text="{Binding [Personalize], Source={x:Static services:LocalizationService.Instance}}" VerticalAlignment="Center" FontWeight="Medium"/>
+                                    </StackPanel>
+                                </Button>
+
+                                <Button x:Name="NavDisplay" Style="{StaticResource PremiumNavButtonStyle}" Click="NavButton_Click" Tag="Display">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Path Data="{StaticResource DisplayIcon}" Fill="#06B6D4" Stretch="Uniform"/>
+                                        <TextBlock Text="{Binding [Display], Source={x:Static services:LocalizationService.Instance}}" VerticalAlignment="Center" FontWeight="Medium"/>
+                                    </StackPanel>
+                                </Button>
+
+                                <!-- [FIX:PAGINA-ENERGIA-REMOVIDA]
+                                     O botão "Energia" saiu do sidebar.
+
+                                     A página offercia atalhos que brigavam com o
+                                     Perfil Inteligente: ativar planos nativos do
+                                     Windows, editar EPP à mão, restaurar padrões
+                                     e "consertar" energia. Cada um desses botões
+                                     desfazia o perfil escolhido pelo usuário.
+
+                                     Energia agora tem uma interface só: o
+                                     questionário de Perfil Inteligente, que
+                                     escolhe o perfil e deixa o plano sob controle
+                                     do app. O diagnóstico da tabela continua
+                                     acessível no self-test de startup. -->
+
+                                <Button x:Name="NavSecurity" Style="{StaticResource PremiumNavButtonStyle}" Click="NavButton_Click" Tag="Security">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Path Data="{StaticResource SecurityIcon}" Fill="#EF4444" Stretch="Uniform"/>
+                                        <TextBlock Text="{Binding [Security], Source={x:Static services:LocalizationService.Instance}}"/>
+                                    </StackPanel>
+                                </Button>
+
+                                <Button x:Name="NavPrivacy" Style="{StaticResource PremiumNavButtonStyle}" Click="NavButton_Click" Tag="Privacy">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Path Data="{StaticResource PrivacyIcon}" Fill="#A855F7" Stretch="Uniform"/>
+                                        <TextBlock Text="{Binding [Privacy], Source={x:Static services:LocalizationService.Instance}}"/>
+                                    </StackPanel>
+                                </Button>
+
+                                <!-- SEÇÃO MONITORAMENTO -->
+                                <TextBlock Text="{Binding [HeaderMonitoring], Source={x:Static services:LocalizationService.Instance}}" Style="{StaticResource SidebarGroupLabelStyle}"/>
+
+                                <Button x:Name="NavDeviceInfo" Style="{StaticResource PremiumNavButtonStyle}" Click="NavButton_Click" Tag="DeviceInfo">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Path Data="{StaticResource DeviceInfoIcon}" Fill="#14B8A6" Stretch="Uniform"/>
+                                        <TextBlock Text="{Binding [DeviceInfo], Source={x:Static services:LocalizationService.Instance}}"/>
+                                    </StackPanel>
+                                </Button>
+
+                                <Button x:Name="NavBenchmark" Style="{StaticResource PremiumNavButtonStyle}" Click="NavButton_Click" Tag="Benchmark">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Path Data="{StaticResource BenchmarkIcon}" Fill="#F97316" Stretch="Uniform"/>
+                                        <TextBlock Text="{Binding [Benchmark], Source={x:Static services:LocalizationService.Instance}}"/>
+                                    </StackPanel>
+                                </Button>
+
+                                <Button x:Name="NavDiagnostics" Style="{StaticResource PremiumNavButtonStyle}" Click="NavButton_Click" Tag="Diagnostics">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Path Data="{StaticResource DiagnosticsIcon}" Fill="#6366F1" Stretch="Uniform"/>
+                                        <TextBlock Text="{Binding [Diagnostics], Source={x:Static services:LocalizationService.Instance}}"/>
+                                    </StackPanel>
+                                </Button>
+
+                                <Button x:Name="NavHistory" Style="{StaticResource PremiumNavButtonStyle}" Click="NavButton_Click" Tag="History">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Path Data="{StaticResource HistoryIcon}" Fill="#84CC16" Stretch="Uniform"/>
+                                        <TextBlock Text="{Binding [History], Source={x:Static services:LocalizationService.Instance}}"/>
+                                    </StackPanel>
+                                </Button>
+
+                                <!-- SEÇÃO SERVIÇOS -->
+                                <TextBlock Text="{Binding [HeaderServices], Source={x:Static services:LocalizationService.Instance}}" Style="{StaticResource SidebarGroupLabelStyle}"/>
+
+                                <Button x:Name="NavScheduler" Style="{StaticResource PremiumNavButtonStyle}" Click="NavButton_Click" Tag="Scheduler">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Path Data="{StaticResource SchedulerIcon}" Fill="#0EA5E9" Stretch="Uniform"/>
+                                        <TextBlock Text="{Binding [Scheduler], Source={x:Static services:LocalizationService.Instance}}"/>
+                                    </StackPanel>
+                                </Button>
+
+                                <!-- ATALHOS -->
+                                <Button x:Name="NavShortcuts" Style="{StaticResource PremiumNavButtonStyle}" Click="NavButton_Click" Tag="Shortcuts">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Path Data="{StaticResource ShortcutsIcon}" Fill="#F59E0B" Stretch="Uniform"/>
+                                        <TextBlock Text="{Binding [Shortcuts], Source={x:Static services:LocalizationService.Instance}}"/>
+                                    </StackPanel>
+                                </Button>
+
+                            </StackPanel>
+                        </ScrollViewer>
+                        </Grid>
+                    </Grid>
+                </Border>
+                
+                <!-- ============================================ -->
+                <!-- ÁREA DE CONTEÚDO -->
+                <!-- ============================================ -->
+                <!-- ============================================ -->
+                <!-- ÁREA DE CONTEÚDO (COM SCROLLVIEWER INDEPENDENTE) -->
+                <!-- ============================================ -->
+                <Grid Grid.Column="1" ClipToBounds="True">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    
+                    <!-- Frame de Conteúdo SEM Scroll (Fit-to-Screen) com transição suave -->
+                    <ContentControl x:Name="ContentFrame"
+                                    Grid.Row="0"
+                                    Background="Transparent"
+                                    HorizontalAlignment="Stretch"
+                                    VerticalAlignment="Stretch"
+                                    HorizontalContentAlignment="Stretch"
+                                    VerticalContentAlignment="Stretch"
+                                    ClipToBounds="True"
+                                    MinWidth="400"
+                                    Margin="0"
+                                    Padding="0"
+                                    Opacity="0"
+                                    RenderTransformOrigin="0.5, 0.5">
+                        <ContentControl.RenderTransform>
+                            <TranslateTransform Y="10"/>
+                        </ContentControl.RenderTransform>
+                        <ContentControl.Triggers>
+                            <!-- ANIMAÇÃO SUAVE: Quando Content muda, fade in + slide up -->
+                            <EventTrigger RoutedEvent="ContentControl.Loaded">
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetProperty="Opacity" From="0" To="1" Duration="0:0:0.35" BeginTime="0:0:0"/>
+                                        <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.Y)" From="10" To="0" Duration="0:0:0.35" BeginTime="0:0:0"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </EventTrigger>
+                        </ContentControl.Triggers>
+                    </ContentControl>
+                    
+                    <!-- Barra de Progresso Inferior (Seamless) -->
+                    <Border x:Name="BottomBarBorder" Grid.Row="1"
+                           Padding="24,8,24,12"
+                           CornerRadius="0,0,15,0"
+                           Background="Transparent"
+                           BorderBrush="#1AFFFFFF"
+                           BorderThickness="0,1,0,0">
+                        <Grid>
+                            <!-- Três faixas: barra, bloco de status (ícone +
+                                 textos) e o card "VER PLANOS". Os respiros
+                                 entre elas são iguais (10px), então o status
+                                 fica centralizado entre a barra e o footer —
+                                 e não encostado no card. -->
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/> <!-- Progress Bar Row -->
+                                <RowDefinition Height="Auto"/> <!-- Status Text Row -->
+                                <RowDefinition Height="Auto"/> <!-- CTA Promocional Row -->
+                            </Grid.RowDefinitions>
+
+                            <!-- Progress Bar com Glow -->
+                            <Border Grid.Row="0"
+                                    MinHeight="6"
+                                    Height="6"
+                                    Background="{DynamicResource DarkBorderBrush}"
+                                    CornerRadius="3"
+                                    Margin="0,0,0,10"
+                                    HorizontalAlignment="Stretch"
+                                    VerticalAlignment="Center">
+                                <Border x:Name="ProgressBarFill"
+                                        HorizontalAlignment="Left"
+                                        Background="{DynamicResource VoltrisGradientHorizontalBrush}"
+                                        CornerRadius="3"
+                                        Width="0"
+                                        VerticalAlignment="Stretch"
+                                        Height="6">
+                                    <Border.Effect>
+                                        <DropShadowEffect BlurRadius="8" ShadowDepth="0" Color="#8B31FF" Opacity="0.6"/>
+                                    </Border.Effect>
+                                </Border>
+                            </Border>
+                            
+                            <StackPanel x:Name="StatusContainer"
+                                        Grid.Row="1"
+                                        Orientation="Horizontal"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        Margin="0,0,0,10"
+                                        Visibility="Collapsed">
+                                
+                                <!-- Container de Ícone Premium e Fluido -->
+                                <Border x:Name="StatusIconContainer"
+                                        Width="20" Height="20"
+                                        CornerRadius="5"
+                                        Margin="0,0,8,0"
+                                        VerticalAlignment="Center"
+                                        Background="#1531A8FF">
+                                    <Viewbox Width="12" Height="12" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                        <Path x:Name="StatusIconPath"
+                                              Data="M12 2A10 10 0 1 0 22 12A10 10 0 0 0 12 2M12 20A8 8 0 1 1 20 12A8 8 0 0 1 12 20"
+                                              Fill="#31A8FF"
+                                              Stretch="Uniform"/>
+                                    </Viewbox>
+                                    <Border.Effect>
+                                        <DropShadowEffect x:Name="StatusIconGlow" BlurRadius="6" ShadowDepth="0" Color="#31A8FF" Opacity="0.4"/>
+                                    </Border.Effect>
+                                </Border>
+
+                                <TextBlock x:Name="StatusLabel"
+                                           Text=""
+                                           FontSize="11.5"
+                                           FontFamily="Segoe UI Variable Display, Segoe UI, Segoe UI Emoji"
+                                           Foreground="#E2E2E9"
+                                           VerticalAlignment="Center"
+                                           FontWeight="Medium"/>
+                                           
+                                <TextBlock x:Name="SubTaskLabel"
+                                           Text=""
+                                           FontSize="11.5"
+                                           Margin="8,0,0,0"
+                                           FontFamily="Segoe UI Variable Display, Segoe UI, Segoe UI Emoji"
+                                           Foreground="#94A3B8"
+                                           VerticalAlignment="Center"
+                                           Visibility="Collapsed"/>
+
+                                <!-- [UPDATE-FLUXO] O BOTÃO DE AUTORIZAR A ATUALIZAÇÃO.
+                                =====================================================
+                                Sem este botão o fluxo é um beco sem saída: o
+                                download chega a 100%, o texto perguntava
+                                "reiniciar agora?", e não havia onde responder.
+
+                                [FIX:DONO-UNICO] A pergunta é feita NA BARRA, e a
+                                resposta fica NA BARRA. Colocá-la dentro do botão
+                                circular foi tentado e é errado: aquele círculo é
+                                o MESMO que a otimização usa, e a atualização não
+                                pode transformar um controle de otimização em
+                                controle de atualização. Quem optimise por engano
+                                no meio de uma atualização faria o app
+                                otimizar enquanto o instalador espera.
+
+                                Aparece SOMENTE em `ReadyToApply`, e some em
+                                qualquer outro estado. Ficando no meio da barra,
+                                ele empurra o `StatusLabel` para fora de
+                                posição — e o texto é o que diz ao usuário o que
+                                está acontecendo, então ele não pode sair de
+                                lugar. -->
+
+                                <Button x:Name="UpdateApplyButton"
+                                        Content="{Binding [UpdateBtnApplyNow], Source={x:Static services:LocalizationService.Instance}}"
+                                        FontSize="11.5"
+                                        FontWeight="SemiBold"
+                                        FontFamily="Segoe UI Variable Display, Segoe UI"
+                                        Foreground="#0B0B12"
+                                        Margin="12,0,0,0"
+                                        Padding="14,0"
+                                        Height="26"
+                                        Cursor="Hand"
+                                        VerticalAlignment="Center"
+                                        Visibility="Collapsed"
+                                        Click="UpdateApplyButton_Click"
+                                        ToolTip="{Binding [UpdateBtnApplyNowTip], Source={x:Static services:LocalizationService.Instance}}">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border x:Name="Surface"
+                                                    CornerRadius="13"
+                                                    Padding="14,0"
+                                                    Height="26"
+                                                    Background="{StaticResource VoltrisGradientHorizontalBrush}">
+                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="Surface" Property="Opacity" Value="0.88"/>
+                                                </Trigger>
+                                                <Trigger Property="IsEnabled" Value="False">
+                                                    <Setter TargetName="Surface" Property="Opacity" Value="0.45"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                </Button>
+                                           
+                                <TextBlock x:Name="TimeEstimationLabel"
+                                           Text=""
+                                           FontSize="11"
+                                           Margin="12,0,0,0"
+                                           FontFamily="Segoe UI Variable, Segoe UI, Segoe UI Emoji"
+                                           Foreground="#64748B"
+                                           VerticalAlignment="Center"
+                                           Visibility="Collapsed"/>
+                            </StackPanel>
+
+                            <!-- CTA PROMOCIONAL (FOOTER): persuasivo, centralizado e traduzido (PT/ES/EN).
+                                 Abre a página de licença conforme o idioma via BuyLicense_Click.
+                                 Visibilidade: Collapsed por padrão — UpdateFooterPromoCardVisibility()
+                                 decide em runtime. Evita flash quando licença PRO já está ativa. -->
+                            <Border x:Name="FooterPromoCard" Grid.Row="2" Margin="0,0,0,0"
+                                    Visibility="Collapsed"
+                                    CornerRadius="12" Padding="16,6"
+                                    Background="#0DFFFFFF" BorderBrush="#2EFFFFFF" BorderThickness="1">
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding [FooterCtaTitle], Source={x:Static services:LocalizationService.Instance}}"
+                                               FontSize="12" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}"
+                                               VerticalAlignment="Center" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"/>
+                                    <TextBlock Text="•" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}"
+                                               VerticalAlignment="Center" Margin="8,0"/>
+                                    <TextBlock Text="{Binding [FooterCtaText], Source={x:Static services:LocalizationService.Instance}}"
+                                               FontSize="10.5" Foreground="{DynamicResource TextSecondaryBrush}"
+                                               VerticalAlignment="Center" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"/>
+                                    <Button Content="{Binding [FooterCtaButton], Source={x:Static services:LocalizationService.Instance}}"
+                                            Click="BuyLicense_Click" Cursor="Hand"
+                                            Style="{StaticResource ModernButtonStyle}"
+                                            Background="{DynamicResource VoltrisGradientHorizontalBrush}"
+                                            BorderThickness="0" FontWeight="Bold"
+                                            Foreground="White" Padding="18,6" MinHeight="28"
+                                            Margin="12,0,0,0" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+                    </Border>
+                </Grid>
+            </Grid>
+        </Grid>
+        </Border>
+
+        <!-- Resize Handles Overlay — bordas e cantos invisveis para redimensionamento -->
+        <Grid x:Name="ResizeHandleGrid" Panel.ZIndex="9995" IsHitTestVisible="True">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="6"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="6"/>
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="6"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="6"/>
+            </Grid.RowDefinitions>
+            <!-- Cantos -->
+            <Border Grid.Row="0" Grid.Column="0" x:Name="ResizeTopLeft" Background="Transparent" Cursor="SizeNWSE" MouseDown="ResizeHandle_MouseDown" Tag="TopLeft"/>
+            <Border Grid.Row="0" Grid.Column="2" x:Name="ResizeTopRight" Background="Transparent" Cursor="SizeNESW" MouseDown="ResizeHandle_MouseDown" Tag="TopRight"/>
+            <Border Grid.Row="2" Grid.Column="0" x:Name="ResizeBottomLeft" Background="Transparent" Cursor="SizeNESW" MouseDown="ResizeHandle_MouseDown" Tag="BottomLeft"/>
+            <Border Grid.Row="2" Grid.Column="2" x:Name="ResizeBottomRight" Background="Transparent" Cursor="SizeNWSE" MouseDown="ResizeHandle_MouseDown" Tag="BottomRight"/>
+            <!-- Bordas -->
+            <Border Grid.Row="0" Grid.Column="1" x:Name="ResizeTop" Background="Transparent" Cursor="SizeNS" MouseDown="ResizeHandle_MouseDown" Tag="Top"/>
+            <Border Grid.Row="2" Grid.Column="1" x:Name="ResizeBottom" Background="Transparent" Cursor="SizeNS" MouseDown="ResizeHandle_MouseDown" Tag="Bottom"/>
+            <Border Grid.Row="1" Grid.Column="0" x:Name="ResizeLeft" Background="Transparent" Cursor="SizeWE" MouseDown="ResizeHandle_MouseDown" Tag="Left"/>
+            <Border Grid.Row="1" Grid.Column="2" x:Name="ResizeRight" Background="Transparent" Cursor="SizeWE" MouseDown="ResizeHandle_MouseDown" Tag="Right"/>
+        </Grid>
+
+        <!-- Modal de Bloqueio Onboarding -->
+        <controls:OnboardingLockModal x:Name="LockModal" Grid.RowSpan="2" Panel.ZIndex="9998"/>
+
+        <!-- Modal de Notificações -->
+        <controls:NotificationDrawer x:Name="NotificationDrawerControl" 
+                                     DataContext="{Binding NotificationDrawer, Source={StaticResource Locator}}"
+                                     Grid.RowSpan="2" 
+                                     Panel.ZIndex="9998" />
+
+<!-- Modal de Bloqueio de Licença (Lockdown Total) -->
+        <Grid x:Name="LicenseLockdownOverlay" Grid.RowSpan="2" Panel.ZIndex="9999" Visibility="Collapsed">
+            <Border Background="#F2000000">
+                <Border.Effect>
+                    <BlurEffect Radius="10"/>
+                </Border.Effect>
+            </Border>
+            
+            <Border Background="Transparent" VerticalAlignment="Center" HorizontalAlignment="Center" MaxWidth="500">
+                <StackPanel Margin="40">
+                    <Path Data="M12,2C6.48,2,2,6.48,2,12s4.48,10,10,10,10-4.48,10-10S17.52,2,12,2ZM13,17h-2v-2h2v2Zm0-4h-2V7h2v6Z" 
+                          Fill="#EF4444" Width="80" Height="80" Stretch="Uniform" Margin="0,0,0,24" HorizontalAlignment="Center"/>
+                    
+                    <TextBlock Text="{Binding [LockdownTitle], Source={x:Static services:LocalizationService.Instance}}" FontSize="28" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}" 
+                               TextAlignment="Center" Margin="0,0,0,12"/>
+                    
+                    <TextBlock Text="{Binding [LockdownDesc], Source={x:Static services:LocalizationService.Instance}}" 
+                               FontSize="14" Foreground="#BBFFFFFF" TextWrapping="Wrap" TextAlignment="Center" Margin="0,0,0,32" LineHeight="20"/>
+                    
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="16"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        
+                        <Button Grid.Column="0" Content="{Binding [LockdownBuy], Source={x:Static services:LocalizationService.Instance}}" Height="45" 
+                                Style="{StaticResource ModernButtonStyle}" Click="BuyLicense_Click"/>
+                        
+                        <Button Grid.Column="2" Content="{Binding [LockdownActivate], Source={x:Static services:LocalizationService.Instance}}" Height="45" 
+                                Style="{StaticResource SecondaryButtonStyle}" Click="ReopenActivation_Click"/>
+                    </Grid>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- Modal de Compra de Licença (3 Planos) -->
+        <Grid x:Name="LicensePurchaseModalOverlay" Grid.RowSpan="2" Panel.ZIndex="9999" Visibility="Collapsed">
+            <Border Background="#C0000000"/>
+            <views:LicensePurchaseModal x:Name="LicensePurchaseModalControl" 
+                                        HorizontalAlignment="Center" VerticalAlignment="Center"
+                                        MaxWidth="540" MaxHeight="700"/>
+        </Grid>
+
+    </Grid>
+</Window>

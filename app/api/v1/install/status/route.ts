@@ -24,18 +24,17 @@ import {
 export const runtime = 'nodejs';
 
 export const dynamic = 'force-dynamic';
-export const revalidate = 0;
 
 // In-memory caches para evitar queries desnecessárias ao Supabase
 const userEmailCache = new Map<string, { email: string | null; expiresAt: number }>();
 const lastLinkCheckWritten = new Map<string, number>();
 
-// Rate limiting em memoria. Este e o endpoint mais chamado do app: o polling
-// normal e de 5 s (12/min) e a tela de vinculo interroga a cada 1 s por ate 5
-// minutos (60/min). O limite fica ACIMA do pior caso para nunca interromper o
-// fluxo de login; o que ele corta e flood/bot drenando a cota da Vercel.
+// Rate limiting em memória.
+// Cliente desktop chama a cada 5min (vinculado) ou nunca (sem vínculo).
+// Tela de vinculação: pode chamar manualmente algumas vezes.
+// 20/min por IP é muito acima do uso legítimo e corta flood/bot.
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
-const RATE_LIMIT = 120;
+const RATE_LIMIT = 20;
 
 function checkRateLimit(ip: string): boolean {
     const now = Date.now();
@@ -226,7 +225,7 @@ export async function GET(request: NextRequest) {
                 userEmail = userData?.user?.email ?? null;
                 userEmailCache.set(installation.user_id, {
                     email: userEmail,
-                    expiresAt: nowMs + 10 * 60_000, // Cache de 10 minutos
+                    expiresAt: nowMs + 15 * 60_000, // Cache de 15 minutos
                 });
             }
         }
@@ -254,15 +253,24 @@ export async function GET(request: NextRequest) {
         user: maskEmail(userEmail),
     });
 
-    // Se já está vinculado, faz cache de 20s na CDN da Vercel (economiza 75% das invocações).
-    // Se não está vinculado, cache de 3s para responder rápido quando o usuário vincular no site.
-    const cacheSeconds = isLinked ? 20 : 3;
-    const cacheHeaders: Record<string, string> = {
-        'Cache-Control': `public, s-maxage=${cacheSeconds}, stale-while-revalidate=${cacheSeconds * 2}`,
-        'CDN-Cache-Control': `public, s-maxage=${cacheSeconds}, stale-while-revalidate=${cacheSeconds * 2}`,
-        'Vercel-CDN-Cache-Control': `public, s-maxage=${cacheSeconds}, stale-while-revalidate=${cacheSeconds * 2}`,
-        'Vary': 'x-voltris-device-credential',
-    };
+    // Cache na CDN da Vercel:
+    //   - Vinculado: 5min (cliente consulta a cada 5min — quase 100% de HIT na CDN).
+    //     stale-while-revalidate de 1min garante que o HIT nunca bloqueia.
+    //   - Não vinculado: 10s de cache na CDN (permite resposta rápida na tela de vinculação,
+    //     mas impede que polling de 1s a 5s consuma milhares de invocações serverless).
+    const cacheHeaders: Record<string, string> = isLinked
+        ? {
+            'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=60',
+            'CDN-Cache-Control': 'public, s-maxage=300, stale-while-revalidate=60',
+            'Vercel-CDN-Cache-Control': 'public, s-maxage=300, stale-while-revalidate=60',
+            'Vary': 'x-voltris-device-credential',
+          }
+        : {
+            'Cache-Control': 'public, s-maxage=10, stale-while-revalidate=10',
+            'CDN-Cache-Control': 'public, s-maxage=10, stale-while-revalidate=10',
+            'Vercel-CDN-Cache-Control': 'public, s-maxage=10, stale-while-revalidate=10',
+            'Vary': 'x-voltris-device-credential',
+          };
 
     return jsonWithCorrelation(
         ctx,

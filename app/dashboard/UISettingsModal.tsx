@@ -1,7 +1,7 @@
 'use client';
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiX, FiCheck, FiMonitor, FiMaximize2, FiMinimize2, FiSettings, FiLayout, FiShield, FiSliders } from 'react-icons/fi';
+import { FiX, FiCheck, FiMaximize2, FiMinimize2, FiSettings, FiLayout, FiShield } from 'react-icons/fi';
 import { useDashboard } from '@/app/context/DashboardContext';
 
 interface UISettingsModalProps {
@@ -10,129 +10,151 @@ interface UISettingsModalProps {
 }
 
 export default function UISettingsModal({ isOpen, onClose }: UISettingsModalProps) {
-  const { 
-    transparencyMode, 
-    toggleTransparency, 
-    sidebarCollapsed, 
+  const {
+    transparencyMode,
+    toggleTransparency,
+    sidebarCollapsed,
     setSidebarCollapsed,
     hardwareIDProtection,
     toggleHardwareIDProtection
   } = useDashboard();
 
+  const options = [
+    {
+      id: 'transparent',
+      label: 'Modo Transparente',
+      description: 'Fundo translúcido (Glassmorphism)',
+      icon: FiMaximize2,
+      active: transparencyMode,
+      onClick: toggleTransparency,
+      activeColor: 'border-indigo-500/40 bg-indigo-500/10',
+      iconColor: 'text-indigo-400',
+      checkColor: 'text-indigo-400',
+    },
+    {
+      id: 'solid',
+      label: 'Modo Sólido',
+      description: 'Fundo opaco de alto contraste',
+      icon: FiMinimize2,
+      active: !transparencyMode,
+      onClick: toggleTransparency,
+      activeColor: 'border-violet-500/40 bg-violet-500/10',
+      iconColor: 'text-violet-400',
+      checkColor: 'text-violet-400',
+    },
+    {
+      id: 'compact',
+      label: 'Sidebar Compacto',
+      description: 'Reduz o menu lateral apenas a ícones',
+      icon: FiLayout,
+      active: sidebarCollapsed,
+      onClick: () => setSidebarCollapsed(!sidebarCollapsed),
+      activeColor: 'border-amber-500/40 bg-amber-500/10',
+      iconColor: 'text-amber-400',
+      checkColor: 'text-amber-400',
+    },
+    {
+      id: 'hid',
+      label: 'Proteção HID',
+      description: 'Segurança de Hardware ID em tempo real',
+      icon: FiShield,
+      active: hardwareIDProtection,
+      onClick: toggleHardwareIDProtection,
+      activeColor: 'border-emerald-500/40 bg-emerald-500/10',
+      iconColor: 'text-emerald-400',
+      checkColor: 'text-emerald-400',
+    },
+  ];
+
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-6">
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 sm:p-6">
+          {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute inset-0 bg-black/80 backdrop-blur-xl"
+            className="absolute inset-0 bg-black/70 backdrop-blur-md"
             onClick={onClose}
           />
-          
+
+          {/* Modal */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+            initial={{ opacity: 0, scale: 0.95, y: 16 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            className="relative w-full max-w-xl p-8 rounded-[3rem] bg-white border border-gray-200 shadow-xl overflow-hidden"
+            exit={{ opacity: 0, scale: 0.95, y: 16 }}
+            transition={{ type: 'spring', damping: 24, stiffness: 200 }}
+            className="relative w-full max-w-lg bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden"
           >
-            {/* Background Glow */}
-            <div className="absolute -right-20 -top-20 w-80 h-80 bg-gradient-to-br from-[#8B31FF]/20 to-transparent blur-[100px] pointer-events-none"></div>
-            
-            <div className="relative z-10 space-y-10">
+            {/* Subtle glow accent */}
+            <div className="absolute top-0 right-0 w-48 h-48 bg-indigo-500/5 rounded-full blur-3xl pointer-events-none" />
+
+            <div className="relative z-10 p-5 sm:p-6 space-y-5 sm:space-y-6">
               {/* Header */}
               <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                   <div className="flex items-center gap-3">
-                      <div className="p-2.5 rounded-xl bg-gradient-to-br from-[#8B31FF] to-[#6010FF] text-gray-900">
-                        <FiSettings className="w-5 h-5" />
-                      </div>
-                      <h2 className="text-2xl font-black text-gray-900 uppercase italic tracking-tighter">Configurações <span className="text-[#8B31FF] not-italic">UI</span></h2>
-                   </div>
-                   <p className="text-gray-500 font-bold text-[10px] uppercase tracking-widest pl-1">Personalização Operacional do Terminal</p>
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-indigo-500/15 border border-indigo-500/30 flex items-center justify-center">
+                    <FiSettings className="w-4 h-4 text-indigo-400" />
+                  </div>
+                  <div>
+                    <h2 className="text-sm font-bold text-slate-100 tracking-wide">Configurações UI</h2>
+                    <p className="text-[10px] text-slate-500 uppercase tracking-widest font-medium">Personalização do painel</p>
+                  </div>
                 </div>
-                <button 
+                <button
                   onClick={onClose}
-                  className="p-3 rounded-2xl bg-gray-100 hover:bg-gray-200 text-gray-400 hover:text-gray-900 transition-all border border-gray-200"
+                  className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-500 hover:text-slate-200 transition border border-slate-700"
                 >
-                  <FiX className="w-5 h-5" />
+                  <FiX className="w-4 h-4" />
                 </button>
               </div>
 
-              {/* Settings Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                 {/* Transparency Mode */}
-                 <button 
-                   onClick={toggleTransparency}
-                   className={`p-6 rounded-[2rem] border transition-all duration-300 flex flex-col gap-4 text-left group
-                     ${transparencyMode ? 'bg-[#31A8FF]/10 border-[#31A8FF]/30 text-[#31A8FF]' : 'bg-gray-100 border-gray-200 text-gray-400 hover:border-gray-300'}
-                   `}
-                 >
-                    <div className="flex items-center justify-between w-full">
-                       <FiMaximize2 className="w-6 h-6" />
-                       {transparencyMode && <FiCheck className="w-5 h-5" />}
-                    </div>
-                    <div>
-                       <h4 className="font-black uppercase italic tracking-wider text-sm mb-1 text-gray-900">Modo Transparente</h4>
-                       <p className="text-[9px] font-bold uppercase tracking-widest text-gray-500">Fundo translúcido (Glassmorphism)</p>
-                    </div>
-                 </button>
-
-                 {/* Solid Mode */}
-                 <button 
-                   onClick={toggleTransparency}
-                   className={`p-6 rounded-[2rem] border transition-all duration-300 flex flex-col gap-4 text-left group
-                     ${!transparencyMode ? 'bg-[#8B31FF]/10 border-[#8B31FF]/30 text-[#8B31FF]' : 'bg-gray-100 border-gray-200 text-gray-400 hover:border-gray-300'}
-                   `}
-                 >
-                    <div className="flex items-center justify-between w-full">
-                       <FiMinimize2 className="w-6 h-6" />
-                       {!transparencyMode && <FiCheck className="w-5 h-5" />}
-                    </div>
-                    <div>
-                       <h4 className="font-black uppercase italic tracking-wider text-sm mb-1 text-gray-900">Modo Sólido</h4>
-                       <p className="text-[9px] font-bold uppercase tracking-widest text-gray-500">Fundo opaco de alto contraste</p>
-                    </div>
-                 </button>
-
-                 {/* Sidebar Collapsed */}
-                 <button 
-                   onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-                   className={`p-6 rounded-[2rem] border transition-all duration-300 flex flex-col gap-4 text-left group
-                     ${sidebarCollapsed ? 'bg-[#FF4B6B]/10 border-[#FF4B6B]/30 text-[#FF4B6B]' : 'bg-gray-100 border-gray-200 text-gray-400 hover:border-gray-300'}
-                   `}
-                 >
-                    <div className="flex items-center justify-between w-full">
-                       <FiLayout className="w-6 h-6" />
-                       {sidebarCollapsed && <FiCheck className="w-5 h-5" />}
-                    </div>
-                    <div>
-                       <h4 className="font-black uppercase italic tracking-wider text-sm mb-1 text-gray-900">Sidebar Compacto</h4>
-                       <p className="text-[9px] font-bold uppercase tracking-widest text-gray-500">Reduz o menu lateral apenas a ícones</p>
-                    </div>
-                 </button>
-
-                 {/* Hardware ID Protection Mode */}
-                 <button 
-                   onClick={toggleHardwareIDProtection}
-                   className={`p-6 rounded-[2rem] border transition-all duration-300 flex flex-col gap-4 text-left group
-                     ${hardwareIDProtection ? 'bg-emerald-100 border-emerald-200 text-emerald-700' : 'bg-gray-100 border-gray-200 text-gray-400 hover:border-gray-300'}
-                   `}
-                 >
-                    <div className="flex items-center justify-between w-full">
-                       <FiShield className="w-6 h-6" />
-                       {hardwareIDProtection && <FiCheck className="w-5 h-5" />}
-                    </div>
-                    <div>
-                       <h4 className="font-black uppercase italic tracking-wider text-sm mb-1 text-gray-900">Proteção HID</h4>
-                       <p className="text-[9px] font-bold uppercase tracking-widest text-gray-500">Segurança de Hardware ID em tempo real</p>
-                    </div>
-                 </button>
+              {/* Options Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {options.map((opt) => {
+                  const Icon = opt.icon;
+                  return (
+                    <button
+                      key={opt.id}
+                      onClick={opt.onClick}
+                      className={`group relative p-4 rounded-xl border transition-all duration-200 text-left flex flex-col gap-3
+                        ${opt.active
+                          ? `${opt.activeColor}`
+                          : 'border-slate-800 bg-slate-800/40 hover:bg-slate-800 hover:border-slate-700'
+                        }
+                      `}
+                    >
+                      <div className="flex items-center justify-between">
+                        <Icon className={`w-4 h-4 ${opt.active ? opt.iconColor : 'text-slate-600 group-hover:text-slate-400'} transition`} />
+                        {opt.active && (
+                          <motion.div
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            className={`w-4 h-4 rounded-full flex items-center justify-center ${opt.checkColor}`}
+                          >
+                            <FiCheck className="w-3.5 h-3.5" />
+                          </motion.div>
+                        )}
+                      </div>
+                      <div>
+                        <p className={`text-xs font-semibold mb-0.5 ${opt.active ? 'text-slate-100' : 'text-slate-400 group-hover:text-slate-300'} transition`}>
+                          {opt.label}
+                        </p>
+                        <p className={`text-[10px] leading-relaxed ${opt.active ? 'text-slate-400' : 'text-slate-600'} transition`}>
+                          {opt.description}
+                        </p>
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
 
-              <div className="pt-6 border-t border-gray-200">
-                 <p className="text-center text-[9px] font-bold text-gray-400 uppercase tracking-[0.3em]">As alterações são salvas automaticamente na nuvem</p>
+              {/* Footer */}
+              <div className="pt-4 border-t border-slate-800">
+                <p className="text-center text-[10px] text-slate-600 uppercase tracking-widest font-medium">
+                  As alterações são salvas automaticamente
+                </p>
               </div>
             </div>
           </motion.div>

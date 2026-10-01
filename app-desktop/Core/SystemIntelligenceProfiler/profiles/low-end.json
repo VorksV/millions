@@ -1,0 +1,11 @@
+{
+  "Audit": {
+    "Cpu": { "Model": "Intel Core i3", "LogicalCores": 4, "PhysicalCores": 2 },
+    "Ram": { "TotalMb": 8192 },
+    "Gpu": { "Vendor": "Intel", "Model": "Intel UHD Graphics", "IsIntegrated": true },
+    "Battery": { "Present": true },
+    "Windows": { "Build": 19045 }
+  },
+  "Answers": { "UseCase": "Jogos competitivos", "Priority": "Performance" }
+}
+

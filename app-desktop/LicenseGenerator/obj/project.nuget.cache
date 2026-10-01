@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "dgSpecHash": "bFuibqJb990=",
+  "success": true,
+  "projectFilePath": "D:\\APLICATIVO VOLTRIS\\LicenseGenerator\\LicenseGenerator.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\VOLTRIS\\.nuget\\packages\\microsoft.win32.systemevents\\8.0.0\\microsoft.win32.systemevents.8.0.0.nupkg.sha512",
+    "C:\\Users\\VOLTRIS\\.nuget\\packages\\system.drawing.common\\8.0.6\\system.drawing.common.8.0.6.nupkg.sha512"
+  ],
+  "logs": []
+}

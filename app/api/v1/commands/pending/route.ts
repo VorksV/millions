@@ -13,15 +13,14 @@ import {
 } from '@/lib/voltris-log';
 
 export const dynamic = 'force-dynamic';
-export const revalidate = 0;
 
 /** Comandos expirados nao sao entregues: evita replay de comando antigo. */
 const COMMAND_TTL_MINUTES = 30;
 
-// Rate limiting em memoria. O app desktop consulta a cada 15 s (4/min), entao
-// 30/min nao encosta no polling normal e so corta flood/bot.
+// Rate limiting em memória. O app desktop consulta a cada 2 minutos, então
+// 20/min fica muito acima do uso legítimo e corta flood/bot.
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
-const RATE_LIMIT = 30;
+const RATE_LIMIT = 20;
 
 function checkRateLimit(ip: string): boolean {
     const now = Date.now();
@@ -93,9 +92,13 @@ export async function GET(req: NextRequest) {
 
     if (!installation) {
         // Dispositivo ainda nao registrado: responde lista vazia (nao erro) para
-        // o app nao entrar em loop de retry.
+        // o app nao entrar em loop de retry. Faz cache na CDN para evitar execuções repetidas.
         logWarn(ctx, 'instalacao nao encontrada; retornando lista vazia');
-        return jsonWithCorrelation(ctx, { commands: [], registered: false });
+        return jsonWithCorrelation(ctx, { commands: [], registered: false }, 200, {
+            'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=30',
+            'CDN-Cache-Control': 'public, s-maxage=60, stale-while-revalidate=30',
+            'Vercel-CDN-Cache-Control': 'public, s-maxage=60, stale-while-revalidate=30',
+        });
     }
 
     const notExpired = new Date(Date.now() - COMMAND_TTL_MINUTES * 60_000).toISOString();
@@ -121,9 +124,9 @@ export async function GET(req: NextRequest) {
     const cacheHeaders = hasCommands
         ? { 'Cache-Control': 'no-store, no-cache, must-revalidate' }
         : {
-            'Cache-Control': 'public, s-maxage=10, stale-while-revalidate=20',
-            'CDN-Cache-Control': 'public, s-maxage=10, stale-while-revalidate=20',
-            'Vercel-CDN-Cache-Control': 'public, s-maxage=10, stale-while-revalidate=20',
+            'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=30',
+            'CDN-Cache-Control': 'public, s-maxage=60, stale-while-revalidate=30',
+            'Vercel-CDN-Cache-Control': 'public, s-maxage=60, stale-while-revalidate=30',
         };
 
     return jsonWithCorrelation(
