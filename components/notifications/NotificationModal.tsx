@@ -3,7 +3,7 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNotificationContext } from './NotificationContext';
-import { FiBell, FiCheck, FiX, FiShield, FiCpu } from 'react-icons/fi';
+import VoltrisIcon from '@/components/dashboard/VoltrisIcon';
 import { useDashboard } from '@/app/context/DashboardContext';
 
 export default function NotificationModal() {
@@ -49,7 +49,7 @@ export default function NotificationModal() {
           <div className="flex flex-col items-center text-center gap-6 relative z-10">
             <div className="relative mt-2">
               <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#31A8FF]/15 to-[#8B31FF]/15 border border-[#31A8FF]/30 flex items-center justify-center text-[#31A8FF] shadow-xl relative z-10">
-                <FiBell className="w-8 h-8" />
+                <VoltrisIcon name="bell" size={32} className="text-[#31A8FF]" />
               </div>
               <div className="absolute inset-0 rounded-2xl bg-[#31A8FF] blur-2xl opacity-20 animate-pulse"></div>
             </div>
@@ -64,11 +64,11 @@ export default function NotificationModal() {
                  </p>
                  <div className="flex items-center justify-center gap-3 pt-1">
                     <div className="flex items-center gap-1.5 px-2.5 py-1 bg-slate-800/80 rounded-lg border border-slate-700/60">
-                       <FiShield className="w-3 h-3 text-[#00FF88]" />
+                       <VoltrisIcon name="security" size={12} className="text-[#00FF94]" />
                        <span className="text-[10px] font-semibold text-slate-300 uppercase tracking-wider">Criptografado</span>
                     </div>
                     <div className="flex items-center gap-1.5 px-2.5 py-1 bg-slate-800/80 rounded-lg border border-slate-700/60">
-                       <FiCpu className="w-3 h-3 text-[#31A8FF]" />
+                       <VoltrisIcon name="system" size={12} className="text-[#31A8FF]" />
                        <span className="text-[10px] font-semibold text-slate-300 uppercase tracking-wider">Baixo Consumo</span>
                     </div>
                  </div>
@@ -80,7 +80,7 @@ export default function NotificationModal() {
                 className="w-full py-3 px-4 bg-gradient-to-r from-[#31A8FF] to-[#8B31FF] hover:opacity-95 text-white font-semibold rounded-xl shadow-lg shadow-indigo-500/20 active:scale-95 transition-all flex items-center justify-center gap-2 text-xs"
                 onClick={handleEnable}
               >
-                <FiCheck className="w-4 h-4" />
+                <VoltrisIcon name="check" size={16} />
                 <span>Ativar Notificações</span>
               </button>
               <button

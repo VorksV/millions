@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiArrowRight, FiClock, FiCheckCircle, FiAlertCircle, FiEye, FiXCircle } from 'react-icons/fi';
+import VoltrisIcon from '@/components/dashboard/VoltrisIcon';
 import Link from 'next/link';
 import type { Order } from '@/app/types/order';
 import { supabase } from '@/app/lib/supabase/client';
@@ -51,15 +51,15 @@ export default function RecentOrders() {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'completed':
-        return <FiCheckCircle className="w-4 h-4 text-green-500" />;
+        return <VoltrisIcon name="success" size={16} className="text-[#00FF94]" />;
       case 'pending':
-        return <FiClock className="w-4 h-4 text-yellow-500" />;
+        return <VoltrisIcon name="clock" size={16} className="text-[#F59E0B]" />;
       case 'processing':
-        return <FiClock className="w-4 h-4 text-blue-500" />;
+        return <VoltrisIcon name="clock" size={16} className="text-[#00D4FF]" />;
       case 'cancelled':
-        return <FiAlertCircle className="w-4 h-4 text-red-500" />;
+        return <VoltrisIcon name="alertCircle" size={16} className="text-[#EF4444]" />;
       default:
-        return <FiClock className="w-4 h-4 text-gray-500" />;
+        return <VoltrisIcon name="clock" size={16} className="text-gray-500" />;
     }
   };
 
@@ -125,7 +125,7 @@ export default function RecentOrders() {
           className="flex items-center gap-2 px-4 py-2 bg-[#8B31FF]/10 text-[#8B31FF] rounded-lg hover:bg-[#8B31FF]/20 transition-colors duration-300"
         >
           Ver Todos
-          <FiArrowRight className="w-4 h-4" />
+          <VoltrisIcon name="arrowRight" size={16} />
         </Link>
       </div>
 
@@ -173,7 +173,7 @@ export default function RecentOrders() {
                   onClick={() => handleViewOrderDetails(order)}
                   className="flex items-center gap-2 px-3 py-2 bg-[#8B31FF]/10 text-[#8B31FF] rounded-lg hover:bg-[#8B31FF]/20 transition-colors duration-300"
                 >
-                  <FiEye className="w-4 h-4" />
+                  <VoltrisIcon name="eye" size={16} />
                   Ver
                 </button>
               </div>
@@ -205,7 +205,7 @@ export default function RecentOrders() {
                   onClick={() => setShowOrderModal(false)}
                   className="text-gray-400 hover:text-white transition-colors duration-300"
                 >
-                  <FiXCircle className="w-6 h-6" />
+                  <VoltrisIcon name="close" size={24} />
                 </button>
               </div>
 

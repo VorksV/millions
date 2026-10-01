@@ -177,7 +177,7 @@ export default function TicketsClient() {
                      <div className="space-y-3">
                         <div className="flex justify-between items-center">
                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold border ${config.bg} ${config.color} ${config.border}`}>
-                              <Icon className="w-3 h-3" />
+                              <VoltrisIcon name={config.icon} size={12} />
                               <span>{ticket.status}</span>
                            </span>
                            <span className={`text-[10px] font-semibold px-2 py-0.5 rounded border ${
@@ -246,7 +246,7 @@ export default function TicketsClient() {
                     </div>
                   </div>
                   <button onClick={() => setShowCreateForm(false)} className="text-slate-500 hover:text-white transition-colors">
-                    <FiX size={20} />
+                    <VoltrisIcon name="close" size={20} />
                   </button>
                </div>
 
@@ -315,7 +315,7 @@ export default function TicketsClient() {
                <div className="px-6 py-4 bg-slate-950/80 border-b border-slate-800 flex justify-between items-center shrink-0">
                   <div className="flex items-center gap-3 min-w-0">
                     <div className={`p-2 rounded-lg ${statusConfig(selectedTicket.status).bg} ${statusConfig(selectedTicket.status).color} border ${statusConfig(selectedTicket.status).border} shrink-0`}>
-                       {React.createElement(statusConfig(selectedTicket.status).icon, { className: 'w-4 h-4' })}
+                       <VoltrisIcon name={statusConfig(selectedTicket.status).icon} size={16} />
                     </div>
                     <div className="min-w-0">
                       <h4 className="text-sm font-bold text-white tracking-tight truncate">{selectedTicket.title}</h4>
@@ -323,7 +323,7 @@ export default function TicketsClient() {
                     </div>
                  </div>
                   <button onClick={() => setShowTicketModal(false)} className="text-slate-400 hover:text-white transition-colors p-1">
-                    <FiX size={20} />
+                    <VoltrisIcon name="close" size={20} />
                   </button>
                </div>
 

@@ -4,11 +4,8 @@ import { useState } from 'react';
 import { useNotificationContext } from '@/components/notifications/NotificationContext';
 import { useAuth } from '@/app/hooks/useAuth';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  FiBell, FiPackage, FiMessageSquare, FiInfo, 
-  FiCheckCircle, FiAlertTriangle, FiClock, FiShield,
-  FiTerminal, FiActivity, FiZap, FiCheck, FiFilter, FiRefreshCw
-} from 'react-icons/fi';
+import VoltrisIcon, { type VoltrisIconName } from '@/components/dashboard/VoltrisIcon';
+import VoltrisIconTile, { DASHBOARD_ACCENT } from '@/components/dashboard/VoltrisIconTile';
 import { useDashboard } from '@/app/context/DashboardContext';
 
 export default function NotificationsClient() {
@@ -30,24 +27,24 @@ export default function NotificationsClient() {
         return true;
     });
 
-    const getIcon = (type: string) => {
+    const getIcon = (type: string): VoltrisIconName => {
         switch (type) {
-            case 'order': return FiPackage;
-            case 'ticket': return FiMessageSquare;
-            case 'success': return FiCheckCircle;
-            case 'warning': return FiAlertTriangle;
-            default: return FiBell;
+            case 'order': return 'package';
+            case 'ticket': return 'message';
+            case 'success': return 'success';
+            case 'warning': return 'alertTriangle';
+            default: return 'bell';
         }
     };
 
     // Cores dos ícones mantidas estritamente conforme configurado pelo usuário
     const getColor = (type: string) => {
         switch (type) {
-            case 'order': return 'text-[#31A8FF] bg-[#31A8FF]/10 border-[#31A8FF]/20';
-            case 'ticket': return 'text-[#8B31FF] bg-[#8B31FF]/10 border-[#8B31FF]/20';
-            case 'success': return 'text-[#00FF88] bg-[#00FF88]/10 border-[#00FF88]/20';
-            case 'warning': return 'text-amber-400 bg-amber-400/10 border-amber-400/20';
-            default: return 'text-indigo-400 bg-indigo-500/10 border-indigo-500/20';
+      case 'order': return 'text-[#00D4FF] bg-[#00D4FF]/10 border-[#00D4FF]/20';
+      case 'ticket': return 'text-[#8B31FF] bg-[#8B31FF]/10 border-[#8B31FF]/20';
+      case 'success': return 'text-[#00FF94] bg-[#00FF94]/10 border-[#00FF94]/20';
+      case 'warning': return 'text-[#F59E0B] bg-[#F59E0B]/10 border-[#F59E0B]/20';
+      default: return 'text-[#8B31FF] bg-[#8B31FF]/10 border-[#8B31FF]/20';
         }
     };
 
@@ -76,10 +73,10 @@ export default function NotificationsClient() {
             {/* Page Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-800/80">
                 <div>
-                    <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-white flex items-center gap-2.5">
-                        <FiBell className="w-6 h-6 text-indigo-400" />
-                        <span>Central de Notificações</span>
-                    </h2>
+                    <div className="flex items-center gap-3.5">
+                        <VoltrisIconTile icon="bell" tone="gradient" size={10} />
+                        <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-white">Central de Notificações</h2>
+                    </div>
                     <p className="text-xs sm:text-sm text-slate-400 mt-1">
                         Logs de eventos, atualizações de pedidos e avisos em tempo real.
                     </p>
@@ -101,7 +98,7 @@ export default function NotificationsClient() {
                         className="p-2 rounded-xl bg-slate-900/60 border border-slate-800 text-slate-400 hover:text-white hover:bg-slate-800 transition-all shadow-sm active:scale-95 disabled:opacity-50"
                         title="Atualizar notificações"
                     >
-                        <FiRefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin text-indigo-400' : ''}`} />
+                        <VoltrisIcon name="processing" size={16} className={isRefreshing ? 'animate-spin text-indigo-400' : ''} />
                     </button>
 
                     {/* Mark All as Read */}
@@ -110,7 +107,7 @@ export default function NotificationsClient() {
                             onClick={() => markAllAsRead()}
                             className="px-3.5 py-1.5 rounded-xl bg-indigo-600/10 hover:bg-indigo-600/20 border border-indigo-500/20 text-indigo-300 hover:text-white text-xs font-semibold transition-all active:scale-95 flex items-center gap-1.5 shadow-sm"
                         >
-                            <FiCheck className="w-3.5 h-3.5" />
+                            <VoltrisIcon name="check" size={14} />
                             <span>Marcar lidas</span>
                         </button>
                     )}
@@ -155,7 +152,7 @@ export default function NotificationsClient() {
                 <AnimatePresence mode="popLayout">
                     {filteredNotifications.length > 0 ? (
                         filteredNotifications.map((notif, i) => {
-                            const Icon = getIcon(notif.type);
+                            const iconName = getIcon(notif.type);
                             const colorClasses = getColor(notif.type);
 
                             return (
@@ -176,7 +173,7 @@ export default function NotificationsClient() {
                                     <div className="flex items-start gap-3.5 sm:gap-4">
                                         {/* Icon Box with User's Exact Colors */}
                                         <div className={`p-3 sm:p-3.5 rounded-xl border flex-shrink-0 transition-transform duration-200 group-hover:scale-105 ${colorClasses}`}>
-                                            <Icon className="w-5 h-5 sm:w-5 sm:h-5" />
+                                            <VoltrisIcon name={iconName} size={20} />
                                         </div>
 
                                         {/* Content */}
@@ -196,7 +193,7 @@ export default function NotificationsClient() {
                                                         {getTypeLabel(notif.type)}
                                                     </span>
                                                     <span className="text-[11px] text-slate-500 font-mono flex items-center gap-1">
-                                                        <FiClock className="w-3 h-3 text-slate-600" />
+                                                        <VoltrisIcon name="clock" size={12} className="text-slate-600" />
                                                         {new Date(notif.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
                                                     </span>
                                                 </div>
@@ -212,9 +209,7 @@ export default function NotificationsClient() {
                         })
                     ) : (
                         <div className={`py-20 sm:py-24 px-6 flex flex-col items-center justify-center text-center gap-4 rounded-2xl border border-slate-800 ${transparencyMode ? 'voltris-glass' : 'bg-slate-900/40 shadow-sm'}`}>
-                            <div className="w-14 h-14 rounded-2xl bg-slate-800/80 border border-slate-700 flex items-center justify-center text-slate-400">
-                                <FiBell className="w-7 h-7 text-indigo-400" />
-                            </div>
+                            <VoltrisIconTile icon="bell" accent={DASHBOARD_ACCENT.brand} size={14} />
                             <div className="space-y-1.5 max-w-sm">
                                 <h3 className="text-base font-bold text-white tracking-tight">Nenhuma notificação encontrada</h3>
                                 <p className="text-xs text-slate-400 leading-relaxed">

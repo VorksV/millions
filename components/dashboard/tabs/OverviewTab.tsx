@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
-import { ShoppingCart, Clock, CheckCircle, Ticket, UserEdit } from 'lucide-react';
+import VoltrisIcon from '@/components/dashboard/VoltrisIcon';
 
 interface Activity {
   type: 'order' | 'ticket' | 'other';
@@ -59,19 +59,19 @@ export default function OverviewTab() {
       title: 'Total de Pedidos',
       value: orders.length,
       color: 'from-[#FF4B6B] to-[#8B31FF]',
-      icon: <ShoppingCart className="text-[#FF4B6B]" size={20} />
+      icon: <VoltrisIcon name="orders" size={20} className="text-[#FF4B6B]" />
     },
     {
       title: 'Pedidos Pendentes',
       value: orders.filter(order => order.status === 'pending').length,
       color: 'from-[#8B31FF] to-[#31A8FF]',
-      icon: <Clock className="text-[#8B31FF]" size={20} />
+      icon: <VoltrisIcon name="clock" size={20} className="text-[#8B31FF]" />
     },
     {
       title: 'Pedidos Concluídos',
       value: orders.filter(order => order.status === 'completed').length,
       color: 'from-[#31A8FF] to-[#FF4B6B]',
-      icon: <CheckCircle className="text-[#31A8FF]" size={20} />
+      icon: <VoltrisIcon name="success" size={20} className="text-[#31A8FF]" />
     }
   ];
 
@@ -82,21 +82,21 @@ export default function OverviewTab() {
       title: 'Pedido #1234',
       time: '2 horas atrás',
       status: 'success',
-      icon: <ShoppingCart className="text-[#8B31FF]" size={16} />
+      icon: <VoltrisIcon name="orders" size={16} className="text-[#8B31FF]" />
     },
     {
       type: 'ticket',
       title: 'Ticket de Suporte #5678',
       time: '5 horas atrás',
       status: 'in_progress',
-      icon: <Ticket className="text-[#FF4B6B]" size={16} />
+      icon: <VoltrisIcon name="support" size={16} className="text-[#FF4B6B]" />
     },
     {
       type: 'other',
       title: 'Atualização de Perfil',
       time: '1 dia atrás',
       status: 'success',
-      icon: <UserEdit className="text-[#31A8FF]" size={16} />
+      icon: <VoltrisIcon name="edit" size={16} className="text-[#31A8FF]" />
     }
   ];
 
@@ -185,7 +185,7 @@ export default function OverviewTab() {
           className="bg-[#1E1E1E]/80 backdrop-blur-xl p-6 rounded-2xl border border-gray-800/30"
         >
           <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-            <ShoppingCart className="text-[#8B31FF]" size={18} />
+            <VoltrisIcon name="orders" size={18} className="text-[#8B31FF]" />
             Últimos Pedidos
           </h3>
           <div className="space-y-4">

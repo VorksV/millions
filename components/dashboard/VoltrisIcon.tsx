@@ -101,6 +101,8 @@ export type VoltrisIconName =
   | 'eye'
   | 'layout'
   | 'menu'
+  | 'chevronLeft'
+  | 'chevronRight'
   | 'logout';
 
 export const VOLTRIS_ICON_PATHS: Record<VoltrisIconName, string> = {
@@ -347,6 +349,8 @@ export const VOLTRIS_ICON_PATHS: Record<VoltrisIconName, string> = {
   menu: 'M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z',
   logout:
     'M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z',
+  chevronLeft: 'M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z',
+  chevronRight: 'M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z',
 };
 
 export interface VoltrisIconProps {

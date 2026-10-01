@@ -2,11 +2,8 @@
 
 import React, { useEffect, useState, useMemo } from 'react';
 import { createClient } from '@/utils/supabase/client';
-import { 
-  FiMonitor, FiCpu, FiHardDrive, FiActivity, 
-  FiSearch, FiRefreshCw, FiLock, FiTrash2, FiZap,
-  FiTerminal, FiShield, FiTrendingUp, FiCheckCircle, FiX, FiArrowLeft
-} from 'react-icons/fi';
+import VoltrisIcon from '@/components/dashboard/VoltrisIcon';
+import VoltrisIconTile, { DASHBOARD_ACCENT } from '@/components/dashboard/VoltrisIconTile';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
@@ -87,7 +84,7 @@ export default function DevicesClient() {
                 <div className="space-y-1">
                    <div className="flex items-center gap-3">
                      <Link href="/dashboard/companies" className="p-2 rounded-xl bg-slate-900 border border-slate-800 hover:bg-slate-800 text-slate-400 hover:text-white transition-colors" title="Voltar para Organização">
-                        <FiArrowLeft className="w-4 h-4" />
+                        <VoltrisIcon name="arrowLeft" size={16} />
                      </Link>
                      <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight">Nós da Frota</h2>
                    </div>
@@ -96,7 +93,7 @@ export default function DevicesClient() {
 
                 <div className="flex items-center gap-2.5 w-full sm:w-auto">
                     <div className="relative flex-1 sm:w-64">
-                        <FiSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 w-4 h-4" />
+                        <VoltrisIcon name="search" size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
                         <input
                             type="text"
                             placeholder="Buscar por hostname ou ID..."
@@ -110,7 +107,7 @@ export default function DevicesClient() {
                       className={`p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-white hover:bg-slate-800 transition-colors ${loading ? 'opacity-50' : ''}`}
                       title="Atualizar lista"
                     >
-                        <FiRefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
+                        <VoltrisIcon name="processing" size={16} className={loading ? "animate-spin" : ""} />
                     </button>
                 </div>
             </div>
@@ -124,9 +121,7 @@ export default function DevicesClient() {
                         ))
                     ) : filteredDevices.length === 0 ? (
                         <div className={`py-20 flex flex-col items-center justify-center text-center gap-3 rounded-2xl border border-slate-800 ${transparencyMode ? 'voltris-glass' : 'bg-slate-900/40 shadow-xl'}`}>
-                            <div className="w-12 h-12 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-400">
-                              <FiMonitor className="w-6 h-6" />
-                            </div>
+                            <VoltrisIconTile icon="display" accent={DASHBOARD_ACCENT.brand} size={12} />
                             <div className="space-y-1 max-w-sm">
                               <h3 className="text-base font-bold text-white tracking-tight">Nenhum nó localizado</h3>
                               <p className="text-xs text-slate-400">Nenhum dispositivo encontrado para os termos da busca ou não há computadores conectados nesta organização.</p>
@@ -157,7 +152,7 @@ function DeviceCard({ device, onCommand, onLock, transparencyMode }: any) {
             <div className="flex items-center gap-4 min-w-0">
                 <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 border text-lg
                   ${isOnline ? 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20' : 'bg-slate-800/80 text-slate-500 border-slate-700'}`}>
-                    <FiMonitor />
+                    <VoltrisIcon name="display" size={24} />
                 </div>
 
                 <div className="min-w-0 space-y-1">
@@ -183,15 +178,15 @@ function DeviceCard({ device, onCommand, onLock, transparencyMode }: any) {
             {/* Hardware specifications */}
             <div className="flex flex-wrap items-center gap-2">
                 <div className="px-2.5 py-1 bg-slate-950/50 rounded-lg border border-slate-800 text-[11px] font-medium text-slate-300 flex items-center gap-1.5">
-                   <FiCpu className="text-indigo-400 w-3.5 h-3.5 shrink-0" />
+                   <VoltrisIcon name="system" size={14} className="text-indigo-400 shrink-0" />
                    <span className="truncate max-w-[140px]">{device.cpu_model || 'CPU padrão'}</span>
                 </div>
                 <div className="px-2.5 py-1 bg-slate-950/50 rounded-lg border border-slate-800 text-[11px] font-medium text-slate-300 flex items-center gap-1.5">
-                   <FiActivity className="text-emerald-400 w-3.5 h-3.5 shrink-0" />
+                   <VoltrisIcon name="activity" size={14} className="text-emerald-400 shrink-0" />
                    <span>{device.ram_total_gb ? `${device.ram_total_gb}GB` : 'RAM'}</span>
                 </div>
                 <div className="px-2.5 py-1 bg-slate-950/50 rounded-lg border border-slate-800 text-[11px] font-medium text-slate-300 flex items-center gap-1.5">
-                   <FiShield className="text-amber-400 w-3.5 h-3.5 shrink-0" />
+                   <VoltrisIcon name="security" size={14} className="text-amber-400 shrink-0" />
                    <span>{device.os_version?.slice(0, 12) || 'Windows'}</span>
                 </div>
             </div>
@@ -202,7 +197,7 @@ function DeviceCard({ device, onCommand, onLock, transparencyMode }: any) {
                     onClick={() => onCommand(device.id, 'OPTIMIZE_RAM')}
                     className="flex-1 md:flex-none px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs shadow-md shadow-indigo-600/20 transition-all flex items-center justify-center gap-1.5 active:scale-95"
                 >
-                    <FiZap className="w-3.5 h-3.5" />
+                    <VoltrisIcon name="bolt" size={14} />
                     <span>Otimizar</span>
                 </button>
                 <button
@@ -210,7 +205,7 @@ function DeviceCard({ device, onCommand, onLock, transparencyMode }: any) {
                     title="Bloquear Dispositivo"
                     className="p-2 rounded-xl bg-rose-500/10 text-rose-400 border border-rose-500/20 hover:bg-rose-500/20 hover:border-rose-500/40 transition-colors flex items-center justify-center"
                 >
-                    <FiLock className="w-3.5 h-3.5" />
+                    <VoltrisIcon name="lock" size={14} className="text-rose-400" />
                 </button>
             </div>
         </div>

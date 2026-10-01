@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Activity, Clock, Monitor, Users } from 'lucide-react';
+import VoltrisIcon from './VoltrisIcon';
 
 interface Session {
     id: string;
@@ -100,7 +100,7 @@ export default function RealtimeSessions() {
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">Online Agora</CardTitle>
-                        <Users className="h-4 w-4 text-green-500" />
+                        <VoltrisIcon name="users" size={16} className="text-green-500" />
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">{stats.online}</div>
@@ -112,7 +112,7 @@ export default function RealtimeSessions() {
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">Ociosos (Idle)</CardTitle>
-                        <Clock className="h-4 w-4 text-yellow-500" />
+                        <VoltrisIcon name="clock" size={16} className="text-yellow-500" />
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">{stats.idle}</div>
@@ -124,7 +124,7 @@ export default function RealtimeSessions() {
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">Sessões Hoje</CardTitle>
-                        <Activity className="h-4 w-4 text-blue-500" />
+                        <VoltrisIcon name="activity" size={16} className="text-blue-500" />
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">{stats.todayTotal}</div>

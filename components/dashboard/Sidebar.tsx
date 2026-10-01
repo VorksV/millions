@@ -6,7 +6,6 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
-import { FiLogOut, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 import { useAuth } from '@/app/hooks/useAuth';
 import VoltrisIcon from './VoltrisIcon';
 import { DASHBOARD_TABS, isDashboardTabActive } from './dashboardTabs';
@@ -59,7 +58,7 @@ export default function Sidebar({ mobileOpen = false, setMobileOpen, collapsed, 
           className="absolute -right-3 top-8 w-6 h-6 rounded-full bg-slate-900 hover:bg-indigo-600 border border-slate-700/80 flex items-center justify-center text-slate-400 hover:text-white transition-all z-50 shadow-md group hover:scale-105"
           title={collapsed ? "Expandir" : "Recolher"}
         >
-          {collapsed ? <FiChevronRight className="w-3.5 h-3.5" /> : <FiChevronLeft className="w-3.5 h-3.5" />}
+          {collapsed ? <VoltrisIcon name="chevronRight" size={14} /> : <VoltrisIcon name="chevronLeft" size={14} />}
         </button>
       )}
 
@@ -116,7 +115,7 @@ export default function Sidebar({ mobileOpen = false, setMobileOpen, collapsed, 
           onClick={handleLogout}
           className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-medium text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 border border-transparent hover:border-rose-500/20 transition-all group overflow-hidden ${!isMobile && collapsed ? 'justify-center p-3' : ''}`}
         >
-          <FiLogOut className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform flex-shrink-0" />
+          <VoltrisIcon name="logout" size={16} className="group-hover:-translate-x-0.5 transition-transform flex-shrink-0" />
           {(!collapsed || isMobile) && (
             <span>Sair da Conta</span>
           )}

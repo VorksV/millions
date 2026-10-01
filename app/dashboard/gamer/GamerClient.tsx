@@ -2,11 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  FiZap, FiZapOff, FiActivity, FiCpu, 
-  FiTarget, FiShield, FiTrendingUp, FiCheckCircle,
-  FiTerminal, FiAlertCircle
-} from 'react-icons/fi';
+import VoltrisIcon from '@/components/dashboard/VoltrisIcon';
 import { createClient } from '@/utils/supabase/client';
 import { toast } from 'react-hot-toast';
 import { useDashboard } from '@/app/context/DashboardContext';
@@ -96,7 +92,7 @@ export default function GamerClient() {
                      <div className="relative">
                         <div className={`w-40 h-40 rounded-[3rem] p-[2px] transition-all duration-700 shadow-2xl ${gamerModeActive ? 'bg-gradient-to-br from-[#FF4B6B] to-[#FF9B31] rotate-3' : 'bg-white/5 grayscale'}`}>
                            <div className="w-full h-full rounded-[2.85rem] bg-gray-100 flex items-center justify-center">
-                              {gamerModeActive ? <FiZap className="w-16 h-16 text-[#FF4B6B] animate-pulse" /> : <FiZapOff className="w-16 h-16 text-gray-300" />}
+                              {gamerModeActive ? <VoltrisIcon name="bolt" size={64} className="text-[#FF4B6B] animate-pulse" /> : <VoltrisIcon name="boltOff" size={64} className="text-gray-300" />}
                            </div>
                         </div>
                         {gamerModeActive && (
@@ -138,11 +134,11 @@ export default function GamerClient() {
 
             {/* Sub-system Telemetry */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-               {[
-                 { label: 'Prioridade de CPU', icon: FiCpu, status: gamerModeActive ? 'Thread Alta' : 'Equilibrado', color: 'text-[#31A8FF]' },
-                 { label: 'Mapa de Latência', icon: FiTrendingUp, status: gamerModeActive ? 'Sub-Atômica' : 'Padrão', color: 'text-[#FF4B6B]' },
-                 { label: 'Controle de Entropia', icon: FiActivity, status: gamerModeActive ? 'Nível Zero' : 'Nominal', color: 'text-[#00FF88]' },
-               ].map((mod, i) => (
+               {([
+                 { label: 'Prioridade de CPU', icon: 'system', status: gamerModeActive ? 'Thread Alta' : 'Equilibrado', color: 'text-[#31A8FF]' },
+                 { label: 'Mapa de Latência', icon: 'trendingUp', status: gamerModeActive ? 'Sub-Atômica' : 'Padrão', color: 'text-[#FF4B6B]' },
+                 { label: 'Controle de Entropia', icon: 'activity', status: gamerModeActive ? 'Nível Zero' : 'Nominal', color: 'text-[#00FF88]' },
+               ] as const).map((mod, i) => (
                  <motion.div
                    key={i}
                    initial={{ opacity: 0, y: 20 }}
@@ -152,7 +148,7 @@ export default function GamerClient() {
                  >
                     <div className="relative z-10 flex flex-col gap-6 items-center text-center">
                        <div className={`p-5 rounded-2xl bg-gray-100 border border-gray-200 group-hover:bg-gray-200 group-hover:scale-110 transition-all ${mod.color}`}>
-                          <mod.icon className="w-8 h-8" />
+                          <VoltrisIcon name={mod.icon} size={32} />
                        </div>
                        <div className="space-y-1">
                           <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] font-mono">{mod.label}</h4>
@@ -169,7 +165,7 @@ export default function GamerClient() {
             {!machineId && (
                <div className="p-8 rounded-3xl bg-amber-500/5 border border-amber-500/10 flex items-center gap-6">
                   <div className="p-4 rounded-2xl bg-amber-500/10 text-amber-500 shadow-lg shadow-amber-500/10">
-                    <FiAlertCircle className="w-8 h-8" />
+                    <VoltrisIcon name="alertCircle" size={32} className="text-amber-500" />
                   </div>
                   <div className="space-y-1">
                     <p className="text-sm font-black text-gray-900 uppercase italic tracking-tighter">Nenhum Nó Vinculado Detectado</p>

@@ -1,8 +1,9 @@
 'use client';
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiX, FiCheck, FiMaximize2, FiMinimize2, FiSettings, FiLayout, FiShield } from 'react-icons/fi';
 import { useDashboard } from '@/app/context/DashboardContext';
+import VoltrisIcon, { type VoltrisIconName } from '@/components/dashboard/VoltrisIcon';
+import VoltrisIconTile, { DASHBOARD_ACCENT } from '@/components/dashboard/VoltrisIconTile';
 
 interface UISettingsModalProps {
   isOpen: boolean;
@@ -19,50 +20,60 @@ export default function UISettingsModal({ isOpen, onClose }: UISettingsModalProp
     toggleHardwareIDProtection
   } = useDashboard();
 
-  const options = [
+  const options: Array<{
+    id: string;
+    label: string;
+    description: string;
+    icon: VoltrisIconName;
+    active: boolean;
+    onClick: () => void;
+    activeColor: string;
+    iconColor: string;
+    checkColor: string;
+  }> = [
     {
       id: 'transparent',
       label: 'Modo Transparente',
       description: 'Fundo translúcido (Glassmorphism)',
-      icon: FiMaximize2,
+      icon: 'eye',
       active: transparencyMode,
       onClick: toggleTransparency,
-      activeColor: 'border-indigo-500/40 bg-indigo-500/10',
-      iconColor: 'text-indigo-400',
-      checkColor: 'text-indigo-400',
+      activeColor: 'border-[#8B31FF]/40 bg-[#8B31FF]/10',
+      iconColor: 'text-[#8B31FF]',
+      checkColor: 'text-[#8B31FF]',
     },
     {
       id: 'solid',
       label: 'Modo Sólido',
       description: 'Fundo opaco de alto contraste',
-      icon: FiMinimize2,
+      icon: 'display',
       active: !transparencyMode,
       onClick: toggleTransparency,
-      activeColor: 'border-violet-500/40 bg-violet-500/10',
-      iconColor: 'text-violet-400',
-      checkColor: 'text-violet-400',
+      activeColor: 'border-[#8B31FF]/40 bg-[#8B31FF]/10',
+      iconColor: 'text-[#8B31FF]',
+      checkColor: 'text-[#8B31FF]',
     },
     {
       id: 'compact',
       label: 'Sidebar Compacto',
       description: 'Reduz o menu lateral apenas a ícones',
-      icon: FiLayout,
+      icon: 'layout',
       active: sidebarCollapsed,
       onClick: () => setSidebarCollapsed(!sidebarCollapsed),
-      activeColor: 'border-amber-500/40 bg-amber-500/10',
-      iconColor: 'text-amber-400',
-      checkColor: 'text-amber-400',
+      activeColor: 'border-[#F59E0B]/40 bg-[#F59E0B]/10',
+      iconColor: 'text-[#F59E0B]',
+      checkColor: 'text-[#F59E0B]',
     },
     {
       id: 'hid',
       label: 'Proteção HID',
       description: 'Segurança de Hardware ID em tempo real',
-      icon: FiShield,
+      icon: 'security',
       active: hardwareIDProtection,
       onClick: toggleHardwareIDProtection,
-      activeColor: 'border-emerald-500/40 bg-emerald-500/10',
-      iconColor: 'text-emerald-400',
-      checkColor: 'text-emerald-400',
+      activeColor: 'border-[#00FF94]/40 bg-[#00FF94]/10',
+      iconColor: 'text-[#00FF94]',
+      checkColor: 'text-[#00FF94]',
     },
   ];
 
@@ -94,9 +105,7 @@ export default function UISettingsModal({ isOpen, onClose }: UISettingsModalProp
               {/* Header */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-indigo-500/15 border border-indigo-500/30 flex items-center justify-center">
-                    <FiSettings className="w-4 h-4 text-indigo-400" />
-                  </div>
+                  <VoltrisIconTile icon="settings" accent={DASHBOARD_ACCENT.brand} size={9} />
                   <div>
                     <h2 className="text-sm font-bold text-slate-100 tracking-wide">Configurações UI</h2>
                     <p className="text-[10px] text-slate-500 uppercase tracking-widest font-medium">Personalização do painel</p>
@@ -106,14 +115,13 @@ export default function UISettingsModal({ isOpen, onClose }: UISettingsModalProp
                   onClick={onClose}
                   className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-500 hover:text-slate-200 transition border border-slate-700"
                 >
-                  <FiX className="w-4 h-4" />
+                  <VoltrisIcon name="close" size={16} />
                 </button>
               </div>
 
               {/* Options Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {options.map((opt) => {
-                  const Icon = opt.icon;
                   return (
                     <button
                       key={opt.id}
@@ -126,14 +134,14 @@ export default function UISettingsModal({ isOpen, onClose }: UISettingsModalProp
                       `}
                     >
                       <div className="flex items-center justify-between">
-                        <Icon className={`w-4 h-4 ${opt.active ? opt.iconColor : 'text-slate-600 group-hover:text-slate-400'} transition`} />
+                        <VoltrisIcon name={opt.icon} size={16} className={`transition ${opt.active ? opt.iconColor : 'text-slate-600 group-hover:text-slate-400'}`} />
                         {opt.active && (
                           <motion.div
                             initial={{ scale: 0 }}
                             animate={{ scale: 1 }}
                             className={`w-4 h-4 rounded-full flex items-center justify-center ${opt.checkColor}`}
                           >
-                            <FiCheck className="w-3.5 h-3.5" />
+                            <VoltrisIcon name="check" size={14} className={`rounded-full ${opt.checkColor}`} />
                           </motion.div>
                         )}
                       </div>

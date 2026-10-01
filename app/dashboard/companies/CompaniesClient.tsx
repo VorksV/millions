@@ -352,17 +352,15 @@ export default function CompaniesClient() {
                             className={`border border-slate-800 rounded-2xl p-6 sm:p-8 max-w-lg w-full shadow-2xl relative overflow-hidden ${transparencyMode ? 'voltris-glass' : 'bg-slate-900'}`}
                         >
                             <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-800">
-                               <div className="flex items-center gap-3">
-                                 <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400">
-                                   <FiPieChart className="w-5 h-5" />
-                                 </div>
-                                 <div>
-                                   <h2 className="text-lg font-bold text-white tracking-tight">Expandir Capacidade da Frota</h2>
-                                   <p className="text-xs text-slate-400">Adicione novos nós simultâneos ao plano corporativo</p>
-                                 </div>
+                                <div className="flex items-center gap-3">
+                                  <VoltrisIconTile icon="pieChart" accent={DASHBOARD_ACCENT.brand} size={10} />
+                                  <div>
+                                    <h2 className="text-lg font-bold text-white tracking-tight">Expandir Capacidade da Frota</h2>
+                                    <p className="text-xs text-slate-400">Adicione novos nós simultâneos ao plano corporativo</p>
+                                  </div>
                                </div>
                                <button onClick={() => setIsBuyModalOpen(false)} className="text-slate-500 hover:text-white transition-colors">
-                                 <FiX className="w-5 h-5" />
+                                 <VoltrisIcon name="close" size={20} />
                                </button>
                             </div>
 
@@ -421,15 +419,24 @@ export default function CompaniesClient() {
     );
 }
 
-function StatCard({ title, value, icon: Icon, color = 'indigo', subtext, alert = false, transparencyMode }: any) {
-    const colorStyles: Record<string, { icon: string, bg: string }> = {
-      indigo: { icon: 'text-indigo-400', bg: 'bg-indigo-500/10 border-indigo-500/20' },
-      emerald: { icon: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/20' },
-      rose: { icon: 'text-rose-400', bg: 'bg-rose-500/10 border-rose-500/20' },
-      slate: { icon: 'text-slate-400', bg: 'bg-slate-800 border-slate-700' },
+function StatCard({ title, value, icon, color = 'indigo', subtext, alert = false, transparencyMode }: {
+    title: string;
+    value: string;
+    icon: VoltrisIconName;
+    color?: string;
+    subtext?: string;
+    alert?: boolean;
+    transparencyMode?: boolean;
+}) {
+    // Acentos = paleta do app desktop (VoltrisDesignSystem.xaml:20-28).
+    const colorStyles: Record<string, string> = {
+      indigo: DASHBOARD_ACCENT.brand,
+      emerald: DASHBOARD_ACCENT.success,
+      rose: DASHBOARD_ACCENT.danger,
+      slate: DASHBOARD_ACCENT.brand,
     };
 
-    const currentStyle = colorStyles[color] || colorStyles.indigo;
+    const currentAccent = colorStyles[color] || colorStyles.indigo;
 
     return (
         <div
@@ -441,9 +448,7 @@ function StatCard({ title, value, icon: Icon, color = 'indigo', subtext, alert =
             <div className="relative z-10 flex flex-col justify-between h-full gap-3">
                 <div className="flex justify-between items-center">
                     <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">{title}</span>
-                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center border shrink-0 ${currentStyle.bg} ${currentStyle.icon}`}>
-                        <Icon className="w-4 h-4" />
-                    </div>
+                    <VoltrisIconTile icon={icon} accent={currentAccent} size={8} />
                 </div>
                 <div>
                    <h3 className="text-2xl font-bold text-white tracking-tight leading-none mb-1">{value}</h3>
@@ -455,16 +460,11 @@ function StatCard({ title, value, icon: Icon, color = 'indigo', subtext, alert =
 }
 
 function AlertItem({ device, msg, time, level = 'warning' }: any) {
-    const isCritical = level === 'critical';
-    const badgeColor = isCritical 
-      ? 'bg-rose-500/10 border-rose-500/20 text-rose-400' 
-      : 'bg-amber-500/10 border-amber-500/20 text-amber-400';
+    const badgeAccent = level === 'critical' ? DASHBOARD_ACCENT.danger : DASHBOARD_ACCENT.warning;
 
     return (
         <div className="flex items-center gap-3.5 p-3.5 rounded-xl bg-slate-950/40 border border-slate-800/80 hover:border-slate-700 transition-colors">
-            <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 border ${badgeColor}`}>
-                <FiAlertTriangle className="w-4 h-4" />
-            </div>
+            <VoltrisIconTile icon="alertTriangle" accent={badgeAccent} size={9} />
             <div className="flex-1 min-w-0">
                 <h4 className="text-xs font-semibold text-slate-200 truncate">{msg}</h4>
                 <div className="flex items-center gap-2 mt-0.5">

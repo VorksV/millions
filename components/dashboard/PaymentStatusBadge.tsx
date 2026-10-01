@@ -1,12 +1,5 @@
 import React from 'react';
-import { 
-  CheckCircleIcon, 
-  XCircleIcon, 
-  ClockIcon, 
-  ArrowPathIcon,
-  ExclamationTriangleIcon,
-  CurrencyDollarIcon
-} from '@heroicons/react/24/outline';
+import VoltrisIcon, { type VoltrisIconName } from './VoltrisIcon';
 
 interface PaymentStatusBadgeProps {
   status: string;
@@ -14,66 +7,67 @@ interface PaymentStatusBadgeProps {
 }
 
 export default function PaymentStatusBadge({ status, className = '' }: PaymentStatusBadgeProps) {
+  // Glifos e acentos = sistema de ícones do app desktop
+  // (D:\APLICATIVO VOLTRIS\UI\Themes\Icons.xaml + VoltrisDesignSystem.xaml:20-28).
   const getStatusConfig = (status: string) => {
     switch (status) {
       case 'approved':
         return {
           label: 'Aprovado',
-          color: 'bg-green-100 text-green-800 border-green-200',
-          icon: CheckCircleIcon
+          color: 'bg-[#00FF94]/10 text-[#00FF94] border-[#00FF94]/20',
+          icon: 'success' as VoltrisIconName
         };
       case 'pending':
         return {
           label: 'Pendente',
-          color: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-          icon: ClockIcon
+          color: 'bg-[#F59E0B]/10 text-[#F59E0B] border-[#F59E0B]/20',
+          icon: 'clock' as VoltrisIconName
         };
       case 'cancelled':
         return {
           label: 'Cancelado',
-          color: 'bg-red-100 text-red-800 border-red-200',
-          icon: XCircleIcon
+          color: 'bg-[#EF4444]/10 text-[#EF4444] border-[#EF4444]/20',
+          icon: 'close' as VoltrisIconName
         };
       case 'processing':
         return {
           label: 'Processando',
-          color: 'bg-blue-100 text-blue-800 border-blue-200',
-          icon: ArrowPathIcon
+          color: 'bg-[#00D4FF]/10 text-[#00D4FF] border-[#00D4FF]/20',
+          icon: 'processing' as VoltrisIconName
         };
       case 'refunded':
         return {
           label: 'Estornado',
-          color: 'bg-orange-100 text-orange-800 border-orange-200',
-          icon: ExclamationTriangleIcon
+          color: 'bg-[#FF4B6B]/10 text-[#FF4B6B] border-[#FF4B6B]/20',
+          icon: 'recovery' as VoltrisIconName
         };
       case 'disputed':
         return {
           label: 'Disputado',
-          color: 'bg-purple-100 text-purple-800 border-purple-200',
-          icon: ExclamationTriangleIcon
+          color: 'bg-[#8B31FF]/10 text-[#8B31FF] border-[#8B31FF]/20',
+          icon: 'alertTriangle' as VoltrisIconName
         };
       case 'returned':
         return {
           label: 'Devolvido',
-          color: 'bg-gray-100 text-gray-800 border-gray-200',
-          icon: ExclamationTriangleIcon
+          color: 'bg-slate-800 text-slate-400 border-slate-700',
+          icon: 'package' as VoltrisIconName
         };
       default:
         return {
           label: 'Desconhecido',
-          color: 'bg-gray-100 text-gray-800 border-gray-200',
-          icon: CurrencyDollarIcon
+          color: 'bg-slate-800 text-slate-400 border-slate-700',
+          icon: 'info' as VoltrisIconName
         };
     }
   };
 
   const config = getStatusConfig(status);
-  const Icon = config.icon;
 
   return (
     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${config.color} ${className}`}>
-      <Icon className="h-3 w-3 mr-1" />
+      <VoltrisIcon name={config.icon} size={12} className="mr-1" />
       {config.label}
     </span>
   );
-} 
+}

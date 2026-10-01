@@ -437,7 +437,11 @@ function DashboardContent() {
                             {/* Card Top */}
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-3">
-                                <VoltrisIconTile icon="success" accent={DASHBOARD_ACCENT.brand} size={10} />
+                                <VoltrisIconTile
+                                  icon="success"
+                                  accent={lic.is_active ? DASHBOARD_ACCENT.brand : DASHBOARD_ACCENT.danger}
+                                  size={10}
+                                />
                                 <div className="flex flex-col">
                                   <h4 className="text-base font-bold text-white tracking-tight">{lic.license_type}</h4>
                                   <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full uppercase tracking-wider w-fit mt-0.5 border ${lic.is_active ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border-rose-500/20'}`}>

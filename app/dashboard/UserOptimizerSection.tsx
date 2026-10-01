@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react';
 import { createClient } from '@/utils/supabase/client';
 import { toast } from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiMonitor, FiCpu, FiZap, FiActivity, FiClock, FiShield, FiX } from 'react-icons/fi';
+import VoltrisIcon from '@/components/dashboard/VoltrisIcon';
+import VoltrisIconTile, { DASHBOARD_ACCENT } from '@/components/dashboard/VoltrisIconTile';
 
 export default function UserOptimizerSection({ userId }: { userId: string }) {
     const [installations, setInstallations] = useState<any[]>([]);
@@ -102,7 +103,7 @@ export default function UserOptimizerSection({ userId }: { userId: string }) {
             <div className="space-y-4 pt-6 mt-6 border-t border-slate-800">
                 <div className="flex items-center justify-between px-1">
                     <h2 className="text-sm font-semibold text-white flex items-center gap-2">
-                        <FiMonitor className="text-indigo-400 w-4 h-4" /> Meu Computador
+                        <VoltrisIcon name="display" size={16} className="text-[#8B31FF]" /> Meu Computador
                     </h2>
                 </div>
 
@@ -111,9 +112,7 @@ export default function UserOptimizerSection({ userId }: { userId: string }) {
                     animate={{ opacity: 1, y: 0 }}
                     className="p-8 bg-slate-900/60 border border-slate-800 rounded-2xl flex flex-col items-center text-center mx-auto shadow-xl"
                 >
-                    <div className="p-3.5 bg-indigo-500/10 rounded-xl border border-indigo-500/20 text-indigo-400 mb-5">
-                        <FiZap className="w-7 h-7" />
-                    </div>
+                    <VoltrisIconTile icon="bolt" accent={DASHBOARD_ACCENT.brand} size={14} className="mb-5" />
 
                     <h3 className="text-base font-bold text-white mb-1.5">Vincule seu computador</h3>
                     <p className="text-xs text-slate-400 mb-6 max-w-xs leading-relaxed">
@@ -151,7 +150,7 @@ export default function UserOptimizerSection({ userId }: { userId: string }) {
             <div className="space-y-4 pt-6 mt-6 border-t border-slate-800">
                 <div className="flex items-center justify-between px-1">
                     <h2 className="text-sm font-semibold text-white flex items-center gap-2">
-                        <FiMonitor className="text-indigo-400 w-4 h-4" /> Meus Computadores
+                        <VoltrisIcon name="display" size={16} className="text-[#8B31FF]" /> Meus Computadores
                     </h2>
                     <span className="text-[10px] text-slate-500 font-medium">Sincronizado via Telemetria</span>
                 </div>
@@ -175,11 +174,11 @@ export default function UserOptimizerSection({ userId }: { userId: string }) {
 
                                         <div className="flex flex-col gap-1">
                                             <div className="flex items-center gap-1.5 text-xs text-slate-400">
-                                                <FiCpu className="text-indigo-400 shrink-0 w-3.5 h-3.5" />
+                                                <VoltrisIcon name="system" size={14} className="text-[#8B31FF] shrink-0" />
                                                 <span className="truncate max-w-[160px]">{inst.cpu_name}</span>
                                             </div>
                                             <div className="flex items-center gap-1.5 text-xs text-slate-400">
-                                                <FiShield className="text-indigo-400 shrink-0 w-3.5 h-3.5" />
+                                                <VoltrisIcon name="security" size={14} className="text-[#8B31FF] shrink-0" />
                                                 <span>v{inst.app_version} • {inst.ram_gb_total}GB RAM</span>
                                             </div>
                                         </div>
@@ -203,7 +202,7 @@ export default function UserOptimizerSection({ userId }: { userId: string }) {
                                         </div>
 
                                         <div className="text-[10px] text-slate-500 font-mono flex items-center gap-1">
-                                            {new Date(inst.last_heartbeat).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} <FiClock className="w-3 h-3" />
+                                            {new Date(inst.last_heartbeat).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} <VoltrisIcon name="clock" size={12} />
                                         </div>
                                     </div>
                                 </div>
@@ -261,7 +260,7 @@ export default function UserOptimizerSection({ userId }: { userId: string }) {
                                             className="w-7 h-7 flex items-center justify-center bg-rose-500/10 text-rose-400 border border-rose-500/20 rounded-lg hover:bg-rose-500/20 transition-colors shrink-0"
                                             title="Desvincular Computador"
                                         >
-                                            <FiX className="w-3.5 h-3.5" />
+                                            <VoltrisIcon name="close" size={14} />
                                         </button>
                                     </div>
                                 </div>
@@ -289,9 +288,7 @@ export default function UserOptimizerSection({ userId }: { userId: string }) {
                             className="bg-slate-900 border border-slate-800 rounded-2xl p-6 max-w-sm w-full shadow-2xl"
                         >
                             <div className="flex items-start gap-4 mb-5">
-                                <div className="w-10 h-10 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400 shrink-0">
-                                    <FiX className="w-5 h-5" />
-                                </div>
+                                <VoltrisIconTile icon="close" accent={DASHBOARD_ACCENT.danger} size={10} />
                                 <div className="flex-1">
                                     <h2 className="text-sm font-bold text-white mb-1">Desvincular Computador?</h2>
                                     <p className="text-xs text-slate-400 leading-relaxed">
@@ -302,7 +299,7 @@ export default function UserOptimizerSection({ userId }: { userId: string }) {
                                     onClick={() => setUnlinkModalOpen(false)}
                                     className="text-slate-500 hover:text-white transition-colors shrink-0"
                                 >
-                                    <FiX className="w-4 h-4" />
+                                    <VoltrisIcon name="close" size={16} />
                                 </button>
                             </div>
                             <div className="flex gap-2.5 justify-end">
