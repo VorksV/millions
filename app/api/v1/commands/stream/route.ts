@@ -138,6 +138,33 @@ export async function GET(req: NextRequest) {
                         send('command', JSON.stringify(cmd));
                     }
                 )
+                // NOVO: Listener para mudanças de vínculo
+                .on(
+                    'postgres_changes',
+                    {
+                        event: 'UPDATE',
+                        schema: 'public',
+                        table: 'installations',
+                        filter: `id=eq.${machineId}`,
+                    },
+                    (payload) => {
+                        const before = payload.old as { user_id: string | null };
+                        const after = payload.new as { 
+                            user_id: string | null; 
+                            user_email?: string | null;
+                            linked_at?: string;
+                        };
+
+                        // Se houve mudança no user_id, disparar evento de vínculo
+                        if (before.user_id !== after.user_id) {
+                            send('link_status_changed', JSON.stringify({
+                                is_linked: Boolean(after.user_id),
+                                user_email: after.user_email || null,
+                                timestamp: new Date().toISOString(),
+                            }));
+                        }
+                    }
+                )
                 .subscribe();
 
             // ── Keep-alive pings ───────────────────────────────────────────
