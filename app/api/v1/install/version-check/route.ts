@@ -25,15 +25,15 @@ export const dynamic = 'force-dynamic';
 
 // Versão mínima obrigatória
 // Atualize este número quando lançar versão com event-driven
-const MIN_APP_VERSION = '2.0.0'; // Event-driven com SSE
-const POLLING_VERSION_THRESHOLD = '1.9.9'; // Versões <= 1.9.9 fazem polling infinito
+const MIN_APP_VERSION = '1.0.3.0'; // Event-driven com SSE
+const POLLING_VERSION_THRESHOLD = '1.0.2.9'; // Versões <= 1.0.2.9 fazem polling infinito
 
 // Mapa de versões e features
 const VERSION_FEATURES: Record<string, { polling: boolean; sse: boolean; description: string }> = {
   '1.0.0': { polling: true, sse: false, description: 'Original - polling 5min' },
-  '1.5.0': { polling: true, sse: false, description: 'Versão intermediária - polling 5min' },
-  '1.9.9': { polling: true, sse: false, description: 'Última antes do event-driven' },
-  '2.0.0': { polling: false, sse: true, description: 'Event-driven com SSE' },
+  '1.0.2.0': { polling: true, sse: false, description: 'Versão intermediária - polling 5min' },
+  '1.0.2.9': { polling: true, sse: false, description: 'Última antes do event-driven' },
+  '1.0.3.0': { polling: false, sse: true, description: 'Event-driven com SSE' },
 };
 
 export async function GET(request: NextRequest) {

@@ -100,7 +100,7 @@ export async function GET(request: NextRequest) {
     ctx.installationId = installationId;
 
     // NOVO: Bloquear versões antigas que fazem polling infinito
-    const MIN_APP_VERSION = '2.0.0'; // Event-driven com SSE
+    const MIN_APP_VERSION = '1.0.3.0'; // Event-driven com SSE
     if (appVersion && compareVersions(appVersion, MIN_APP_VERSION) < 0) {
         logWarn(ctx, 'app version too old - polling not allowed', { app_version: appVersion, min_version: MIN_APP_VERSION });
         return errorWithCorrelation(ctx, 403, 'OUTDATED_CLIENT', 'Your app version is too old. Please update.', {
