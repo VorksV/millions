@@ -90,6 +90,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = request.nextUrl;
     const installationId = normalizeUuid(searchParams.get('installation_id'));
     const since = searchParams.get('since');
+    const appVersion = searchParams.get('app_version'); // NOVO: versão do app
 
     if (!installationId) {
         return errorWithCorrelation(ctx, 400, 'INVALID_INSTALLATION_ID', 'Missing or invalid installation_id.', {
@@ -97,6 +98,15 @@ export async function GET(request: NextRequest) {
         });
     }
     ctx.installationId = installationId;
+
+    // NOVO: Bloquear versões antigas que fazem polling infinito
+    const MIN_APP_VERSION = '2.0.0'; // Event-driven com SSE
+    if (appVersion && compareVersions(appVersion, MIN_APP_VERSION) < 0) {
+        logWarn(ctx, 'app version too old - polling not allowed', { app_version: appVersion, min_version: MIN_APP_VERSION });
+        return errorWithCorrelation(ctx, 403, 'OUTDATED_CLIENT', 'Your app version is too old. Please update.', {
+            details: { is_linked: false, upgrade_required: true, min_version: MIN_APP_VERSION },
+        });
+    }
 
     const ownershipError = await installationOwnershipErrorIfAuthenticated(installationId);
     if (ownershipError) return ownershipError;
@@ -291,4 +301,23 @@ export async function GET(request: NextRequest) {
         200,
         cacheHeaders
     );
+}
+
+/**
+ * Compara duas versões semantic versioning (major.minor.patch)
+ * Retorna: -1 (v1 < v2), 0 (v1 == v2), 1 (v1 > v2)
+ */
+function compareVersions(v1: string, v2: string): number {
+    const parts1 = v1.split('.').map(Number);
+    const parts2 = v2.split('.').map(Number);
+
+    for (let i = 0; i < Math.max(parts1.length, parts2.length); i++) {
+        const p1 = parts1[i] || 0;
+        const p2 = parts2[i] || 0;
+
+        if (p1 < p2) return -1;
+        if (p1 > p2) return 1;
+    }
+
+    return 0;
 }
