@@ -269,8 +269,8 @@ export function maskEmail(email?: string | null): string | null {
     return `${head}${'*'.repeat(Math.max(2, local.length - 1))}@${domain}`;
 }
 
-/** UUID estritamente RFC 4122 (versao 1-8, variante 8/9/A/B). */
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+/** UUID padrao 8-4-4-4-12 compativel com PostgreSQL (tipo uuid nativo), RFC 4122 e GUIDs de hardware/WMI/Microsoft. */
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export function isValidUuid(value: unknown): value is string {
     return typeof value === 'string' && UUID_RE.test(value.trim());
