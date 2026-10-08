@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, Suspense, useState, useCallback } from 'react';
+import { useEffect, Suspense, useState, useCallback, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { createClient } from '@/utils/supabase/client';
 import { useAuth } from '@/app/hooks/useAuth';
 import { Loader2, ShieldCheck, Cpu, Globe, Lock, ArrowRight } from 'lucide-react';
 import { FiAlertCircle, FiCheckCircle } from 'react-icons/fi';
@@ -10,6 +11,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 function LinkDeviceContent() {
     const { user, loading: authLoading } = useAuth();
+    const supabase = useMemo(() => createClient(), []);
     const router = useRouter();
     const searchParams = useSearchParams();
     const installationId = searchParams.get('installation_id');
@@ -37,9 +39,15 @@ function LinkDeviceContent() {
                 });
             }, 200);
 
+            const { data: sessionData } = await supabase.auth.getSession();
+            const token = sessionData?.session?.access_token;
+
             const response = await fetch('/api/v1/install/link', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+                },
                 body: JSON.stringify({
                     installation_id: installationId,
                     user_id: userId

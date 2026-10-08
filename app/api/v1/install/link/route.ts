@@ -61,25 +61,51 @@ export async function POST(request: NextRequest) {
         return errorWithCorrelation(ctx, 500, 'SERVER_CONFIG', 'Configuracao do servidor incompleta.');
     }
 
-    const serverSupabase = createServerClient(supabaseUrl, supabaseAnonKey, {
-        cookies: {
-            get: (name: string) => request.cookies.get(name)?.value,
-            set: (_n: string, _v: string, _o: CookieOptions) => {},
-            remove: (_n: string, _o: CookieOptions) => {},
-        },
+    const admin = createClient(supabaseUrl, supabaseServiceKey, {
+        auth: { autoRefreshToken: false, persistSession: false },
     });
 
-    const { data: sessionData, error: authError } = await serverSupabase.auth.getUser();
-    const user = sessionData?.user ?? null;
+    let user: any = null;
+    let authErrorMsg: string | null = null;
 
-    if (authError) {
-        return errorWithCorrelation(ctx, 401, 'AUTH_SESSION_ERROR', 'Erro ao verificar sessao.', {
-            expose: true,
-            details: { reason: authError.message },
-        });
+    // 1. Tentar autenticacao direta via header Authorization: Bearer <token>
+    const authHeader = request.headers.get('authorization') || request.headers.get('Authorization');
+    if (authHeader && authHeader.toLowerCase().startsWith('bearer ')) {
+        const token = authHeader.slice(7).trim();
+        if (token) {
+            const { data: tokenUserData, error: tokenError } = await admin.auth.getUser(token);
+            if (!tokenError && tokenUserData?.user) {
+                user = tokenUserData.user;
+            } else if (tokenError) {
+                authErrorMsg = tokenError.message;
+            }
+        }
     }
+
+    // 2. Se nao autenticou por Bearer, tentar via cookies da sessao (com suporte a getAll)
     if (!user) {
-        return errorWithCorrelation(ctx, 401, 'UNAUTHORIZED', 'Sessao expirada. Faca login novamente.');
+        const serverSupabase = createServerClient(supabaseUrl, supabaseAnonKey, {
+            cookies: {
+                getAll() {
+                    return request.cookies.getAll();
+                },
+                setAll() {},
+            },
+        });
+
+        const { data: sessionData, error: authError } = await serverSupabase.auth.getUser();
+        if (sessionData?.user) {
+            user = sessionData.user;
+        } else if (authError) {
+            authErrorMsg = authError.message;
+        }
+    }
+
+    if (!user) {
+        return errorWithCorrelation(ctx, 401, 'AUTH_SESSION_ERROR', 'Sessao expirada ou nao autenticada. Faca login novamente.', {
+            expose: true,
+            details: { reason: authErrorMsg || 'Auth session missing!' },
+        });
     }
     ctx.userId = user.id;
 
@@ -95,10 +121,6 @@ export async function POST(request: NextRequest) {
 
     // O vinculo aponta para profiles.id (FK). Garante que o perfil existe antes
     // de gravar, para nao estourar 23503 e devolver 409 opaco.
-    const admin = createClient(supabaseUrl, supabaseServiceKey, {
-        auth: { autoRefreshToken: false, persistSession: false },
-    });
-
     const { data: profile, error: profileError } = await admin
         .from('profiles')
         .select('id, email')
@@ -120,17 +142,6 @@ export async function POST(request: NextRequest) {
 
     const now = new Date().toISOString();
 
-    // ROTACAO DA CREDENCIAL NO VINCULO
-    // O vinculo e feito pelo NAVEGADOR, que prova identidade por sessao. O
-    // navegador nao tem a credencial do dispositivo, entao nao consegue validar
-    // nada — logo o vinculo e o ponto de confianca e rotaciona a credencial.
-    //
-    // Isso tambem e o caminho de recuperacao: builds antigos gravavam o hash via
-    // /install/link e devolviam o token no corpo da resposta, que o JavaScript
-    // nunca lia. O app ficava com hash gravado e zero tokens, travado em
-    // "credencial invalida" para sempre (409 no registro, sem email no status).
-    // Rotacionando aqui, revincular pela conta destrava a maquina: o proximo
-    // poll do app encontra o hash vazio e registra o token que ele mesmo gerou.
     const { error: upsertError } = await admin.from('installations').upsert(
         {
             id: installationId,
@@ -138,8 +149,6 @@ export async function POST(request: NextRequest) {
             linked_at: now,
             last_link_check_at: now,
             updated_at: now,
-            device_credential_hash: null,
-            device_credential_issued: null,
             unlinked_at: null,
         },
         { onConflict: 'id' }

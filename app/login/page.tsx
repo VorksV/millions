@@ -126,9 +126,15 @@ function LoginContent() {
   const linkInstallation = async (userId: string): Promise<{ ok: boolean; message?: string }> => {
     if (!installationId) return { ok: true };
     try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token;
+
       const response = await fetch('/api/v1/install/link', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
         body: JSON.stringify({ installation_id: installationId, user_id: userId })
       });
 
@@ -300,9 +306,13 @@ function LoginContent() {
         console.warn('⚠️ [AUTH] Erro ou timeout ao buscar admin no login, prosseguindo com metadados.');
       }
 
-      // Link de instalação em background para não travar o login
+      // Link de instalação sincronizado
       if (installationId) {
-        linkInstallation(signInData.user.id).catch(err => console.error('Erro linkInstallation:', err));
+        try {
+          await linkInstallation(signInData.user.id);
+        } catch (err) {
+          console.error('Erro linkInstallation:', err);
+        }
       }
 
       setSuccess(true);
