@@ -240,7 +240,7 @@ export function errorWithCorrelation(
     status: number,
     code: string,
     message: string,
-    options?: { expose?: boolean; details?: Record<string, unknown> }
+    options?: { expose?: boolean; details?: Record<string, unknown>; headers?: Record<string, string> }
 ): NextResponse {
     const expose = options?.expose ?? status < 500;
     const payload: Record<string, unknown> = {
@@ -253,7 +253,10 @@ export function errorWithCorrelation(
     logResponse(ctx, status, payload, { code });
     return NextResponse.json(payload, {
         status,
-        headers: { [CORRELATION_HEADER]: ctx.correlationId },
+        headers: {
+            [CORRELATION_HEADER]: ctx.correlationId,
+            ...(options?.headers ?? {}),
+        },
     });
 }
 

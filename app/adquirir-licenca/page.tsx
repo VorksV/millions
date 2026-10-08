@@ -4,7 +4,7 @@ import React, { useState, useEffect, Suspense } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { motion } from 'framer-motion';
-import { ShieldCheck, Zap, MessageSquare, CheckCircle2, Lock, Cpu, Server, ChevronDown, Rocket, Crown, Star, HelpCircle } from 'lucide-react';
+import { ShieldCheck, Zap, MessageSquare, CheckCircle2, Lock, Cpu, Server, ChevronDown, Rocket, Crown, Star, HelpCircle, Sparkles, SlidersHorizontal, Radio, Wrench, ArrowRight } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/app/hooks/useAuth';
 import { toast } from 'react-hot-toast';
@@ -91,6 +91,128 @@ function AdquirirLicencaContent() {
         year: { standard: '29.90', pro: '59.90', enterprise: '1,099.90' }
     };
 
+    // ─────────────────────────────────────────────────────────────
+    // O QUE A LICENÇA PROFESSIONAL DESBLOQUEIA
+    // ─────────────────────────────────────────────────────────────
+    // Estes 6 módulos são EXATAMENTE o que o aplicativo bloqueia sem
+    // licença paga (ver `ProOnlyFeatures` em LicenseService.cs do app
+    // desktop: smart_repair, shield, intelligent_profile,
+    // intelligent_optimization, gamer_mode, stream_mode). Nada além
+    // disso é bloqueado — por isso a lista é essa e não outra.
+    //
+    // As classes Tailwind ficam em strings ESTÁTICAS de propósito: o
+    // JIT do Tailwind v4 só enxerga classes escritas literalmente no
+    // arquivo. A cor da marca vai por `style`, que aceita hex.
+    const UNLOCKED_MODULES = [
+        {
+            icon: ShieldCheck,
+            accent: '#FF4B6B',
+            chipBg: 'bg-pink-100',
+            chipBorder: 'border-pink-200',
+            chipText: 'text-pink-600',
+            dot: 'bg-pink-500',
+            title: 'Voltris Shield',
+            tagline: 'Antivírus completo, integrado ao Windows Defender',
+            features: [
+                'Scan rápido, completo, de adware e do Windows Defender',
+                'Monitoramento de processos, rede, portas e inicialização',
+                'Quarentena automática com restauração segura',
+                'Detecção de ransomware e ameaças avançadas',
+            ],
+        },
+        {
+            icon: Wrench,
+            accent: '#31A8FF',
+            chipBg: 'bg-blue-100',
+            chipBorder: 'border-blue-200',
+            chipText: 'text-blue-600',
+            dot: 'bg-blue-500',
+            title: 'Reparo Inteligente',
+            tagline: 'Diagnóstico que encontra a causa, não só o sintoma',
+            features: [
+                'Varredura de drivers, arquivos e chaves de registro',
+                'Reparo seguro antes de qualquer alteração no sistema',
+                'Recuperação de serviços e componentes corrompidos',
+                'Relatório do que foi encontrado e do que foi corrigido',
+            ],
+        },
+        {
+            icon: Zap,
+            accent: '#8B31FF',
+            chipBg: 'bg-purple-100',
+            chipBorder: 'border-purple-200',
+            chipText: 'text-purple-600',
+            dot: 'bg-purple-500',
+            title: 'Otimização Inteligente',
+            tagline: 'Ajusta o sistema medindo o uso real da máquina',
+            features: [
+                'Análise contínua de CPU, memória e disco',
+                'Só aplica o que faz diferença no seu hardware',
+                'Perfis de energia por contexto de uso',
+                'Sem chute e sem perder responsividade',
+            ],
+        },
+        {
+            icon: SlidersHorizontal,
+            accent: '#31A8FF',
+            chipBg: 'bg-blue-100',
+            chipBorder: 'border-blue-200',
+            chipText: 'text-blue-600',
+            dot: 'bg-blue-500',
+            title: 'Perfil Inteligente',
+            tagline: 'Um perfil pronto para cada momento do seu dia',
+            features: [
+                'Combinações de energia, rede e serviços por perfil',
+                'Perfis para trabalho, jogo e streaming',
+                'Alternância entre eles com um único clique',
+                'Ajuste automático conforme o uso da máquina',
+            ],
+        },
+        {
+            icon: Rocket,
+            accent: '#8B31FF',
+            chipBg: 'bg-purple-100',
+            chipBorder: 'border-purple-200',
+            chipText: 'text-purple-600',
+            dot: 'bg-purple-500',
+            title: 'Modo Gamer Pro',
+            tagline: 'Desempenho estável enquanto você joga',
+            features: [
+                'Perfil por jogo para CPU, GPU e memória',
+                'Monitoramento de temperatura e desempenho em tempo real',
+                'Overlay de FPS e métricas sobre o jogo',
+                'Otimizações temporárias que você reverte quando quiser',
+            ],
+        },
+        {
+            icon: Radio,
+            accent: '#FF4B6B',
+            chipBg: 'bg-pink-100',
+            chipBorder: 'border-pink-200',
+            chipText: 'text-pink-600',
+            dot: 'bg-pink-500',
+            title: 'Modo Stream',
+            tagline: 'Transmissões estáveis, sem quadros perdidos',
+            features: [
+                'Prioriza a rede para o seu streaming',
+                'Reduz serviços em segundo plano durante a live',
+                'Ajuste de taxa de quadros e bitrate por jogo',
+                'Menos travamentos para quem assiste e para quem joga',
+            ],
+        },
+    ];
+
+    // O que o app JÁ ENTREGA sem nenhuma licença. Existe de verdade e é
+    // free: o gate de licença só cobre os 6 módulos acima.
+    const FREE_INCLUDED = [
+        'Dashboard de saúde com telemetria em tempo real',
+        'Benchmark e diagnóstico de hardware',
+        'Gerenciador de drivers e dispositivos',
+        'Agendador e rotinas de manutenção',
+        'Central de recuperação e backup',
+        'Personalização visual e configurações do sistema',
+    ];
+
     return (
         <main className="min-h-screen bg-gray-50 text-gray-900 font-sans selection:bg-[#31A8FF]/30 relative pb-20">
             {/* Global Ambient Background Effects */}
@@ -114,7 +236,7 @@ function AdquirirLicencaContent() {
                         initial={{ opacity: 0, y: -20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.2 }}
-                        className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white border border-gray-200 backdrop-blur-md mb-8 shadow-sm"
+                        className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white border border-gray-200 mb-8 shadow-sm"
                     >
                         <Lock className="w-3 h-3 text-blue-600" />
                         <span className="text-[10px] sm:text-xs font-bold text-gray-600 tracking-widest uppercase">Pagamento Seguro & Ativação Imediata</span>
@@ -149,7 +271,7 @@ function AdquirirLicencaContent() {
                     
                     {/* Billing Cycle Toggle */}
                     <div className="flex flex-col items-center mb-16">
-                        <div className="bg-white border border-gray-200 p-1.5 rounded-2xl flex items-center gap-1 backdrop-blur-xl relative shadow-sm">
+                        <div className="bg-white border border-gray-200 p-1.5 rounded-2xl flex items-center gap-1 relative shadow-sm">
                             <button
                                 onClick={() => setBillingCycle('month')}
                                 className={`px-8 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 relative z-10 ${billingCycle === 'month' ? 'text-black' : 'text-gray-600 hover:text-gray-900'}`}
@@ -187,7 +309,7 @@ function AdquirirLicencaContent() {
                             initial={{ opacity: 0, x: -50 }}
                             whileInView={{ opacity: 1, x: 0 }}
                             viewport={{ once: true }}
-                            className="bg-white backdrop-blur-xl border border-gray-200 rounded-[2.5rem] p-8 md:p-10 flex flex-col justify-between hover:border-blue-300 transition-all duration-500 group shadow-md hover:shadow-lg"
+                            className="bg-white border border-gray-200 rounded-[2.5rem] p-8 md:p-10 flex flex-col justify-between hover:border-blue-300 transition-all duration-500 group shadow-md hover:shadow-lg"
                         >
                             <div>
                                 <div className="w-14 h-14 rounded-2xl bg-blue-100 flex items-center justify-center mb-6 border border-blue-200 text-blue-600">
@@ -228,19 +350,19 @@ function AdquirirLicencaContent() {
                                     <ul className="space-y-2.5">
                                         <li className="flex items-center gap-3 text-sm text-gray-600 transition-all duration-200 hover:translate-x-0.5">
                                             <CheckCircle2 className="w-4 h-4 text-blue-400 shrink-0" />
-                                            <span>Todas as funções liberadas</span>
+                                            <span>Voltris Shield — antivírus + Windows Defender</span>
                                         </li>
                                         <li className="flex items-center gap-3 text-sm text-gray-600 transition-all duration-200 hover:translate-x-0.5">
                                             <CheckCircle2 className="w-4 h-4 text-blue-400 shrink-0" />
-                                            <span>Otimizações Máximas</span>
+                                            <span>Reparo Inteligente de drivers e serviços</span>
                                         </li>
                                         <li className="flex items-center gap-3 text-sm text-gray-600 transition-all duration-200 hover:translate-x-0.5">
                                             <CheckCircle2 className="w-4 h-4 text-blue-400 shrink-0" />
-                                            <span>Suporte Premium</span>
+                                            <span>Otimização e Perfil Inteligente</span>
                                         </li>
                                         <li className="flex items-center gap-3 text-sm text-gray-600 transition-all duration-200 hover:translate-x-0.5">
                                             <CheckCircle2 className="w-4 h-4 text-blue-400 shrink-0" />
-                                            <span>Atualizações Constantes</span>
+                                            <span>Suporte Premium e atualizações constantes</span>
                                         </li>
                                     </ul>
                                 </div>
@@ -260,7 +382,7 @@ function AdquirirLicencaContent() {
                             initial={{ opacity: 0, y: 50 }}
                             whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true }}
-                            className="bg-white backdrop-blur-2xl border-2 border-purple-600 rounded-[2.5rem] p-8 md:p-10 flex flex-col justify-between relative shadow-[0_0_50px_rgba(139,49,255,0.15)] transform scale-105 z-20 group"
+                            className="bg-white border-2 border-purple-600 rounded-[2.5rem] p-8 md:p-10 flex flex-col justify-between relative shadow-[0_0_50px_rgba(139,49,255,0.15)] transform scale-105 z-20 group"
                         >
                             <div className="absolute -top-5 left-1/2 -translate-x-1/2 px-6 py-1 bg-gradient-to-r from-[#8B31FF] to-[#31A8FF] rounded-full text-[10px] font-black tracking-widest text-white uppercase shadow-lg">
                                 MAIS VENDIDO
@@ -309,23 +431,23 @@ function AdquirirLicencaContent() {
                                     <ul className="space-y-2.5">
                                         <li className="flex items-center gap-3 text-sm text-gray-900 font-medium transition-all duration-200 hover:translate-x-0.5">
                                             <CheckCircle2 className="w-4 h-4 text-purple-400 shrink-0" />
-                                            <span>Todas as funções liberadas</span>
+                                            <span>Voltris Shield — antivírus + Windows Defender</span>
                                         </li>
                                         <li className="flex items-center gap-3 text-sm text-gray-900 font-medium transition-all duration-200 hover:translate-x-0.5">
                                             <CheckCircle2 className="w-4 h-4 text-purple-400 shrink-0" />
-                                            <span>Otimizações Máximas</span>
+                                            <span>Reparo Inteligente de drivers e serviços</span>
                                         </li>
                                         <li className="flex items-center gap-3 text-sm text-gray-900 font-medium transition-all duration-200 hover:translate-x-0.5">
                                             <CheckCircle2 className="w-4 h-4 text-purple-400 shrink-0" />
-                                            <span>Suporte Premium</span>
+                                            <span>Otimização e Perfil Inteligente</span>
                                         </li>
                                         <li className="flex items-center gap-3 text-sm text-gray-900 font-medium transition-all duration-200 hover:translate-x-0.5">
                                             <CheckCircle2 className="w-4 h-4 text-purple-400 shrink-0" />
-                                            <span>Atualizações Constantes</span>
+                                            <span>Modo Gamer Pro com overlay de FPS</span>
                                         </li>
                                         <li className="flex items-center gap-3 text-sm text-gray-900 font-medium transition-all duration-200 hover:translate-x-0.5">
                                             <CheckCircle2 className="w-4 h-4 text-purple-400 shrink-0" />
-                                            <span>IA Inteligente</span>
+                                            <span>Modo Stream e suporte Premium</span>
                                         </li>
                                     </ul>
                                 </div>
@@ -345,7 +467,7 @@ function AdquirirLicencaContent() {
                             initial={{ opacity: 0, x: 50 }}
                             whileInView={{ opacity: 1, x: 0 }}
                             viewport={{ once: true }}
-                            className="bg-white backdrop-blur-xl border border-gray-200 rounded-[2.5rem] p-8 md:p-10 flex flex-col justify-between hover:border-pink-300 transition-all duration-500 group shadow-md hover:shadow-lg"
+                            className="bg-white border border-gray-200 rounded-[2.5rem] p-8 md:p-10 flex flex-col justify-between hover:border-pink-300 transition-all duration-500 group shadow-md hover:shadow-lg"
                         >
                             <div>
                                 <div className="w-14 h-14 rounded-2xl bg-pink-100 flex items-center justify-center mb-6 border border-pink-200 text-pink-600">
@@ -390,23 +512,23 @@ function AdquirirLicencaContent() {
                                     <ul className="space-y-2.5">
                                         <li className="flex items-center gap-3 text-sm text-gray-600 transition-all duration-200 hover:translate-x-0.5">
                                             <CheckCircle2 className="w-4 h-4 text-pink-400 shrink-0" />
-                                            <span>Todas as funções liberadas</span>
+                                            <span>Voltris Shield — antivírus + Windows Defender</span>
                                         </li>
                                         <li className="flex items-center gap-3 text-sm text-gray-600 transition-all duration-200 hover:translate-x-0.5">
                                             <CheckCircle2 className="w-4 h-4 text-pink-400 shrink-0" />
-                                            <span>Otimizações Máximas</span>
+                                            <span>Reparo Inteligente de drivers e serviços</span>
                                         </li>
                                         <li className="flex items-center gap-3 text-sm text-gray-600 transition-all duration-200 hover:translate-x-0.5">
                                             <CheckCircle2 className="w-4 h-4 text-pink-400 shrink-0" />
-                                            <span>Suporte Premium</span>
+                                            <span>Otimização e Perfil Inteligente</span>
                                         </li>
                                         <li className="flex items-center gap-3 text-sm text-gray-600 transition-all duration-200 hover:translate-x-0.5">
                                             <CheckCircle2 className="w-4 h-4 text-pink-400 shrink-0" />
-                                            <span>Atualizações Constantes</span>
+                                            <span>Modo Gamer Pro e Modo Stream</span>
                                         </li>
                                         <li className="flex items-center gap-3 text-sm text-gray-600 transition-all duration-200 hover:translate-x-0.5">
                                             <CheckCircle2 className="w-4 h-4 text-pink-400 shrink-0" />
-                                            <span>IA Inteligente</span>
+                                            <span>Gestão de dispositivos para a empresa inteira</span>
                                         </li>
                                     </ul>
                                 </div>
@@ -422,6 +544,178 @@ function AdquirirLicencaContent() {
                         </motion.div>
 
                     </div>
+
+                    {/* ────────────────────────────────────────────────────────── */}
+                    {/* O QUE A LICENÇA DESBLOQUEIA                                */}
+                    {/* ────────────────────────────────────────────────────────── */}
+                    <section className="mt-32" aria-labelledby="unlock-heading">
+
+                        <div className="text-center mb-16 max-w-3xl mx-auto">
+                            <motion.div
+                                initial={{ opacity: 0, y: -10 }}
+                                whileInView={{ opacity: 1, y: 0 }}
+                                viewport={{ once: true }}
+                                transition={{ duration: 0.5 }}
+                                className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white border border-gray-200 mb-6 shadow-sm"
+                            >
+                                <Sparkles className="w-3.5 h-3.5 text-[#8B31FF]" />
+                                <span className="text-[10px] sm:text-xs font-bold text-gray-600 tracking-widest uppercase">
+                                    O que sua licença desbloqueia
+                                </span>
+                            </motion.div>
+
+                            <motion.h2
+                                id="unlock-heading"
+                                initial={{ opacity: 0, y: 20 }}
+                                whileInView={{ opacity: 1, y: 0 }}
+                                viewport={{ once: true }}
+                                transition={{ duration: 0.6 }}
+                                className="text-3xl md:text-5xl font-black tracking-tighter text-gray-900 leading-[1.1] mb-6"
+                            >
+                                SEIS MÓDULOS QUE MUDAM<br className="hidden md:block" />
+                                <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#31A8FF] via-[#8B31FF] to-[#FF4B6B]">
+                                    A REALIDADE DO SEU PC
+                                </span>
+                            </motion.h2>
+
+                            <motion.p
+                                initial={{ opacity: 0, y: 20 }}
+                                whileInView={{ opacity: 1, y: 0 }}
+                                viewport={{ once: true }}
+                                transition={{ duration: 0.6, delay: 0.1 }}
+                                className="text-base md:text-lg text-gray-600 leading-relaxed max-w-2xl mx-auto font-light"
+                            >
+                                Não são efeitos visuais nem enfeite. São seis módulos que
+                                encontram o que está quebrado, medem o que está caro e
+                                mantêm sua máquina estável — exatamente nos momentos em que
+                                você mais precisa que ela responda.
+                            </motion.p>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 text-left">
+                            {UNLOCKED_MODULES.map((mod, i) => (
+                                <motion.div
+                                    key={mod.title}
+                                    initial={{ opacity: 0, y: 40 }}
+                                    whileInView={{ opacity: 1, y: 0 }}
+                                    viewport={{ once: true }}
+                                    transition={{ duration: 0.5, delay: (i % 3) * 0.1 }}
+                                    className="group relative bg-white border border-gray-200 rounded-[2rem] p-8 overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:border-gray-300 hover:shadow-lg"
+                                >
+                                    <div className="relative">
+                                        <div
+                                            className={`w-14 h-14 rounded-2xl ${mod.chipBg} border ${mod.chipBorder} ${mod.chipText} flex items-center justify-center mb-5 transition-transform duration-500 group-hover:scale-110`}
+                                        >
+                                            <mod.icon className="w-7 h-7 shrink-0" />
+                                        </div>
+
+                                        <h3 className="text-xl font-black text-gray-900 tracking-tight mb-1.5">
+                                            {mod.title}
+                                        </h3>
+                                        <p className="text-sm text-gray-500 leading-relaxed mb-6 font-medium">
+                                            {mod.tagline}
+                                        </p>
+
+                                        <ul className="space-y-3 pt-5 border-t border-gray-100">
+                                            {mod.features.map((f) => (
+                                                <li key={f} className="flex items-start gap-3 text-[13px] text-gray-600 leading-snug">
+                                                    <span className={`w-1.5 h-1.5 rounded-full ${mod.dot} mt-1.5 shrink-0`} />
+                                                    <span>{f}</span>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                </motion.div>
+                            ))}
+                        </div>
+
+                        {/* ────────────────────────────────────────────────────── */}
+                        {/* GRÁTIS vs PROFESSIONAL — QUEBRA DE OBJEÇÃO             */}
+                        {/* ────────────────────────────────────────────────────── */}
+                        <motion.div
+                            initial={{ opacity: 0, y: 40 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            viewport={{ once: true }}
+                            transition={{ duration: 0.7 }}
+                            className="mt-20 rounded-[3rem] border border-gray-200 bg-white shadow-xl overflow-hidden"
+                        >
+                            <div className="grid grid-cols-1 lg:grid-cols-2">
+
+                                {/* Coluna gratuita */}
+                                <div className="p-8 md:p-12 bg-gray-50/60 border-b lg:border-b-0 lg:border-r border-gray-100">
+                                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white border border-gray-200 mb-5">
+                                        <span className="text-[10px] font-black tracking-widest text-gray-500 uppercase">
+                                            Sem licença
+                                        </span>
+                                    </div>
+                                    <h3 className="text-2xl font-black text-gray-900 tracking-tight mb-2">
+                                        O que já é gratuito
+                                    </h3>
+                                    <p className="text-sm text-gray-500 leading-relaxed mb-8">
+                                        O Voltris Optimizer não esconde o produto principal. Estes
+                                        módulos funcionam para sempre, sem assinar nada.
+                                    </p>
+                                    <ul className="space-y-4">
+                                        {FREE_INCLUDED.map((f) => (
+                                            <li key={f} className="flex items-start gap-3 text-sm text-gray-600">
+                                                <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0 mt-px" />
+                                                <span>{f}</span>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+
+                                {/* Coluna Professional */}
+                                <div
+                                    className="relative p-8 md:p-12"
+                                    style={{
+                                        background:
+                                            'linear-gradient(135deg, rgba(139,49,255,0.05) 0%, rgba(49,168,255,0.05) 50%, rgba(255,75,107,0.05) 100%)',
+                                    }}
+                                >
+                                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gradient-to-r from-[#8B31FF] to-[#31A8FF] mb-5 shadow-md">
+                                        <Sparkles className="w-3 h-3 text-white" />
+                                        <span className="text-[10px] font-black tracking-widest text-white uppercase">
+                                            Com licença
+                                        </span>
+                                    </div>
+                                    <h3 className="text-2xl font-black text-gray-900 tracking-tight mb-2">
+                                        O que a licença adiciona
+                                    </h3>
+                                    <p className="text-sm text-gray-600 leading-relaxed mb-8">
+                                        Os seis módulos Professional são o que separa um PC que
+                                        funciona de um PC que você confia. Sem eles, os recursos
+                                        ficam bloqueados dentro do aplicativo.
+                                    </p>
+                                    <ul className="space-y-4">
+                                        {UNLOCKED_MODULES.map((mod) => (
+                                            <li key={mod.title} className="flex items-center gap-3">
+                                                <span
+                                                    className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 border"
+                                                    style={{
+                                                        backgroundColor: `${mod.accent}14`,
+                                                        borderColor: `${mod.accent}33`,
+                                                    }}
+                                                >
+                                                    <mod.icon className="w-4 h-4 shrink-0" style={{ color: mod.accent }} />
+                                                </span>
+                                                <span className="text-sm font-bold text-gray-900">{mod.title}</span>
+                                                <ArrowRight className="w-4 h-4 text-gray-300 shrink-0 ml-auto" />
+                                            </li>
+                                        ))}
+                                    </ul>
+
+                                    <button
+                                        onClick={scrollToPurchase}
+                                        className="mt-10 w-full py-4 bg-gradient-to-r from-[#8B31FF] to-[#31A8FF] text-white font-black rounded-2xl hover:brightness-110 transition-all duration-300 shadow-[0_10px_30px_rgba(139,49,255,0.3)]"
+                                    >
+                                        VER OS PLANOS E LIBERAR TUDO
+                                    </button>
+                                </div>
+
+                            </div>
+                        </motion.div>
+                    </section>
 
                     {/* --- RISK REVERSAL: GARANTIA BLINDADA --- */}
                     <motion.div 

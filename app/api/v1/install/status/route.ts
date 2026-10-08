@@ -105,6 +105,11 @@ export async function GET(request: NextRequest) {
         logWarn(ctx, 'app version too old - polling not allowed', { app_version: appVersion, min_version: MIN_APP_VERSION });
         return errorWithCorrelation(ctx, 403, 'OUTDATED_CLIENT', 'Your app version is too old. Please update.', {
             details: { is_linked: false, upgrade_required: true, min_version: MIN_APP_VERSION },
+            headers: {
+                'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=300',
+                'CDN-Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=300',
+                'Vercel-CDN-Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=300',
+            },
         });
     }
 
@@ -140,6 +145,11 @@ export async function GET(request: NextRequest) {
         logWarn(ctx, 'instalacao nao encontrada', { since: since ?? null });
         return errorWithCorrelation(ctx, 404, 'INSTALLATION_NOT_FOUND', 'Installation not found.', {
             details: { linked: null, is_linked: false, email: null },
+            headers: {
+                'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=60',
+                'CDN-Cache-Control': 'public, s-maxage=300, stale-while-revalidate=60',
+                'Vercel-CDN-Cache-Control': 'public, s-maxage=300, stale-while-revalidate=60',
+            },
         });
     }
 
