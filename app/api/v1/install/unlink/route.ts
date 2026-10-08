@@ -209,6 +209,23 @@ export async function POST(request: NextRequest) {
         logSupabaseError(ctx, 'limpar device_commands pendentes', cmdError ?? null);
     }
 
+    // Notifica o app desktop via Realtime / SSE para deslogar imediatamente em tempo real
+    try {
+        await admin.from('device_commands').insert({
+            installation_id: installationId,
+            command_type: 'device_unlinked',
+            payload: {
+                is_linked: false,
+                reason: 'unlinked_from_web',
+                timestamp: new Date().toISOString()
+            },
+            status: 'pending'
+        });
+        logSuccess(ctx, 'comando device_unlinked enviado ao dispositivo');
+    } catch (cmdInsertErr: any) {
+        logSupabaseError(ctx, 'falha ao inserir comando device_unlinked', cmdInsertErr ?? null);
+    }
+
     logSuccess(ctx, 'desvinculacao confirmada', {
         authorizedBy: user ? 'session' : 'device_credential',
         pendingRemoved,

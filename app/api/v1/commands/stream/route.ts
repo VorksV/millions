@@ -136,6 +136,14 @@ export async function GET(req: NextRequest) {
                         if (age > ttlMs) return;
 
                         send('command', JSON.stringify(cmd));
+
+                        if (cmd.command_type === 'device_unlinked' || cmd.command_type === 'device_unlink') {
+                            send('link_status_changed', JSON.stringify({
+                                is_linked: false,
+                                user_email: null,
+                                timestamp: new Date().toISOString()
+                            }));
+                        }
                     }
                 )
                 // NOVO: Listener para mudanças de vínculo
