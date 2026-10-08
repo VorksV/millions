@@ -26,35 +26,65 @@ interface DeviceData {
 }
 
 // Action Button Component for Remote Commands — Sleek Executive Version
-const RemoteAction = ({ icon, label, color, onClick, loading }: {
+const RemoteAction = ({ 
+  icon, 
+  label, 
+  color, 
+  onClick, 
+  loading 
+}: {
   icon: VoltrisIconName;
   label: string;
-  color: 'indigo' | 'emerald' | 'amber' | 'rose';
+  color: 'indigo' | 'emerald' | 'amber' | 'rose' | 'sky';
   onClick: () => void;
   loading?: boolean;
 }) => {
   const colorStyles: Record<string, string> = {
-    indigo: 'bg-slate-900/70 border-slate-800 text-slate-300 hover:bg-[#8B31FF]/10 hover:border-[#8B31FF]/30 hover:text-[#8B31FF]',
-    rose: 'bg-slate-900/70 border-slate-800 text-slate-300 hover:bg-[#EF4444]/10 hover:border-[#EF4444]/30 hover:text-[#EF4444]',
-    amber: 'bg-slate-900/70 border-slate-800 text-slate-300 hover:bg-[#F59E0B]/10 hover:border-[#F59E0B]/30 hover:text-[#F59E0B]',
-    emerald: 'bg-slate-900/70 border-slate-800 text-slate-300 hover:bg-[#00FF94]/10 hover:border-[#00FF94]/30 hover:text-[#00FF94]',
+    indigo: 'bg-slate-900/60 border-slate-800/80 text-slate-300 hover:bg-[#8B31FF]/10 hover:border-[#8B31FF]/40 hover:text-white',
+    rose: 'bg-slate-900/60 border-slate-800/80 text-slate-300 hover:bg-[#EF4444]/10 hover:border-[#EF4444]/40 hover:text-white',
+    amber: 'bg-slate-900/60 border-slate-800/80 text-slate-300 hover:bg-[#F59E0B]/10 hover:border-[#F59E0B]/40 hover:text-white',
+    emerald: 'bg-slate-900/60 border-slate-800/80 text-slate-300 hover:bg-[#00FF94]/10 hover:border-[#00FF94]/40 hover:text-white',
+    sky: 'bg-slate-900/60 border-slate-800/80 text-slate-300 hover:bg-[#38BDF8]/10 hover:border-[#38BDF8]/40 hover:text-white',
+  };
+
+  const iconColors: Record<string, string> = {
+    indigo: 'text-indigo-400 group-hover:text-[#8B31FF]',
+    rose: 'text-rose-400 group-hover:text-[#EF4444]',
+    amber: 'text-amber-400 group-hover:text-[#F59E0B]',
+    emerald: 'text-emerald-400 group-hover:text-[#00FF94]',
+    sky: 'text-sky-400 group-hover:text-[#38BDF8]',
   };
 
   const activeColor = colorStyles[color] || colorStyles.indigo;
+  const iconColor = iconColors[color] || iconColors.indigo;
 
   return (
     <button
       type="button"
       disabled={loading}
       onClick={onClick}
+      title={label}
       className={`
-        flex items-center gap-2.5 px-3 py-2.5 rounded-xl border text-xs font-medium transition-all duration-150 group text-left w-full
+        flex items-center justify-between px-2.5 h-[34px] rounded-lg border text-xs font-medium transition-all duration-150 group text-left w-full
         ${activeColor}
-        ${loading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer active:scale-[0.98]'}
+        ${loading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer active:scale-[0.98] shadow-sm'}
       `}
     >
-      <VoltrisIcon name={icon} size={14} className={`shrink-0 text-slate-400 group-hover:text-current transition-colors ${loading ? 'animate-spin' : ''}`} />
-      <span className="truncate">{label}</span>
+      <div className="flex items-center gap-2 min-w-0">
+        <VoltrisIcon 
+          name={icon} 
+          size={13} 
+          className={`shrink-0 ${iconColor} transition-colors ${loading ? 'animate-spin' : ''}`} 
+        />
+        <span className="truncate text-[11px] font-medium text-slate-200 group-hover:text-white select-none">
+          {label}
+        </span>
+      </div>
+      {loading ? (
+        <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping shrink-0" />
+      ) : (
+        <span className="w-1.5 h-1.5 rounded-full bg-slate-700/60 group-hover:bg-current opacity-40 group-hover:opacity-100 transition-opacity shrink-0" />
+      )}
     </button>
   );
 };
@@ -65,6 +95,12 @@ export default function MyComputerPage({ userId }: { userId: string }) {
   const [loading, setLoading] = useState(true);
   const [commandLoading, setCommandLoading] = useState<string | null>(null);
   const [showUnlinkModal, setShowUnlinkModal] = useState<string | null>(null);
+  const [confirmPowerModal, setConfirmPowerModal] = useState<{
+    deviceId: string;
+    command: 'shutdown' | 'restart_link';
+    title: string;
+    description: string;
+  } | null>(null);
   const supabase = useMemo(() => createClient(), []);
 
   const fetchDevices = useCallback(async () => {
@@ -370,69 +406,121 @@ export default function MyComputerPage({ userId }: { userId: string }) {
                   </div>
 
                   {/* Remote Command Terminal */}
-                  <div className="border-t border-slate-800/80 bg-slate-950/50 p-5 sm:p-6 space-y-5">
-                    <div>
-                      <h4 className="text-xs font-semibold text-slate-300 uppercase tracking-wider">Ações Remotas</h4>
-                      <p className="text-[11px] text-slate-500 mt-0.5">Envie instruções e rotinas em tempo real para o computador conectado</p>
+                  <div className="border-t border-slate-800/80 bg-slate-950/50 p-4 sm:p-5 space-y-4">
+                    {/* Header */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                          <h4 className="text-xs font-bold text-slate-200 uppercase tracking-wider">
+                            Ações Remotas em Tempo Real
+                          </h4>
+                        </div>
+                        <p className="text-[11px] text-slate-500 mt-0.5">
+                          Envie instruções e rotinas de manutenção instantâneas para o computador conectado
+                        </p>
+                      </div>
+
+                      {/* Header Quick Power Action */}
+                      <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
+                        <button
+                          type="button"
+                          disabled={commandLoading === `${device.id}-shutdown`}
+                          onClick={() => setConfirmPowerModal({
+                            deviceId: device.id,
+                            command: 'shutdown',
+                            title: 'Desligar Computador',
+                            description: 'Um comando de desligamento será enviado para o computador conectado. A máquina será encerrada com segurança em 10 segundos.'
+                          })}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-rose-500/30 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-xs font-medium transition-all active:scale-95 shadow-sm group"
+                          title="Desligar Computador Remotamente"
+                        >
+                          <VoltrisIcon name="power" size={13} className="text-rose-400 group-hover:scale-110 transition-transform" />
+                          <span>Desligar PC</span>
+                        </button>
+                      </div>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {/* Otimização */}
-                      <div className="space-y-2">
-                        <span className="text-[10px] font-semibold text-indigo-400 uppercase tracking-wider block">Otimização</span>
-                        <div className="grid grid-cols-2 gap-2">
+                    {/* Symmetrical 4-Module Matrix */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
+                      {/* 1. Desempenho & Gamer */}
+                      <div className="p-3 rounded-xl border border-slate-800/80 bg-slate-900/40 flex flex-col justify-between space-y-2.5">
+                        <div className="flex items-center justify-between pb-1 border-b border-slate-800/50">
+                          <div className="flex items-center gap-1.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-indigo-400" />
+                            <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-wider">
+                              Desempenho & Gamer
+                            </span>
+                          </div>
+                          <span className="text-[9px] font-mono text-slate-500 uppercase">4 ações</span>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-1 gap-1.5">
                           <RemoteAction icon="bolt" label="Otimizar" color="indigo" onClick={() => handleRemoteCommand(device.id, 'quick_optimize')} loading={commandLoading === `${device.id}-quick_optimize`} />
-                          <RemoteAction icon="trash" label="Limpeza" color="emerald" onClick={() => handleRemoteCommand(device.id, 'quick_cleanup')} loading={commandLoading === `${device.id}-quick_cleanup`} />
+                          <RemoteAction icon="cleanup" label="Limpeza Rápida" color="indigo" onClick={() => handleRemoteCommand(device.id, 'quick_cleanup')} loading={commandLoading === `${device.id}-quick_cleanup`} />
+                          <RemoteAction icon="gamer" label="Ativar Gamer" color="indigo" onClick={() => handleRemoteCommand(device.id, 'gamer_activate')} loading={commandLoading === `${device.id}-gamer_activate`} />
+                          <RemoteAction icon="boltOff" label="Desativar Gamer" color="rose" onClick={() => handleRemoteCommand(device.id, 'gamer_deactivate')} loading={commandLoading === `${device.id}-gamer_deactivate`} />
                         </div>
                       </div>
 
-                      {/* Limpeza de Disco */}
-                      <div className="space-y-2">
-                        <span className="text-[10px] font-semibold text-emerald-400 uppercase tracking-wider block">Limpeza de Disco</span>
-                        <div className="grid grid-cols-2 gap-2">
-                          <RemoteAction icon="search" label="Analisar" color="emerald" onClick={() => handleRemoteCommand(device.id, 'cleanup_analyze')} loading={commandLoading === `${device.id}-cleanup_analyze`} />
+                      {/* 2. Disco & Reparo */}
+                      <div className="p-3 rounded-xl border border-slate-800/80 bg-slate-900/40 flex flex-col justify-between space-y-2.5">
+                        <div className="flex items-center justify-between pb-1 border-b border-slate-800/50">
+                          <div className="flex items-center gap-1.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                            <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider">
+                              Disco & Reparo
+                            </span>
+                          </div>
+                          <span className="text-[9px] font-mono text-slate-500 uppercase">4 ações</span>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-1 gap-1.5">
+                          <RemoteAction icon="search" label="Analisar Disco" color="emerald" onClick={() => handleRemoteCommand(device.id, 'cleanup_analyze')} loading={commandLoading === `${device.id}-cleanup_analyze`} />
                           <RemoteAction icon="trash" label="Limpar Tudo" color="emerald" onClick={() => handleRemoteCommand(device.id, 'cleanup_execute')} loading={commandLoading === `${device.id}-cleanup_execute`} />
+                          <RemoteAction icon="repair" label="DISM + SFC" color="amber" onClick={() => handleRemoteCommand(device.id, 'repair_dism_sfc')} loading={commandLoading === `${device.id}-repair_dism_sfc`} />
+                          <RemoteAction icon="disk" label="Limpar Windows" color="amber" onClick={() => handleRemoteCommand(device.id, 'repair_disk_cleanup')} loading={commandLoading === `${device.id}-repair_disk_cleanup`} />
                         </div>
                       </div>
 
-                      {/* Reparo do Windows */}
-                      <div className="space-y-2">
-                        <span className="text-[10px] font-semibold text-amber-400 uppercase tracking-wider block">Reparo do Windows</span>
-                        <div className="grid grid-cols-2 gap-2">
-                          <RemoteAction icon="settings" label="DISM + SFC" color="amber" onClick={() => handleRemoteCommand(device.id, 'repair_dism_sfc')} loading={commandLoading === `${device.id}-repair_dism_sfc`} />
-                          <RemoteAction icon="disk" label="Limpeza Disco" color="amber" onClick={() => handleRemoteCommand(device.id, 'repair_disk_cleanup')} loading={commandLoading === `${device.id}-repair_disk_cleanup`} />
+                      {/* 3. Rede & Conexão */}
+                      <div className="p-3 rounded-xl border border-slate-800/80 bg-slate-900/40 flex flex-col justify-between space-y-2.5">
+                        <div className="flex items-center justify-between pb-1 border-b border-slate-800/50">
+                          <div className="flex items-center gap-1.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-sky-400" />
+                            <span className="text-[10px] font-bold text-sky-400 uppercase tracking-wider">
+                              Rede & Conexão
+                            </span>
+                          </div>
+                          <span className="text-[9px] font-mono text-slate-500 uppercase">4 ações</span>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-1 gap-1.5">
+                          <RemoteAction icon="network" label="Otimizar Rede" color="sky" onClick={() => handleRemoteCommand(device.id, 'network_optimize')} loading={commandLoading === `${device.id}-network_optimize`} />
+                          <RemoteAction icon="processing" label="Flush DNS" color="sky" onClick={() => handleRemoteCommand(device.id, 'network_flush_dns')} loading={commandLoading === `${device.id}-network_flush_dns`} />
+                          <RemoteAction icon="settings" label="Reset Winsock" color="sky" onClick={() => handleRemoteCommand(device.id, 'network_reset_winsock')} loading={commandLoading === `${device.id}-network_reset_winsock`} />
+                          <RemoteAction icon="terminal" label="Reset TCP/IP" color="sky" onClick={() => handleRemoteCommand(device.id, 'network_reset_tcp')} loading={commandLoading === `${device.id}-network_reset_tcp`} />
                         </div>
                       </div>
 
-                      {/* Modo Gamer */}
-                      <div className="space-y-2">
-                        <span className="text-[10px] font-semibold text-indigo-400 uppercase tracking-wider block">Modo Gamer</span>
-                        <div className="grid grid-cols-2 gap-2">
-                          <RemoteAction icon="bolt" label="Ativar" color="indigo" onClick={() => handleRemoteCommand(device.id, 'gamer_activate')} loading={commandLoading === `${device.id}-gamer_activate`} />
-                          <RemoteAction icon="power" label="Desativar" color="rose" onClick={() => handleRemoteCommand(device.id, 'gamer_deactivate')} loading={commandLoading === `${device.id}-gamer_deactivate`} />
+                      {/* 4. Segurança & Sistema */}
+                      <div className="p-3 rounded-xl border border-slate-800/80 bg-slate-900/40 flex flex-col justify-between space-y-2.5">
+                        <div className="flex items-center justify-between pb-1 border-b border-slate-800/50">
+                          <div className="flex items-center gap-1.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-rose-400" />
+                            <span className="text-[10px] font-bold text-rose-400 uppercase tracking-wider">
+                              Segurança & Sistema
+                            </span>
+                          </div>
+                          <span className="text-[9px] font-mono text-slate-500 uppercase">4 ações</span>
                         </div>
-                      </div>
-
-                      {/* Rede */}
-                      <div className="space-y-2">
-                        <span className="text-[10px] font-semibold text-indigo-400 uppercase tracking-wider block">Rede & Conexão</span>
-                        <div className="grid grid-cols-2 gap-2">
-                          <RemoteAction icon="activity" label="Otimizar Rede" color="indigo" onClick={() => handleRemoteCommand(device.id, 'network_optimize')} loading={commandLoading === `${device.id}-network_optimize`} />
-                          <RemoteAction icon="processing" label="Flush DNS" color="indigo" onClick={() => handleRemoteCommand(device.id, 'network_flush_dns')} loading={commandLoading === `${device.id}-network_flush_dns`} />
-                          <RemoteAction icon="settings" label="Reset Winsock" color="indigo" onClick={() => handleRemoteCommand(device.id, 'network_reset_winsock')} loading={commandLoading === `${device.id}-network_reset_winsock`} />
-                          <RemoteAction icon="terminal" label="Reset TCP/IP" color="indigo" onClick={() => handleRemoteCommand(device.id, 'network_reset_tcp')} loading={commandLoading === `${device.id}-network_reset_tcp`} />
-                        </div>
-                      </div>
-
-                      {/* Shield & Sistema */}
-                      <div className="space-y-2">
-                        <span className="text-[10px] font-semibold text-rose-400 uppercase tracking-wider block">Segurança & Sistema</span>
-                        <div className="grid grid-cols-2 gap-2">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-1 gap-1.5">
                           <RemoteAction icon="security" label="Scan Rápido" color="rose" onClick={() => handleRemoteCommand(device.id, 'shield_quick_scan')} loading={commandLoading === `${device.id}-shield_quick_scan`} />
                           <RemoteAction icon="security" label="Scan Completo" color="rose" onClick={() => handleRemoteCommand(device.id, 'shield_full_scan')} loading={commandLoading === `${device.id}-shield_full_scan`} />
                           <RemoteAction icon="alertCircle" label="Scan Adware" color="rose" onClick={() => handleRemoteCommand(device.id, 'shield_adware_scan')} loading={commandLoading === `${device.id}-shield_adware_scan`} />
-                          <RemoteAction icon="processing" label="Reiniciar Link" color="amber" onClick={() => handleRemoteCommand(device.id, 'restart_link')} loading={commandLoading === `${device.id}-restart_link`} />
-                          <RemoteAction icon="power" label="Desligar PC" color="rose" onClick={() => handleRemoteCommand(device.id, 'shutdown')} loading={commandLoading === `${device.id}-shutdown`} />
+                          <RemoteAction icon="processing" label="Reiniciar PC" color="amber" onClick={() => setConfirmPowerModal({
+                            deviceId: device.id,
+                            command: 'restart_link',
+                            title: 'Reiniciar Computador',
+                            description: 'Um comando de reinicialização remota será enviado para o computador. A máquina será reiniciada com segurança em 10 segundos.'
+                          })} loading={commandLoading === `${device.id}-restart_link`} />
                         </div>
                       </div>
                     </div>
@@ -483,6 +571,60 @@ export default function MyComputerPage({ userId }: { userId: string }) {
                   className="flex-1 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-semibold text-xs shadow-lg shadow-rose-600/20 transition-all active:scale-95"
                 >
                   Confirmar
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+              {confirmPowerModal && (
+          <div className="fixed inset-0 z-[250] flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0 }} 
+              animate={{ opacity: 1 }} 
+              exit={{ opacity: 0 }} 
+              className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" 
+              onClick={() => setConfirmPowerModal(null)} 
+            />
+            <motion.div 
+              initial={{ scale: 0.95, opacity: 0 }} 
+              animate={{ scale: 1, opacity: 1 }} 
+              exit={{ scale: 0.95, opacity: 0 }} 
+              className={`relative w-full max-w-md p-6 rounded-2xl border border-slate-800 shadow-2xl text-center flex flex-col items-center ${
+                transparencyMode ? 'voltris-glass' : 'bg-slate-900'
+              }`}
+            >
+              <VoltrisIconTile 
+                icon={confirmPowerModal.command === 'shutdown' ? 'power' : 'processing'} 
+                accent={confirmPowerModal.command === 'shutdown' ? DASHBOARD_ACCENT.danger : DASHBOARD_ACCENT.warning} 
+                size={12} 
+                className="mb-4" 
+              />
+              <h3 className="text-lg font-bold text-white mb-2">{confirmPowerModal.title}</h3>
+              <p className="text-xs text-slate-400 leading-relaxed mb-6 max-w-xs">
+                {confirmPowerModal.description}
+              </p>
+              <div className="flex w-full gap-3">
+                <button 
+                  type="button"
+                  onClick={() => setConfirmPowerModal(null)} 
+                  className="flex-1 py-2.5 rounded-xl border border-slate-700 bg-slate-800 text-slate-300 font-medium text-xs hover:bg-slate-700 transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button 
+                  type="button"
+                  onClick={() => {
+                    const { deviceId, command } = confirmPowerModal;
+                    setConfirmPowerModal(null);
+                    handleRemoteCommand(deviceId, command);
+                  }} 
+                  className={`flex-1 py-2.5 rounded-xl text-white font-semibold text-xs shadow-lg transition-all active:scale-95 ${
+                    confirmPowerModal.command === 'shutdown'
+                      ? 'bg-rose-600 hover:bg-rose-500 shadow-rose-600/20'
+                      : 'bg-amber-600 hover:bg-amber-500 shadow-amber-600/20'
+                  }`}
+                >
+                  Confirmar Ação
                 </button>
               </div>
             </motion.div>
