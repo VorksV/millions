@@ -146,9 +146,9 @@ export async function GET(request: NextRequest) {
         return errorWithCorrelation(ctx, 404, 'INSTALLATION_NOT_FOUND', 'Installation not found.', {
             details: { linked: null, is_linked: false, email: null },
             headers: {
-                'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=60',
-                'CDN-Cache-Control': 'public, s-maxage=300, stale-while-revalidate=60',
-                'Vercel-CDN-Cache-Control': 'public, s-maxage=300, stale-while-revalidate=60',
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                'CDN-Cache-Control': 'no-cache, no-store, must-revalidate',
+                'Vercel-CDN-Cache-Control': 'no-cache, no-store, must-revalidate',
             },
         });
     }
@@ -286,9 +286,9 @@ export async function GET(request: NextRequest) {
             'Vary': 'x-voltris-device-credential',
           }
         : {
-            'Cache-Control': 'public, s-maxage=10, stale-while-revalidate=10',
-            'CDN-Cache-Control': 'public, s-maxage=10, stale-while-revalidate=10',
-            'Vercel-CDN-Cache-Control': 'public, s-maxage=10, stale-while-revalidate=10',
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'CDN-Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Vercel-CDN-Cache-Control': 'no-cache, no-store, must-revalidate',
             'Vary': 'x-voltris-device-credential',
           };
 

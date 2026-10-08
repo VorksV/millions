@@ -189,6 +189,33 @@ export async function POST(request: NextRequest) {
 
     logSuccess(ctx, 'vinculacao confirmada', { email: maskEmail(user.email) });
 
+    // Limpa quaisquer comandos anteriores do dispositivo (ex: unlinks antigos pendentes)
+    try {
+        await admin
+            .from('device_commands')
+            .delete()
+            .eq('installation_id', installationId);
+    } catch (cleanErr: any) {
+        logSupabaseError(ctx, 'limpar comandos antigos ao vincular', cleanErr ?? null);
+    }
+
+    // Emite comando em tempo real para o app desktop via Realtime / SSE
+    try {
+        await admin.from('device_commands').insert({
+            installation_id: installationId,
+            command_type: 'device_linked',
+            payload: {
+                is_linked: true,
+                user_email: user.email,
+                timestamp: now,
+            },
+            status: 'pending',
+        });
+        logSuccess(ctx, 'comando device_linked emitido em tempo real');
+    } catch (cmdInsertErr: any) {
+        logSupabaseError(ctx, 'falha ao inserir comando device_linked', cmdInsertErr ?? null);
+    }
+
     // A credencial de dispositivo NAO e emitida aqui.
     //
     // O navegador autentica por sessão e não precisa dela; o token era
